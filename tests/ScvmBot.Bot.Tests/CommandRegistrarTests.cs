@@ -13,7 +13,7 @@ public class CommandRegistrarTests
     }
 
     [Fact]
-    public void ResolveStrategy_NoGuildId_ReturnsGlobal()
+    public void ResolveStrategy_NoGuildIds_ReturnsGlobal()
     {
         var config = BuildConfig(new Dictionary<string, string?>
         {
@@ -23,76 +23,104 @@ public class CommandRegistrarTests
         var strategy = CommandRegistrar.ResolveStrategy(config);
 
         Assert.Equal(RegistrationMode.Global, strategy.Mode);
-        Assert.Null(strategy.GuildId);
+        Assert.Empty(strategy.GuildIds);
     }
 
     [Fact]
-    public void ResolveStrategy_EmptyGuildId_ReturnsGlobal()
+    public void ResolveStrategy_EmptyGuildIdsSection_ReturnsGlobal()
     {
+        // An empty section with no children should resolve as global.
         var config = BuildConfig(new Dictionary<string, string?>
         {
-            ["Discord:GuildId"] = ""
+            ["Discord:GuildIds"] = null
         });
 
         var strategy = CommandRegistrar.ResolveStrategy(config);
 
         Assert.Equal(RegistrationMode.Global, strategy.Mode);
-        Assert.Null(strategy.GuildId);
+        Assert.Empty(strategy.GuildIds);
     }
 
     [Fact]
-    public void ResolveStrategy_GuildIdIsZero_ReturnsGlobal()
+    public void ResolveStrategy_GuildIdsAllZero_ReturnsGlobal()
     {
         var config = BuildConfig(new Dictionary<string, string?>
         {
-            ["Discord:GuildId"] = "0"
+            ["Discord:GuildIds:0"] = "0",
+            ["Discord:GuildIds:1"] = "0"
         });
 
         var strategy = CommandRegistrar.ResolveStrategy(config);
 
         Assert.Equal(RegistrationMode.Global, strategy.Mode);
-        Assert.Null(strategy.GuildId);
+        Assert.Empty(strategy.GuildIds);
     }
 
     [Fact]
-    public void ResolveStrategy_ValidGuildId_ReturnsGuild()
+    public void ResolveStrategy_SingleValidGuildId_ReturnsGuildWithOneId()
     {
         var config = BuildConfig(new Dictionary<string, string?>
         {
-            ["Discord:GuildId"] = "1296851784899366944"
+            ["Discord:GuildIds:0"] = "1296851784899366944"
         });
 
         var strategy = CommandRegistrar.ResolveStrategy(config);
 
         Assert.Equal(RegistrationMode.Guild, strategy.Mode);
-        Assert.Equal(1296851784899366944UL, strategy.GuildId);
+        Assert.Single(strategy.GuildIds);
+        Assert.Equal(1296851784899366944UL, strategy.GuildIds[0]);
     }
 
     [Fact]
-    public void ResolveStrategy_GuildIdFromEnvVarStyle_ReturnsGuild()
+    public void ResolveStrategy_MultipleValidGuildIds_ReturnsGuildWithAllIds()
     {
         var config = BuildConfig(new Dictionary<string, string?>
         {
-            ["Discord:GuildId"] = "123456789012345678"
+            ["Discord:GuildIds:0"] = "1296851784899366944",
+            ["Discord:GuildIds:1"] = "123456789012345678",
+            ["Discord:GuildIds:2"] = "987654321098765432"
         });
 
         var strategy = CommandRegistrar.ResolveStrategy(config);
 
         Assert.Equal(RegistrationMode.Guild, strategy.Mode);
-        Assert.Equal(123456789012345678UL, strategy.GuildId);
+        Assert.Equal(3, strategy.GuildIds.Count);
+        Assert.Contains(1296851784899366944UL, strategy.GuildIds);
+        Assert.Contains(123456789012345678UL, strategy.GuildIds);
+        Assert.Contains(987654321098765432UL, strategy.GuildIds);
     }
 
     [Fact]
-    public void ResolveStrategy_GuildIdNull_ReturnsGlobal()
+    public void ResolveStrategy_MixOfValidAndInvalidGuildIds_ReturnsOnlyValid()
     {
         var config = BuildConfig(new Dictionary<string, string?>
         {
-            ["Discord:GuildId"] = null
+            ["Discord:GuildIds:0"] = "1296851784899366944",
+            ["Discord:GuildIds:1"] = "0",
+            ["Discord:GuildIds:2"] = "not-a-number",
+            ["Discord:GuildIds:3"] = "123456789012345678"
+        });
+
+        var strategy = CommandRegistrar.ResolveStrategy(config);
+
+        Assert.Equal(RegistrationMode.Guild, strategy.Mode);
+        Assert.Equal(2, strategy.GuildIds.Count);
+        Assert.Contains(1296851784899366944UL, strategy.GuildIds);
+        Assert.Contains(123456789012345678UL, strategy.GuildIds);
+    }
+
+    [Fact]
+    public void ResolveStrategy_GuildIdsSectionWithOnlyInvalidEntries_ReturnsGlobal()
+    {
+        var config = BuildConfig(new Dictionary<string, string?>
+        {
+            ["Discord:GuildIds:0"] = "not-a-number",
+            ["Discord:GuildIds:1"] = ""
         });
 
         var strategy = CommandRegistrar.ResolveStrategy(config);
 
         Assert.Equal(RegistrationMode.Global, strategy.Mode);
-        Assert.Null(strategy.GuildId);
+        Assert.Empty(strategy.GuildIds);
     }
 }

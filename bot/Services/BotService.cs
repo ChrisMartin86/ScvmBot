@@ -88,15 +88,15 @@ public class BotService : IHostedService
                 var strategy = CommandRegistrar.ResolveStrategy(_configuration);
                 if (strategy.Mode == RegistrationMode.Guild)
                 {
-                    var guild = _client.GetGuild(strategy.GuildId!.Value);
-                    if (guild is null)
+                    foreach (var guildId in strategy.GuildIds)
                     {
-                        _logger.LogWarning("Discord:GuildId {GuildId} is set but the guild was not found. Falling back to global registration.", strategy.GuildId.Value);
-                        await _client.BulkOverwriteGlobalApplicationCommandsAsync(commandProperties);
-                        _logger.LogInformation("Registered {CommandCount} slash command(s) globally.", _slashCommands.Count);
-                    }
-                    else
-                    {
+                        var guild = _client.GetGuild(guildId);
+                        if (guild is null)
+                        {
+                            _logger.LogWarning("Discord:GuildIds contains {GuildId} but the guild was not found. Skipping.", guildId);
+                            continue;
+                        }
+
                         await guild.BulkOverwriteApplicationCommandAsync(commandProperties);
                         _logger.LogInformation("Registered {CommandCount} slash command(s) to guild {GuildName} ({GuildId}).",
                             _slashCommands.Count, guild.Name, guild.Id);

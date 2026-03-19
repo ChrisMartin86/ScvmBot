@@ -77,7 +77,15 @@ class Program
 
         Map("DISCORD_TOKEN", "Discord:Token");
         Map("BOT_SYNC_COMMANDS", "Bot:SyncCommands");
-        Map("DISCORD_GUILD_ID", "Discord:GuildId");
+
+        // DISCORD_GUILD_IDS supports a comma-separated list mapped to array-style config keys.
+        var guildIdsRaw = Environment.GetEnvironmentVariable("DISCORD_GUILD_IDS");
+        if (!string.IsNullOrWhiteSpace(guildIdsRaw))
+        {
+            var ids = guildIdsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            for (var i = 0; i < ids.Length; i++)
+                map[$"Discord:GuildIds:{i}"] = ids[i];
+        }
 
         return map;
     }

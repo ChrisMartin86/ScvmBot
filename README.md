@@ -52,7 +52,7 @@ A Discord bot for tabletop RPG character generation with built-in support for **
    {
      "Discord": {
        "Token": "<YOUR_DISCORD_BOT_TOKEN>",
-       "GuildId": ""
+       "GuildIds": []
      },
      "Bot": {
        "SyncCommands": false
@@ -62,9 +62,9 @@ A Discord bot for tabletop RPG character generation with built-in support for **
 
    **Configuration guide:**
    - `Token`: Your bot's Discord token (required)
-   - `GuildId`: Optional. Leave empty for global command registration, or enter a Discord server ID (as a string) for guild-specific registration
-     - **Empty or `"0"`**: Commands register globally across Discord (takes ~1 hour to propagate)
-     - **Valid ID**: Commands register only in that guild (takes ~15 seconds)
+   - `GuildIds`: Optional array of Discord server IDs. Omit or leave empty for global command registration, or provide one or more server IDs for guild-specific registration
+     - **Empty `[]`**: Commands register globally across Discord (takes ~1 hour to propagate)
+     - **One or more IDs**: Commands register only in those guilds (takes ~15 seconds)
 
 3. **Run the bot**
    ```bash

@@ -10,7 +10,7 @@ services:
     environment:
       - Discord__Token=${DISCORD_TOKEN}
       - Bot__SyncCommands=${BOT_SYNC_COMMANDS:-true}
-      - Discord__GuildId=${DISCORD_GUILD_ID:-}
+      - Discord__GuildIds=${DISCORD_GUILD_IDS:-}
       - Logging__LogLevel__Default=${LOG_LEVEL_DEFAULT:-Information}
       - Logging__LogLevel__Microsoft=${LOG_LEVEL_MICROSOFT:-Warning}
       - Logging__LogLevel__Discord=${LOG_LEVEL_DISCORD:-Information}
