@@ -166,6 +166,18 @@ dotnet build ScvmBot.sln
 - **iText7** (9.5.0) — PDF generation
 - **Microsoft.Extensions.*** (10.0.5) — Dependency injection, configuration, logging, hosting
 
+## MÖRK BORG Attribution
+
+ScvmBot is an independent production by Christopher Martin and is not affiliated
+with Ockult Örtmästare Games or Stockholm Kartell. It is published under the
+[MÖRK BORG Third Party License](https://morkborg.com/license/).
+
+MÖRK BORG is © 2019 Ockult Örtmästare Games and Stockholm Kartell.
+
+See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for full details.
+
 ## License
 
 [MIT](LICENSE) © 2025 Christopher Martin
+
+Third-party content is licensed separately — see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
