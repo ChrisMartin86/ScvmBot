@@ -1,0 +1,11 @@
+title: ScvmBot
+description: A Discord bot for tabletop RPG character generation
+url: "https://chrismartin86.github.io"
+baseurl: "/ScvmBot"
+
+markdown: kramdown
+permalink: pretty
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
