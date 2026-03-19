@@ -7,7 +7,7 @@ title: Home
 
 # ScvmBot
 
-A Discord bot for generating tabletop RPG characters. Built with **MÖRK BORG** support and designed to handle more systems over time.
+A Discord bot for tabletop RPG character generation, starting with **MÖRK&nbsp;BORG** and designed to grow from there.
 
 Roll up a character, get it delivered to your DMs, and get back to the table.
 
