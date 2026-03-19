@@ -107,7 +107,7 @@ public class BotService : IHostedService
         _logger.LogInformation("Bot is ready.");
     }
 
-    private async Task SlashCommandHandler(SocketSlashCommand command)
+    private Task SlashCommandHandler(SocketSlashCommand command)
     {
         _logger.LogDebug("Received /{CommandName} from user {UserId} in {Context}.",
             command.Data.Name, command.User.Id,
@@ -115,12 +115,23 @@ public class BotService : IHostedService
 
         if (_slashCommands.TryGetValue(command.Data.Name, out var handler))
         {
-            await handler.HandleAsync(command);
+            // Fire and forget: handlers defer their response immediately, so the gateway task
+            // can continue without waiting for the entire command processing to complete.
+            // This prevents the "handler is blocking the gateway task" warning.
+            _ = handler.HandleAsync(command).ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    _logger.LogError(task.Exception, "Unhandled exception in /{CommandName} handler.", command.Data.Name);
+                }
+            }, TaskScheduler.Default);
+
+            return Task.CompletedTask;
         }
         else
         {
             _logger.LogWarning("No handler registered for /{CommandName}.", command.Data.Name);
-            await command.RespondAsync("Unknown command.");
+            return command.RespondAsync("Unknown command.");
         }
     }
 }
