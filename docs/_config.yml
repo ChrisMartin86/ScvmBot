@@ -1,7 +1,7 @@
 title: ScvmBot
 description: A Discord bot for tabletop RPG character generation
-url: "https://chrismartin86.github.io"
-baseurl: "/ScvmBot"
+url: "https://scvmbot.com"
+baseurl: ""
 
 markdown: kramdown
 permalink: pretty
