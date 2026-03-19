@@ -76,8 +76,6 @@ class Program
         }
 
         Map("DISCORD_TOKEN", "Discord:Token");
-        Map("DISCORD_CLIENT_ID", "Discord:ClientId");
-        Map("DISCORD_CLIENT_SECRET", "Discord:ClientSecret");
         Map("BOT_SYNC_COMMANDS", "Bot:SyncCommands");
 
         return map;
