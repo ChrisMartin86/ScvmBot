@@ -132,8 +132,10 @@ public class GenerateCommandHandler : ISlashCommand
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error during /generate command");
             await command.FollowupAsync(
-                embed: ResponseCardBuilder.Build("Generation Failed", ex.Message, new Color(200, 50, 50)),
+                embed: ResponseCardBuilder.Build("Generation Failed",
+                    "Something went wrong. Please try again.", new Color(200, 50, 50)),
                 ephemeral: true);
         }
     }
@@ -196,7 +198,8 @@ public class GenerateCommandHandler : ISlashCommand
         {
             _logger.LogError(sendEx, "Failed to send character card via DM");
             await command.FollowupAsync(
-                embed: ResponseCardBuilder.Build("Send Failed", sendEx.Message, new Color(200, 50, 50)),
+                embed: ResponseCardBuilder.Build("Send Failed",
+                    "Something went wrong sending your character. Please try again.", new Color(200, 50, 50)),
                 ephemeral: true);
         }
     }
@@ -279,7 +282,8 @@ public class GenerateCommandHandler : ISlashCommand
         {
             _logger.LogError(sendEx, "Failed to send party cards");
             await command.FollowupAsync(
-                embed: ResponseCardBuilder.Build("Party Send Failed", sendEx.Message, new Color(200, 50, 50)),
+                embed: ResponseCardBuilder.Build("Party Send Failed",
+                    "Something went wrong sending your party. Please try again.", new Color(200, 50, 50)),
                 ephemeral: true);
         }
     }

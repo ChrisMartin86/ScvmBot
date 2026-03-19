@@ -85,12 +85,31 @@ public class BotService : IHostedService
                     .Select(cmd => cmd.BuildCommand().Build())
                     .ToArray();
 
-                await _client.BulkOverwriteGlobalApplicationCommandsAsync(commandProperties);
+                var strategy = CommandRegistrar.ResolveStrategy(_configuration);
+                if (strategy.Mode == RegistrationMode.Guild)
+                {
+                    var guild = _client.GetGuild(strategy.GuildId!.Value);
+                    if (guild is null)
+                    {
+                        _logger.LogWarning("Discord:GuildId {GuildId} is set but the guild was not found. Falling back to global registration.", strategy.GuildId.Value);
+                        await _client.BulkOverwriteGlobalApplicationCommandsAsync(commandProperties);
+                        _logger.LogInformation("Registered {CommandCount} slash command(s) globally.", _slashCommands.Count);
+                    }
+                    else
+                    {
+                        await guild.BulkOverwriteApplicationCommandAsync(commandProperties);
+                        _logger.LogInformation("Registered {CommandCount} slash command(s) to guild {GuildName} ({GuildId}).",
+                            _slashCommands.Count, guild.Name, guild.Id);
+                    }
+                }
+                else
+                {
+                    await _client.BulkOverwriteGlobalApplicationCommandsAsync(commandProperties);
+                    _logger.LogInformation("Registered {CommandCount} slash command(s) globally.", _slashCommands.Count);
+                }
 
                 foreach (var cmd in _slashCommands.Values)
                     _logger.LogDebug("  Registered /{CommandName}", cmd.Name);
-
-                _logger.LogInformation("Registered {CommandCount} slash command(s) globally.", _slashCommands.Count);
             }
             catch (HttpException ex)
             {
