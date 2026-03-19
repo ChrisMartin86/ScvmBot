@@ -1,0 +1,38 @@
+# Environment and Configuration
+.env
+.env.local
+.env.*.local
+appsettings.json
+appsettings.*.json
+!appsettings.example.json
+
+# Build Outputs
+bin/
+obj/
+dist/
+*.dll
+*.exe
+*.pdb
+
+# IDE and Editor Settings
+.vs/
+.vscode/
+.idea/
+.rider/
+*.user
+*.suo
+*.sln.iml
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ReSharper
+_ReSharper*/
+*.csproj.user
+
+# Code Coverage and Test Results
+coverage/
+**/TestResults/
+*.trx

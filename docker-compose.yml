@@ -1,0 +1,20 @@
+services:
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    image: scvmbot-bot:${IMAGE_TAG:-latest}
+    container_name: scvmbot-bot
+    restart: unless-stopped
+
+    environment:
+      - Discord__Token=${DISCORD_TOKEN}
+      - Discord__ClientId=${DISCORD_CLIENT_ID}
+      - Discord__ClientSecret=${DISCORD_CLIENT_SECRET}
+
+    networks:
+      - scvmbot-network
+
+networks:
+  scvmbot-network:
+    driver: bridge

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "No armor",
+    "tier": 0,
+    "damageReduction": null,
+    "agilityPenalty": 0
+  },
+  {
+    "name": "Light armor",
+    "tier": 1,
+    "damageReduction": "d2",
+    "agilityPenalty": 0
+  },
+  {
+    "name": "Medium armor",
+    "tier": 2,
+    "damageReduction": "d4",
+    "agilityPenalty": 2
+  },
+  {
+    "name": "Heavy armor",
+    "tier": 3,
+    "damageReduction": "d6",
+    "agilityPenalty": 4
+  }
+]

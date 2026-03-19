@@ -1,0 +1,485 @@
+[
+  {
+    "name": "Backpack",
+    "category": "Container",
+    "description": "Holds 7 normal-sized items",
+    "silverValue": 6,
+    "isConsumable": false
+  },
+  {
+    "name": "Sack",
+    "category": "Container",
+    "description": "Holds 10 normal sized items",
+    "silverValue": 3,
+    "isConsumable": false
+  },
+  {
+    "name": "Waterskin",
+    "category": "Supply",
+    "description": "4 days of water",
+    "silverValue": 4,
+    "isConsumable": false
+  },
+  {
+    "name": "Dried food",
+    "category": "Supply",
+    "description": "1 day",
+    "silverValue": 1,
+    "isConsumable": true
+  },
+  {
+    "name": "Torch",
+    "category": "Supply",
+    "description": null,
+    "silverValue": 2,
+    "isConsumable": true
+  },
+  {
+    "name": "Lantern oil",
+    "category": "Supply",
+    "description": "Presence + 6 hours",
+    "silverValue": 5,
+    "isConsumable": true
+  },
+  {
+    "name": "Rope",
+    "category": "Utility",
+    "description": "30 feet",
+    "silverValue": 4,
+    "isConsumable": false
+  },
+  {
+    "name": "Grappling hook",
+    "category": "Utility",
+    "description": null,
+    "silverValue": 12,
+    "isConsumable": false
+  },
+  {
+    "name": "Crowbar",
+    "category": "Tool",
+    "description": null,
+    "silverValue": 8,
+    "isConsumable": false
+  },
+  {
+    "name": "Hammer",
+    "category": "Tool",
+    "description": null,
+    "silverValue": 8,
+    "isConsumable": false
+  },
+  {
+    "name": "Iron nails",
+    "category": "Tool",
+    "description": "10 nails",
+    "silverValue": 10,
+    "isConsumable": false
+  },
+  {
+    "name": "Ladder",
+    "category": "Utility",
+    "description": null,
+    "silverValue": 7,
+    "isConsumable": false
+  },
+  {
+    "name": "Heavy chain",
+    "category": "Utility",
+    "description": "15 feet",
+    "silverValue": 10,
+    "isConsumable": false
+  },
+  {
+    "name": "Large iron hook",
+    "category": "Tool",
+    "description": null,
+    "silverValue": 9,
+    "isConsumable": false
+  },
+  {
+    "name": "Lockpicks",
+    "category": "Tool",
+    "description": null,
+    "silverValue": 5,
+    "isConsumable": false
+  },
+  {
+    "name": "Metal file",
+    "category": "Tool",
+    "description": null,
+    "silverValue": 10,
+    "isConsumable": false
+  },
+  {
+    "name": "Scissors",
+    "category": "Tool",
+    "description": null,
+    "silverValue": 9,
+    "isConsumable": false
+  },
+  {
+    "name": "Toolbox",
+    "category": "Tool",
+    "description": "10 nails, hammer, small saw, tongs",
+    "silverValue": 20,
+    "isConsumable": false
+  },
+  {
+    "name": "Blanket",
+    "category": "Camp",
+    "description": null,
+    "silverValue": 4,
+    "isConsumable": false
+  },
+  {
+    "name": "Mattress",
+    "category": "Camp",
+    "description": null,
+    "silverValue": 3,
+    "isConsumable": false
+  },
+  {
+    "name": "Tent",
+    "category": "Camp",
+    "description": null,
+    "silverValue": 12,
+    "isConsumable": false
+  },
+  {
+    "name": "Small wagon",
+    "category": "Transport",
+    "description": null,
+    "silverValue": 25,
+    "isConsumable": false
+  },
+  {
+    "name": "Chalk",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 1,
+    "isConsumable": false
+  },
+  {
+    "name": "Chewing tobacco",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 1,
+    "isConsumable": true
+  },
+  {
+    "name": "Exquisite perfume",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 25,
+    "isConsumable": false
+  },
+  {
+    "name": "Firesteel",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 4,
+    "isConsumable": false
+  },
+  {
+    "name": "Magnesium strip",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 4,
+    "isConsumable": true
+  },
+  {
+    "name": "Mirror",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 15,
+    "isConsumable": false
+  },
+  {
+    "name": "Muzzle",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 6,
+    "isConsumable": false
+  },
+  {
+    "name": "Noose",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 5,
+    "isConsumable": false
+  },
+  {
+    "name": "Oil lamp",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 10,
+    "isConsumable": false
+  },
+  {
+    "name": "Bear trap",
+    "category": "Trap",
+    "description": "Presence DR14 to spot, d8 damage",
+    "silverValue": 20,
+    "isConsumable": false
+  },
+  {
+    "name": "Caltrops",
+    "category": "Trap",
+    "description": "d4 damage + infection on 1 in 6",
+    "silverValue": 7,
+    "isConsumable": false
+  },
+  {
+    "name": "Manacles",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 10,
+    "isConsumable": false
+  },
+  {
+    "name": "Medicine box",
+    "category": "Medical",
+    "description": "Stops bleeding/infection and +d6 hp. Presence + 4 uses",
+    "silverValue": 15,
+    "isConsumable": false
+  },
+  {
+    "name": "Crucifix, silver",
+    "category": "Relic",
+    "description": null,
+    "silverValue": 60,
+    "isConsumable": false
+  },
+  {
+    "name": "Crucifix, wood",
+    "category": "Relic",
+    "description": null,
+    "silverValue": 8,
+    "isConsumable": false
+  },
+  {
+    "name": "Poison (black)",
+    "category": "Consumable",
+    "description": "Toughness DR14 or d6 damage + blind for one hour. 3 doses",
+    "silverValue": 20,
+    "isConsumable": true
+  },
+  {
+    "name": "Poison (red)",
+    "category": "Consumable",
+    "description": "Toughness DR12 or d10 damage. 3 doses",
+    "silverValue": 20,
+    "isConsumable": true
+  },
+  {
+    "name": "Preserved corpse",
+    "category": "Oddity",
+    "description": "Cost: 66+d6s",
+    "silverValue": null,
+    "isConsumable": false
+  },
+  {
+    "name": "Lard",
+    "category": "Supply",
+    "description": "May function as 5 meals",
+    "silverValue": 5,
+    "isConsumable": true
+  },
+  {
+    "name": "Meat cleaver",
+    "category": "Tool",
+    "description": null,
+    "silverValue": 15,
+    "isConsumable": false
+  },
+  {
+    "name": "Salt",
+    "category": "Supply",
+    "description": null,
+    "silverValue": 4,
+    "isConsumable": true
+  },
+  {
+    "name": "Sharp needle",
+    "category": "Gear",
+    "description": null,
+    "silverValue": 3,
+    "isConsumable": false
+  },
+  {
+    "name": "Scroll",
+    "category": "Scroll",
+    "description": "Worth roughly 50s to the right buyer",
+    "silverValue": 50,
+    "isConsumable": false
+  },
+  {
+    "name": "Arrows (20)",
+    "category": "Ammo",
+    "description": null,
+    "silverValue": 10,
+    "isConsumable": true
+  },
+  {
+    "name": "Bolts (10)",
+    "category": "Ammo",
+    "description": null,
+    "silverValue": 10,
+    "isConsumable": true
+  },
+  {
+    "name": "Dog (trained)",
+    "category": "Beast",
+    "description": null,
+    "silverValue": 25,
+    "isConsumable": false
+  },
+  {
+    "name": "Dog (wild)",
+    "category": "Beast",
+    "description": null,
+    "silverValue": 10,
+    "isConsumable": false
+  },
+  {
+    "name": "Horse",
+    "category": "Beast",
+    "description": null,
+    "silverValue": 80,
+    "isConsumable": false
+  },
+  {
+    "name": "Mule",
+    "category": "Beast",
+    "description": null,
+    "silverValue": 10,
+    "isConsumable": false
+  },
+  {
+    "name": "Rat (tame)",
+    "category": "Beast",
+    "description": null,
+    "silverValue": 8,
+    "isConsumable": false
+  },
+  {
+    "name": "Night in hospice",
+    "category": "Service",
+    "description": null,
+    "silverValue": 3,
+    "isConsumable": true
+  },
+  {
+    "name": "Drink",
+    "category": "Service",
+    "description": null,
+    "silverValue": 1,
+    "isConsumable": true
+  },
+  {
+    "name": "Steady meal",
+    "category": "Service",
+    "description": null,
+    "silverValue": 2,
+    "isConsumable": true
+  },
+  {
+    "name": "Bribe, guard",
+    "category": "Service",
+    "description": "Cost range: 20–40s",
+    "silverValue": null,
+    "isConsumable": true
+  },
+  {
+    "name": "Bribe, clerk",
+    "category": "Service",
+    "description": "Cost range: 30–60s",
+    "silverValue": null,
+    "isConsumable": true
+  },
+  {
+    "name": "Bribe, rabble",
+    "category": "Service",
+    "description": "Cost range: 5–15s",
+    "silverValue": null,
+    "isConsumable": true
+  },
+  {
+    "name": "Repair armor Tier 1 to 2",
+    "category": "Service",
+    "description": null,
+    "silverValue": 25,
+    "isConsumable": true
+  },
+  {
+    "name": "Repair armor Tier 2 to 3",
+    "category": "Service",
+    "description": null,
+    "silverValue": 40,
+    "isConsumable": true
+  },
+  {
+    "name": "Spellcasting components",
+    "category": "Magical",
+    "description": "Candles, herbs, bones, and various occult materials",
+    "silverValue": 15,
+    "isConsumable": false
+  },
+  {
+    "name": "Healing herbs",
+    "category": "Medical",
+    "description": "Bundle of medicinal herbs and remedies",
+    "silverValue": 10,
+    "isConsumable": false
+  },
+  {
+    "name": "Shield",
+    "category": "Armor",
+    "description": "Wooden shield, -1 hp damage or break to ignore one attack",
+    "silverValue": 8,
+    "isConsumable": false
+  },
+  {
+    "name": "Life elixir",
+    "category": "Magical",
+    "description": "Heals d6 HP when consumed",
+    "silverValue": 30,
+    "isConsumable": true
+  },
+  {
+    "name": "Occult book",
+    "category": "Magical",
+    "description": "Contains knowledge of occult phenomena and arcane practices",
+    "silverValue": 25,
+    "isConsumable": false
+  },
+  {
+    "name": "Red poison",
+    "category": "Consumable",
+    "description": "Toughness DR12 or d6 damage. 4 doses",
+    "silverValue": 15,
+    "isConsumable": true
+  },
+  {
+    "name": "Medicine chest",
+    "category": "Medical",
+    "description": "Comprehensive medical supplies, Presence + 4 uses",
+    "silverValue": 20,
+    "isConsumable": false
+  },
+  {
+    "name": "Bomb",
+    "category": "Explosive",
+    "description": "2d6 damage to all nearby",
+    "silverValue": 25,
+    "isConsumable": true
+  },
+  {
+    "name": "Small vicious dog",
+    "category": "Beast",
+    "description": "1 HP, d4 bite damage",
+    "silverValue": 15,
+    "isConsumable": false
+  }
+]

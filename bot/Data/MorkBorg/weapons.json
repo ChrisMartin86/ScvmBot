@@ -1,0 +1,129 @@
+[
+  {
+    "name": "Unarmed",
+    "damage": "d2",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Femur",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Staff",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": true
+  },
+  {
+    "name": "Knife",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Shortsword",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Shortbow",
+    "damage": "d4",
+    "isRanged": true,
+    "twoHanded": true
+  },
+  {
+    "name": "Sling",
+    "damage": "d4",
+    "isRanged": true,
+    "twoHanded": false
+  },
+  {
+    "name": "Club",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Handaxe",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Mace",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Sword",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Warhammer",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Bow",
+    "damage": "d6",
+    "isRanged": true,
+    "twoHanded": true
+  },
+  {
+    "name": "Battle axe",
+    "damage": "d8",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Flail",
+    "damage": "d8",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Crossbow",
+    "damage": "d8",
+    "isRanged": true,
+    "twoHanded": true
+  },
+  {
+    "name": "Whip",
+    "damage": "d2",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Zweihänder",
+    "damage": "d10",
+    "isRanged": false,
+    "twoHanded": true,
+    "special": "Scrolls will never work when wielding zweihand weapons or medium/heavy armor."
+  },
+  {
+    "name": "Dagger",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Axe",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Walking staff",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": true
+  }
+]

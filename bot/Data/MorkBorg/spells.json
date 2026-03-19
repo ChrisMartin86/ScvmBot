@@ -1,0 +1,142 @@
+[
+  {
+    "name": "Palms Open the Southern Gate",
+    "scrollType": "Unclean",
+    "scrollNumber": 1,
+    "description": "A gust of wind opens all closed doors and portals within sight.",
+    "usageDR": 12
+  },
+  {
+    "name": "Tongue of Eris",
+    "scrollType": "Unclean",
+    "scrollNumber": 2,
+    "description": "A creature you can see must answer d4 questions truthfully.",
+    "usageDR": 12
+  },
+  {
+    "name": "Te Deum",
+    "scrollType": "Unclean",
+    "scrollNumber": 3,
+    "description": "d2 corpses rise from the dead to serve you for Presence hours.",
+    "usageDR": 12
+  },
+  {
+    "name": "Lucy-Fires Levitation",
+    "scrollType": "Unclean",
+    "scrollNumber": 4,
+    "description": "A creature or object levitates for Presence rounds.",
+    "usageDR": 12
+  },
+  {
+    "name": "Aegis of Sykhar",
+    "scrollType": "Unclean",
+    "scrollNumber": 5,
+    "description": "A magical protective sphere shields against one attack.",
+    "usageDR": 12
+  },
+  {
+    "name": "Metzhuotl Unveils",
+    "scrollType": "Unclean",
+    "scrollNumber": 6,
+    "description": "See through illusions, darkness, and invisibility for 10 minutes.",
+    "usageDR": 12
+  },
+  {
+    "name": "Falkarthian Teleport",
+    "scrollType": "Unclean",
+    "scrollNumber": 7,
+    "description": "Teleport to a known location. Test Presence DR14 or end up d100 feet off.",
+    "usageDR": 14
+  },
+  {
+    "name": "Nine Violet Signs Unknot the Storm",
+    "scrollType": "Unclean",
+    "scrollNumber": 8,
+    "description": "Call down lightning dealing d6 damage to all nearby enemies.",
+    "usageDR": 12
+  },
+  {
+    "name": "All Things End",
+    "scrollType": "Unclean",
+    "scrollNumber": 9,
+    "description": "A single creature takes d8 damage, no save.",
+    "usageDR": 12
+  },
+  {
+    "name": "Enochian Syntax",
+    "scrollType": "Unclean",
+    "scrollNumber": 10,
+    "description": "Command a creature. Powerful entities may resist.",
+    "usageDR": 14
+  },
+  {
+    "name": "Grace for a Sinner",
+    "scrollType": "Sacred",
+    "scrollNumber": 1,
+    "description": "Heal d6 HP on a creature you touch.",
+    "usageDR": 12
+  },
+  {
+    "name": "Whispers Pass the Gate",
+    "scrollType": "Sacred",
+    "scrollNumber": 2,
+    "description": "Communicate with a recently dead creature.",
+    "usageDR": 12
+  },
+  {
+    "name": "Grace of a Dead Saint",
+    "scrollType": "Sacred",
+    "scrollNumber": 3,
+    "description": "Invisible holy shield absorbs d4 damage.",
+    "usageDR": 12
+  },
+  {
+    "name": "Eldritch Chain",
+    "scrollType": "Sacred",
+    "scrollNumber": 4,
+    "description": "Bind a creature in glowing chains. Strength DR14 to break free.",
+    "usageDR": 12
+  },
+  {
+    "name": "Foul Psychopomp",
+    "scrollType": "Sacred",
+    "scrollNumber": 5,
+    "description": "Summon a spirit guide to lead the way for Presence hours.",
+    "usageDR": 12
+  },
+  {
+    "name": "False Dawn",
+    "scrollType": "Sacred",
+    "scrollNumber": 6,
+    "description": "Blinding light, all nearby enemies test Agility DR14 or be blinded one round.",
+    "usageDR": 12
+  },
+  {
+    "name": "Hermetic Step",
+    "scrollType": "Sacred",
+    "scrollNumber": 7,
+    "description": "Move silently and unseen for Presence rounds.",
+    "usageDR": 12
+  },
+  {
+    "name": "Roskilde Finger",
+    "scrollType": "Sacred",
+    "scrollNumber": 8,
+    "description": "Point at a creature; it takes d6 holy damage.",
+    "usageDR": 12
+  },
+  {
+    "name": "Brackish Communion",
+    "scrollType": "Sacred",
+    "scrollNumber": 9,
+    "description": "Purify food and water or poison it.",
+    "usageDR": 12
+  },
+  {
+    "name": "He Consumes",
+    "scrollType": "Sacred",
+    "scrollNumber": 10,
+    "description": "A dark entity devours a creature with fewer HP than the caster.",
+    "usageDR": 14
+  }
+]
