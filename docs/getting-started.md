@@ -37,10 +37,26 @@ Edit `bot/appsettings.json` with your Discord bot token:
 ```json
 {
   "Discord": {
-    "Token": "<YOUR_DISCORD_BOT_TOKEN>"
+    "Token": "<YOUR_DISCORD_BOT_TOKEN>",
+    "GuildId": ""
+  },
+  "Bot": {
+    "SyncCommands": false
   }
 }
 ```
+
+**Configuration options:**
+
+| Setting | Required | Notes |
+|---------|----------|-------|
+| `Token` | Yes | Your bot's Discord token from the [Discord Developer Portal](https://discord.com/developers/applications) |
+| `GuildId` | No | Leave empty for global registration, or specify a Discord server ID for guild-specific registration |
+| `SyncCommands` | No | Set to `true` to auto-sync commands on startup (default: `false`) |
+
+**Guild vs. Global Registration:**
+- **Global** (empty `GuildId`): Commands are registered across all Discord servers. Changes take ~1 hour to propagate.
+- **Guild-specific** (valid `GuildId`): Commands register only in that server. Changes propagate in ~15 seconds. Useful for testing and development.
 
 ### 3. Run the bot
 
@@ -59,6 +75,27 @@ docker-compose up --build
 ```
 
 The included `docker-compose.yml` and `Dockerfile` handle the build and runtime environment.
+
+**Environment variables** you can configure:
+
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `DISCORD_TOKEN` | Yes | Your bot's Discord token |
+| `DISCORD_GUILD_ID` | No | Leave empty for global registration, or specify a Discord server ID for guild-specific registration |
+| `BOT_SYNC_COMMANDS` | No | Set to `true` to auto-sync commands (default: `true`) |
+| `LOG_LEVEL_DEFAULT` | No | Logging level (default: `Information`) |
+
+Example with environment variables:
+```bash
+DISCORD_TOKEN=your_token_here DISCORD_GUILD_ID=123456789 docker-compose up --build
+```
+
+Or create a `.env` file:
+```bash
+DISCORD_TOKEN=your_token_here
+DISCORD_GUILD_ID=123456789
+BOT_SYNC_COMMANDS=true
+```
 
 ---
 
