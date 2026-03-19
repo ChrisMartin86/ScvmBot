@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ page.description | default: site.description }}">
   <title>{{ page.title }} — {{ site.title }}</title>
   <style>
     :root {
       --bg: #1a1a1a;
       --surface: #242424;
+      --surface-raised: #2c2c2c;
       --text: #e0e0e0;
       --text-muted: #999;
       --accent: #c9a84c;
+      --accent-dim: rgba(201, 168, 76, 0.12);
       --border: #333;
       --link: #c9a84c;
       --link-hover: #e0c068;
@@ -28,87 +31,155 @@
       flex-direction: column;
     }
 
+    /* ---- Header & Navigation ---- */
+
     header {
       background: var(--surface);
       border-bottom: 2px solid var(--accent);
-      padding: 1.2rem 2rem;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
     header .inner {
-      max-width: 800px;
+      max-width: 860px;
       margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 0.8rem;
+      gap: 0.5rem;
+      padding: 0.9rem 2rem;
     }
 
-    header h1 {
-      font-size: 1.4rem;
+    .site-title {
+      font-size: 1.3rem;
       font-weight: 700;
       color: var(--accent);
+      letter-spacing: 0.02em;
     }
 
-    header h1 a {
+    .site-title a {
       color: inherit;
       text-decoration: none;
     }
 
     nav {
       display: flex;
-      gap: 1.2rem;
+      gap: 1.4rem;
       flex-wrap: wrap;
+      align-items: center;
     }
 
     nav a {
       color: var(--text-muted);
       text-decoration: none;
       font-size: 0.9rem;
+      font-weight: 500;
       transition: color 0.2s;
+      padding: 0.2rem 0;
     }
 
     nav a:hover, nav a.active {
       color: var(--accent);
     }
 
+    nav .nav-divider {
+      color: var(--border);
+      user-select: none;
+    }
+
+    /* ---- Main Content ---- */
+
     main {
-      max-width: 800px;
+      max-width: 860px;
       margin: 0 auto;
-      padding: 2.5rem 2rem;
+      padding: 2.5rem 2rem 3rem;
       width: 100%;
       flex: 1;
     }
 
-    footer {
+    /* ---- Hero ---- */
+
+    .hero {
       text-align: center;
-      padding: 1.5rem 2rem;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      border-top: 1px solid var(--border);
+      padding: 1.5rem 0 0.5rem;
     }
 
-    footer a {
+    .hero h1 {
+      font-size: 2.4rem;
+      margin-bottom: 0.6rem;
+      letter-spacing: 0.03em;
+    }
+
+    .hero p {
+      font-size: 1.05rem;
       color: var(--text-muted);
+      max-width: 540px;
+      margin: 0 auto 1rem;
+    }
+
+    .hero-links {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.55rem 1.4rem;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      background: var(--accent);
+      color: var(--bg);
+      border: 2px solid var(--accent);
+    }
+
+    .btn:hover {
+      background: var(--link-hover);
+      border-color: var(--link-hover);
+      color: var(--bg);
       text-decoration: none;
     }
 
-    footer a:hover {
+    .btn-outline {
+      background: transparent;
       color: var(--accent);
     }
 
+    .btn-outline:hover {
+      background: var(--accent-dim);
+      color: var(--link-hover);
+    }
+
+    /* ---- Typography ---- */
+
     h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--accent); }
-    h2 { font-size: 1.3rem; margin-top: 2rem; margin-bottom: 0.5rem; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
-    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.4rem; }
+    h2 { font-size: 1.35rem; margin-top: 2.2rem; margin-bottom: 0.6rem; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 0.35rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.4rem; color: var(--accent); }
 
     p { margin-bottom: 1rem; }
     ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
-    li { margin-bottom: 0.3rem; }
+    li { margin-bottom: 0.35rem; }
 
     a { color: var(--link); text-decoration: none; }
     a:hover { color: var(--link-hover); text-decoration: underline; }
 
     em { color: var(--text-muted); }
+
+    strong { color: var(--text); }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2rem 0;
+    }
 
     code {
       background: var(--surface);
@@ -161,23 +232,99 @@
       margin-bottom: 1.5rem;
     }
 
-    @media (max-width: 600px) {
-      header .inner { flex-direction: column; align-items: flex-start; }
-      main { padding: 1.5rem 1rem; }
+    /* ---- Footer ---- */
+
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 2rem 2rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .footer-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .footer-col h4 {
+      color: var(--text);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.6rem;
+    }
+
+    .footer-col ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-col li {
+      margin-bottom: 0.3rem;
+    }
+
+    .footer-col a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .footer-col a:hover {
+      color: var(--accent);
+    }
+
+    .footer-bottom {
+      max-width: 860px;
+      margin: 1.2rem auto 0;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .footer-bottom a {
+      color: var(--text-muted);
+    }
+
+    .footer-bottom a:hover {
+      color: var(--accent);
+    }
+
+    /* ---- Responsive ---- */
+
+    @media (max-width: 640px) {
+      header .inner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.8rem 1rem;
+      }
+      nav { gap: 1rem; }
+      main { padding: 1.5rem 1rem 2rem; }
       h1 { font-size: 1.5rem; }
+      .hero h1 { font-size: 1.8rem; }
+      .footer-inner {
+        grid-template-columns: 1fr;
+        gap: 1.2rem;
+      }
     }
   </style>
 </head>
 <body>
   <header>
     <div class="inner">
-      <h1><a href="{{ site.baseurl }}/">ScvmBot</a></h1>
+      <div class="site-title"><a href="{{ site.baseurl }}/">ScvmBot</a></div>
       <nav>
-        <a href="{{ site.baseurl }}/terms-of-service">Terms</a>
-        <a href="{{ site.baseurl }}/privacy">Privacy</a>
-        <a href="{{ site.baseurl }}/license">License</a>
-        <a href="{{ site.baseurl }}/security">Security</a>
-        <a href="{{ site.baseurl }}/third-party-licenses">Third-Party</a>
+        <a href="{{ site.baseurl }}/"{% if page.title == "Home" %} class="active"{% endif %}>Home</a>
+        <a href="{{ site.baseurl }}/getting-started"{% if page.title == "Getting Started" %} class="active"{% endif %}>Get Started</a>
+        <a href="{{ site.baseurl }}/policies"{% if page.title == "Policies" %} class="active"{% endif %}>Policies</a>
+        <span class="nav-divider">|</span>
+        <a href="https://github.com/ChrisMartin86/ScvmBot">GitHub</a>
       </nav>
     </div>
   </header>
@@ -185,7 +332,33 @@
     {{ content }}
   </main>
   <footer>
-    <a href="https://github.com/ChrisMartin86/ScvmBot">GitHub</a> · <a href="mailto:chris@scvmbot.com">Contact</a>
+    <div class="footer-inner">
+      <div class="footer-col">
+        <h4>ScvmBot</h4>
+        <p>An open source Discord bot for tabletop RPG character generation.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Links</h4>
+        <ul>
+          <li><a href="https://github.com/ChrisMartin86/ScvmBot">GitHub</a></li>
+          <li><a href="{{ site.baseurl }}/getting-started">Getting Started</a></li>
+          <li><a href="mailto:chris@scvmbot.com">chris@scvmbot.com</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Policies</h4>
+        <ul>
+          <li><a href="{{ site.baseurl }}/terms-of-service">Terms of Service</a></li>
+          <li><a href="{{ site.baseurl }}/privacy">Privacy Policy</a></li>
+          <li><a href="{{ site.baseurl }}/license">License</a></li>
+          <li><a href="{{ site.baseurl }}/security">Security</a></li>
+          <li><a href="{{ site.baseurl }}/third-party-licenses">Third-Party Licenses</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      ScvmBot is an open source project &middot; <a href="{{ site.baseurl }}/license">MIT License</a> &middot; &copy; Christopher Martin
+    </div>
   </footer>
 </body>
 </html>
