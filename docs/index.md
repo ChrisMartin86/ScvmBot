@@ -44,8 +44,8 @@ Everything runs through Discord slash commands. Characters are delivered via DM 
 **PDF character sheets**
 Generated characters can be exported to fillable PDF character sheets, ready to use at the table or print out.
 
-**Per-guild settings**
-Server owners can configure the bot per guild. Settings are scoped to each server, not shared globally.
+**Per-guild settings** (optional)
+Configure the bot to run in guild-specific mode for a single Discord server, or leave it unconfigured for global Discord-wide command registration. Settings are scoped per deployment instance.
 
 **Open source**
 MIT licensed. The code is public, the development is in the open, and contributions are welcome.
