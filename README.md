@@ -47,13 +47,11 @@ A Discord bot for tabletop RPG character generation with built-in support for **
    ```bash
    cp bot/appsettings.example.json bot/appsettings.json
    ```
-   Edit `bot/appsettings.json` with your Discord bot token and client ID:
+   Edit `bot/appsettings.json` with your Discord bot token:
    ```json
    {
      "Discord": {
-       "Token": "<YOUR_DISCORD_BOT_TOKEN>",
-       "ClientId": "<YOUR_DISCORD_CLIENT_ID>",
-       "ClientSecret": "<YOUR_DISCORD_CLIENT_SECRET>"
+       "Token": "<YOUR_DISCORD_BOT_TOKEN>"
      }
    }
    ```
