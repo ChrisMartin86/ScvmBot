@@ -77,6 +77,7 @@ class Program
 
         Map("DISCORD_TOKEN", "Discord:Token");
         Map("BOT_SYNC_COMMANDS", "Bot:SyncCommands");
+        Map("DISCORD_GUILD_ID", "Discord:GuildId");
 
         return map;
     }

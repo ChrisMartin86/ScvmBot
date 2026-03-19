@@ -14,6 +14,9 @@ RUN dotnet publish -c Release -o /app/publish --no-restore
 FROM mcr.microsoft.com/dotnet/runtime:10.0-noble
 WORKDIR /app
 
+# Run as the built-in non-root user from the .NET base image
+USER app
+
 # Copy published app
 COPY --from=build /app/publish .
 
