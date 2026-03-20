@@ -1,6 +1,7 @@
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Generation;
 
 public sealed class ArmorResolver
 {

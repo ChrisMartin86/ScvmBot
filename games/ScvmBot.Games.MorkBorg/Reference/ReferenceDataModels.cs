@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Reference;
 
 public class WeaponData
 {

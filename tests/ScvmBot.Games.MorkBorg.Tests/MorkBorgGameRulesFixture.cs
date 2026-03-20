@@ -1,4 +1,4 @@
-using ScvmBot.Bot.Games.MorkBorg;
+using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -7,15 +7,13 @@ public class MorkBorgGameRulesFixture
     protected static async Task<MorkBorgReferenceDataService> LoadGameReferenceDataAsync()
     {
         var dataRoot = GetDataRootPath();
-        var service = new MorkBorgReferenceDataService(dataRoot);
-        await service.LoadDataAsync();
-        return service;
+        return await MorkBorgReferenceDataService.CreateAsync(dataRoot);
     }
 
     protected static string GetDataRootPath()
     {
         var repoRoot = FindRepositoryRoot();
-        return Path.Combine(repoRoot, "bot", "Data", "MorkBorg");
+        return Path.Combine(repoRoot, "games", "ScvmBot.Games.MorkBorg", "Data");
     }
 
     private static string FindRepositoryRoot()

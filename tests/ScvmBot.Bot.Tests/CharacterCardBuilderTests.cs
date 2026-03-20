@@ -1,6 +1,6 @@
 using Discord;
 using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Bot.Tests;
 
@@ -136,12 +136,12 @@ public class CharacterCardBuilderTests
             HitPoints = 3,
             EquippedWeapon = "Knife (d4)",
             EquippedArmor = "No Armor",
-            Descriptions = new List<string>
+            Descriptions = new List<CharacterDescription>
             {
-                "Food: 2 day(s)",
-                "Trait: Endlessly Cursed",
-                "Body: Rotting Teeth",
-                "Habit: Picks Nails Obsessively"
+                new(DescriptionCategory.Food, "2 day(s)"),
+                new(DescriptionCategory.Trait, "Endlessly Cursed"),
+                new(DescriptionCategory.Body, "Rotting Teeth"),
+                new(DescriptionCategory.Habit, "Picks Nails Obsessively")
             }
         };
 
@@ -207,7 +207,12 @@ public class CharacterCardBuilderTests
             EquippedWeapon = "Sword (d6)",
             EquippedArmor = "Leather (tier 1)",
             Items = new List<string> { "Rope" },
-            Descriptions = new List<string> { "Trait: Bold", "Body: Scarred", "Habit: Spits" },
+            Descriptions = new List<CharacterDescription>
+            {
+                new(DescriptionCategory.Trait, "Bold"),
+                new(DescriptionCategory.Body, "Scarred"),
+                new(DescriptionCategory.Habit, "Spits")
+            },
             ScrollsKnown = new List<string> { "Fireball" }
         };
 

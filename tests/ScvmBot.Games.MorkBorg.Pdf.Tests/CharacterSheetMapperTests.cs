@@ -1,7 +1,7 @@
-using ScvmBot.Bot.Models.MorkBorg;
-using ScvmBot.Bot.Services.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Pdf;
 
-namespace ScvmBot.Bot.Tests;
+namespace ScvmBot.Games.MorkBorg.Pdf.Tests;
 
 public class CharacterSheetMapperTests
 {
@@ -19,7 +19,11 @@ public class CharacterSheetMapperTests
         EquippedWeapon = "Sword (Damage: d8)",
         EquippedArmor = "Light armor (Tier 1, DR: -d2)",
         Items = new List<string> { "Rope", "Torch", "Waterskin", "Dried food" },
-        Descriptions = new List<string> { "Trait: stubborn", "Body: scar on face" }
+        Descriptions = new List<CharacterDescription>
+        {
+            new(DescriptionCategory.Trait, "stubborn"),
+            new(DescriptionCategory.Body, "scar on face")
+        }
     };
 
     [Fact]
@@ -110,10 +114,10 @@ public class CharacterSheetMapperTests
     public void Map_ExcludesFoodAndWaterFromDescription()
     {
         var ch = SampleCharacter();
-        ch.Descriptions.Add("Food: 3 day(s)");
-        ch.Descriptions.Add("Water: waterskin (4 days capacity)");
-        ch.Descriptions.Add("Gear: rope (30 feet)");
-        ch.Descriptions.Add("Beast: small vicious dog (1 HP, d4 bite damage)");
+        ch.Descriptions.Add(new CharacterDescription(DescriptionCategory.Food, "3 day(s)"));
+        ch.Descriptions.Add(new CharacterDescription(DescriptionCategory.Water, "waterskin (4 days capacity)"));
+        ch.Descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "rope (30 feet)"));
+        ch.Descriptions.Add(new CharacterDescription(DescriptionCategory.Beast, "small vicious dog (1 HP, d4 bite damage)"));
         var data = CharacterSheetMapper.Map(ch);
         Assert.DoesNotContain("Food:", data.Description);
         Assert.DoesNotContain("Water:", data.Description);

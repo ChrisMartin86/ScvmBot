@@ -1,5 +1,6 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -101,12 +102,17 @@ public class CharacterGeneratorGameLogicTests
     }
 
     [Fact]
-    public void ResolveWeapon_WithoutReferenceData_ReturnsNullOnRandomPath()
+    public async Task ResolveWeapon_WithoutReferenceData_ReturnsNullOnRandomPath()
     {
         var directory = TestUtilities.CreateTempDirectory();
         try
         {
-            var referenceData = new MorkBorgReferenceDataService();
+            await File.WriteAllTextAsync(Path.Combine(directory, "classes.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "spells.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "names.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "weapons.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "armor.json"), "[]");
+            var referenceData = await MorkBorgReferenceDataService.CreateAsync(directory);
             var rng = new DeterministicRandom(new[] { 1 });
             var dice = new DiceRoller(rng);
             var resolver = new WeaponResolver(referenceData, dice, rng);
@@ -122,12 +128,17 @@ public class CharacterGeneratorGameLogicTests
     }
 
     [Fact]
-    public void ResolveArmor_WithoutReferenceData_ReturnsNullOnRandomPath()
+    public async Task ResolveArmor_WithoutReferenceData_ReturnsNullOnRandomPath()
     {
         var directory = TestUtilities.CreateTempDirectory();
         try
         {
-            var referenceData = new MorkBorgReferenceDataService();
+            await File.WriteAllTextAsync(Path.Combine(directory, "classes.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "spells.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "names.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "weapons.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "armor.json"), "[]");
+            var referenceData = await MorkBorgReferenceDataService.CreateAsync(directory);
             var rng = new DeterministicRandom(new[] { 1 });
             var dice = new DiceRoller(rng);
             var resolver = new ArmorResolver(referenceData, dice, rng);
@@ -562,9 +573,7 @@ public class CharacterGeneratorGameLogicTests
 
     private static async Task<MorkBorgReferenceDataService> LoadReferenceDataAsync()
     {
-        var dataRoot = Path.Combine(TestUtilities.GetBotProjectPath(), "Data", "MorkBorg");
-        var service = new MorkBorgReferenceDataService(dataRoot);
-        await service.LoadDataAsync();
-        return service;
+        var dataRoot = TestUtilities.GetMorkBorgDataPath();
+        return await MorkBorgReferenceDataService.CreateAsync(dataRoot);
     }
 }

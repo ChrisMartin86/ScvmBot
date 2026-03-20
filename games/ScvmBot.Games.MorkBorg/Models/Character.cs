@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ScvmBot.Bot.Models.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Models;
 
 public class Character : ICharacter
 {
@@ -30,7 +30,7 @@ public class Character : ICharacter
 
     public List<string> ScrollsKnown { get; set; } = new List<string>();
 
-    public List<string> Descriptions { get; set; } = new List<string>();
+    public List<CharacterDescription> Descriptions { get; set; } = new List<CharacterDescription>();
     public List<string> Items { get; set; } = new List<string>();
 
     [MaxLength(1000)]

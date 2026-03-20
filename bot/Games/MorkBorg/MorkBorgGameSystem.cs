@@ -1,28 +1,27 @@
 using Discord;
-using ScvmBot.Bot.Models;
-using ScvmBot.Bot.Models.MorkBorg;
-using ScvmBot.Bot.Services.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Pdf;
 
 namespace ScvmBot.Bot.Games.MorkBorg;
 
-/// <summary>MÖRK BORG implementation of <see cref="IGameSystem"/>.</summary>
-public sealed class MorkBorgGameSystem : IGameSystem
+/// <summary>MÖRK BORG implementation of <see cref="IGameSystem"/> with optional PDF support via <see cref="IGamePdfSupport"/>.</summary>
+public sealed class MorkBorgGameSystem : IGameSystem, IGamePdfSupport
 {
     private readonly CharacterGenerator _generator;
+    private readonly MorkBorgPdfRenderer _pdfRenderer;
 
-    internal static readonly string PdfTemplatePath =
-        Path.Combine(AppContext.BaseDirectory, "Data", "MorkBorg", "character_sheet.pdf");
-
-    public MorkBorgGameSystem(CharacterGenerator generator)
+    public MorkBorgGameSystem(CharacterGenerator generator, MorkBorgPdfRenderer pdfRenderer)
     {
         _generator = generator;
+        _pdfRenderer = pdfRenderer;
     }
 
     public string Name => "MÖRK BORG";
 
     public string CommandKey => "morkborg";
 
-    public bool SupportsPdf => File.Exists(PdfTemplatePath);
+    public bool SupportsPdf => _pdfRenderer.TemplateExists;
 
     public SlashCommandOptionBuilder BuildCommandGroupOptions() =>
         MorkBorgCommandDefinition.BuildCommandGroupOptions();
@@ -93,11 +92,7 @@ public sealed class MorkBorgGameSystem : IGameSystem
         if (character is not Character mbChar)
             throw new ArgumentException($"Expected a MÖRK BORG Character but got {character.GetType().Name}.");
 
-        if (!File.Exists(PdfTemplatePath))
-            return null;
-
-        var templateBytes = File.ReadAllBytes(PdfTemplatePath);
-        return templateBytes.FillMorkBorgSheet(mbChar, flatten: true);
+        return _pdfRenderer.Render(mbChar);
     }
 
     public string BuildFileName(ICharacter character) => BuildFileNameInternal(character);

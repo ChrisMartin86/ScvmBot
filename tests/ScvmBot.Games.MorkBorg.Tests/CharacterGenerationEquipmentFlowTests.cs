@@ -1,5 +1,6 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -21,7 +22,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         Assert.Contains(character.Items, i => i.Contains("Waterskin"));
         Assert.Contains(character.Items, i => i.Contains("Dried food"));
         // And should have a container (most of the time)
-        var containerDescriptions = character.Descriptions.Where(d => d.Contains("Container:"));
+        var containerDescriptions = character.Descriptions.Where(d => d.Category == DescriptionCategory.Container);
         Assert.NotEmpty(containerDescriptions);
     }
 
@@ -127,7 +128,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         Assert.DoesNotContain(character.Items, i => i.Contains("Dried food"));
 
         // And should have no container description (since no container is added in custom mode)
-        var containerDescriptions = character.Descriptions.Where(d => d.Contains("Container:") || d.Contains("Beast:"));
+        var containerDescriptions = character.Descriptions.Where(d => d.Category == DescriptionCategory.Container || d.Category == DescriptionCategory.Beast);
         Assert.Empty(containerDescriptions);
     }
 
@@ -149,7 +150,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         Assert.Contains(character.Items, i => i.Contains("Dried food"));
 
         // And should have a container description
-        var containerDescriptions = character.Descriptions.Where(d => d.Contains("Container:") || d.Contains("Beast:"));
+        var containerDescriptions = character.Descriptions.Where(d => d.Category == DescriptionCategory.Container || d.Category == DescriptionCategory.Beast);
         Assert.NotEmpty(containerDescriptions);
 
         // But should NOT have items from random d12 tables (Table A/B)

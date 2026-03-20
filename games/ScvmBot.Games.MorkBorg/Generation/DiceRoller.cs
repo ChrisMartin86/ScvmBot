@@ -1,4 +1,4 @@
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Generation;
 
 public sealed class DiceRoller
 {

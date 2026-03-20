@@ -1,4 +1,4 @@
-namespace ScvmBot.Bot.Models.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Models;
 
 /// <summary>Determines how ability score modifiers are rolled during character generation.</summary>
 public enum AbilityRollMethod

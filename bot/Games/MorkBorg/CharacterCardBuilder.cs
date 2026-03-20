@@ -1,5 +1,5 @@
 using Discord;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
 using System.Text;
 
 namespace ScvmBot.Bot.Games.MorkBorg;
@@ -74,11 +74,11 @@ public static class CharacterCardBuilder
 
         foreach (var desc in character.Descriptions)
         {
-            if (desc.StartsWith("Trait:", StringComparison.OrdinalIgnoreCase) ||
-                desc.StartsWith("Body:", StringComparison.OrdinalIgnoreCase) ||
-                desc.StartsWith("Habit:", StringComparison.OrdinalIgnoreCase))
+            if (desc.Category == DescriptionCategory.Trait ||
+                desc.Category == DescriptionCategory.Body ||
+                desc.Category == DescriptionCategory.Habit)
             {
-                lines.Add(desc);
+                lines.Add($"{desc.Category}: {desc.Text}");
             }
         }
 

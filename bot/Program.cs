@@ -8,6 +8,9 @@ using ScvmBot.Bot.Games;
 using ScvmBot.Bot.Games.MorkBorg;
 using ScvmBot.Bot.Models;
 using ScvmBot.Bot.Services;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Pdf;
+using ScvmBot.Games.MorkBorg.Reference;
 using ScvmBot.Bot.Services.Commands;
 using System.Diagnostics.CodeAnalysis;
 
@@ -32,8 +35,10 @@ class Program
             })
             .ConfigureServices((context, services) =>
             {
-                services.AddSingleton<MorkBorgReferenceDataService>();
+                services.AddSingleton<MorkBorgReferenceDataService>(_ =>
+                    MorkBorgReferenceDataService.CreateAsync().GetAwaiter().GetResult());
                 services.AddSingleton<CharacterGenerator>();
+                services.AddSingleton<MorkBorgPdfRenderer>();
                 services.AddSingleton<IGameSystem, MorkBorgGameSystem>();
 
                 // Slash commands registered via ISlashCommand; BotService discovers them automatically.
@@ -54,12 +59,6 @@ class Program
                 logging.AddConsole();
             })
             .Build();
-
-        var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
-
-        var refDataService = host.Services.GetRequiredService<MorkBorgReferenceDataService>();
-        await refDataService.LoadDataAsync();
-        logger.LogInformation("Reference data loaded successfully.");
 
         await host.RunAsync();
     }

@@ -1,7 +1,7 @@
 using Discord;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Games;
-using ScvmBot.Bot.Models;
+using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Bot.Services;
 using System.IO.Compression;
 

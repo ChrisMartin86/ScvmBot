@@ -1,5 +1,5 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -71,11 +71,10 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
                 ClassName = "none",
             });
 
-            // Verify scroll descriptions don't contain "placeholder"
-            var scrollDescriptions = character.Descriptions.Where(d => d.StartsWith("Scroll:")).ToList();
-            foreach (var scrollDesc in scrollDescriptions)
+            // Verify no descriptions contain "placeholder"
+            foreach (var desc in character.Descriptions)
             {
-                Assert.DoesNotContain("placeholder", scrollDesc, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("placeholder", desc.Text, StringComparison.OrdinalIgnoreCase);
             }
         }
     }

@@ -1,6 +1,5 @@
 using Discord;
 using Discord.Interactions;
-using ScvmBot.Bot.Models;
 
 namespace ScvmBot.Bot.Games;
 
@@ -17,7 +16,4 @@ public interface IGameSystem
     Task<GenerateResult> HandleGenerateCommandAsync(
         IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
         CancellationToken ct = default);
-    bool SupportsPdf { get; }
-    byte[]? GeneratePdf(ICharacter character);
-    string BuildFileName(ICharacter character);
 }

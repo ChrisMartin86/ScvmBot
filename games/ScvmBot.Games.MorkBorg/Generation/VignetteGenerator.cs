@@ -1,6 +1,7 @@
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Generation;
 
 public sealed class VignetteGenerator
 {
@@ -23,21 +24,21 @@ public sealed class VignetteGenerator
         var result = template
             .Replace("{name}", character.Name)
             .Replace("{classIntro}", PickClassIntro(character.ClassName))
-            .Replace("{body}", PickFromKeyed(_data.Bodies, ExtractDescription(character, "Body")))
-            .Replace("{habit}", PickFromKeyed(_data.Habits, ExtractDescription(character, "Habit")))
+            .Replace("{body}", PickFromKeyed(_data.Bodies, ExtractDescription(character, DescriptionCategory.Body)))
+            .Replace("{habit}", PickFromKeyed(_data.Habits, ExtractDescription(character, DescriptionCategory.Habit)))
             .Replace("{item}", PickFromKeyed(_data.Items, ExtractWeaponName(character)))
-            .Replace("{trait}", PickFromKeyed(_data.Traits, ExtractDescription(character, "Trait")))
+            .Replace("{trait}", PickFromKeyed(_data.Traits, ExtractDescription(character, DescriptionCategory.Trait)))
             .Replace("{closer}", PickRandom(_data.Closers));
 
         return CapitalizeSentenceStarts(result);
     }
 
-    private static string? ExtractDescription(Character character, string prefix)
+    private static string? ExtractDescription(Character character, DescriptionCategory category)
     {
         foreach (var desc in character.Descriptions)
         {
-            if (desc.StartsWith(prefix + ":", StringComparison.OrdinalIgnoreCase))
-                return desc[(prefix.Length + 1)..].Trim();
+            if (desc.Category == category)
+                return desc.Text;
         }
         return null;
     }

@@ -1,6 +1,7 @@
 using Discord;
 using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Bot.Tests;
 
@@ -12,7 +13,7 @@ public class PartyNameGeneratorTests
     [Fact]
     public void Generate_ReturnsSuppliedName_WhenProvided()
     {
-        var characters = new List<Models.MorkBorg.Character>
+        var characters = new List<Character>
         {
             new() { Name = "Svein" }
         };
@@ -25,7 +26,7 @@ public class PartyNameGeneratorTests
     [Fact]
     public void Generate_CreatesRandomName_WhenNotProvided()
     {
-        var characters = new List<Models.MorkBorg.Character>
+        var characters = new List<Character>
         {
             new() { Name = "Karg" },
             new() { Name = "Bleth" }
@@ -41,7 +42,7 @@ public class PartyNameGeneratorTests
     [Fact]
     public void Generate_UsesFirstCharacterName_InTemplate()
     {
-        var characters = new List<Models.MorkBorg.Character>
+        var characters = new List<Character>
         {
             new() { Name = "Solo" }
         };
@@ -56,7 +57,7 @@ public class PartyNameGeneratorTests
     [Fact]
     public void Generate_GeneratesDefaultName_WhenNoCharacters()
     {
-        var characters = new List<Models.MorkBorg.Character>();
+        var characters = new List<Character>();
 
         var result = PartyNameGenerator.Generate(characters, null, new Random(42));
 

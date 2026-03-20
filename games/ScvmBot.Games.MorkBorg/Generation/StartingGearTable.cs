@@ -1,6 +1,7 @@
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Generation;
 
 public sealed class StartingGearTable
 {
@@ -23,7 +24,7 @@ public sealed class StartingGearTable
 
     public void ApplyStartingEquipment(
         List<string> items,
-        List<string> descriptions,
+        List<CharacterDescription> descriptions,
         List<string> scrolls,
         CharacterGenerationOptions options,
         ClassData? classData,
@@ -80,7 +81,7 @@ public sealed class StartingGearTable
 
     internal void ApplyStartingContainer(
         List<string> items,
-        List<string> descriptions,
+        List<CharacterDescription> descriptions,
         CharacterGenerationOptions options)
     {
         if (!string.IsNullOrWhiteSpace(options.StartingContainerOverride))
@@ -95,34 +96,34 @@ public sealed class StartingGearTable
         {
             case 1:
             case 2:
-                descriptions.Add("Container: none");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Container, "none"));
                 return;
 
             case 3:
                 AddItemByName(items, "Backpack");
-                descriptions.Add("Container: backpack");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Container, "backpack"));
                 return;
 
             case 4:
                 AddItemByName(items, "Sack");
-                descriptions.Add("Container: sack");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Container, "sack"));
                 return;
 
             case 5:
                 AddItemByName(items, "Small wagon");
-                descriptions.Add("Container: small wagon");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Container, "small wagon"));
                 return;
 
             case 6:
                 AddItemByName(items, "Mule");
-                descriptions.Add("Beast: mule");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Beast, "mule"));
                 return;
         }
     }
 
     private void ApplyStartingEquipmentTables(
         List<string> items,
-        List<string> descriptions,
+        List<CharacterDescription> descriptions,
         List<string> scrolls,
         CharacterGenerationOptions options,
         int presenceModifier)
@@ -141,27 +142,27 @@ public sealed class StartingGearTable
     internal void ApplyGearRollA(
         int roll,
         List<string> items,
-        List<string> descriptions,
+        List<CharacterDescription> descriptions,
         int presenceModifier)
     {
         switch (roll)
         {
             case 1:
                 AddItemByName(items, "Rope");
-                descriptions.Add("Gear: rope (30 feet)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "rope (30 feet)"));
                 break;
 
             case 2:
                 var torches = Math.Max(1, presenceModifier + 4);
                 AddItemByName(items, "Torch");
-                descriptions.Add($"Gear: torches x{torches}");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, $"torches x{torches}"));
                 break;
 
             case 3:
                 AddItemByName(items, "Oil lamp");
                 AddItemByName(items, "Lantern oil");
                 var hours = Math.Max(1, presenceModifier + 6);
-                descriptions.Add($"Gear: lantern + oil ({hours} hours)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, $"lantern + oil ({hours} hours)"));
                 break;
 
             case 4:
@@ -175,37 +176,37 @@ public sealed class StartingGearTable
             case 6:
                 AddItemByName(items, "Metal file");
                 AddItemByName(items, "Lockpicks");
-                descriptions.Add("Gear: metal file and lockpicks");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "metal file and lockpicks"));
                 break;
 
             case 7:
                 AddItemByName(items, "Bear trap");
-                descriptions.Add("Gear: bear trap (d6 damage, DR14 to spot)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "bear trap (d6 damage, DR14 to spot)"));
                 break;
 
             case 8:
                 AddItemByName(items, "Bomb");
-                descriptions.Add("Explosive: bomb (2d6 damage to all nearby)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Explosive, "bomb (2d6 damage to all nearby)"));
                 break;
 
             case 9:
                 AddItemByName(items, "Red poison");
-                descriptions.Add("Poison: red (d4 uses, ingestion, d6 damage)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Poison, "red (d4 uses, ingestion, d6 damage)"));
                 break;
 
             case 10:
                 AddItemByName(items, "Life elixir");
-                descriptions.Add("Elixir: heals d6 HP when consumed");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Elixir, "heals d6 HP when consumed"));
                 break;
 
             case 11:
                 AddItemByName(items, "Heavy chain");
-                descriptions.Add("Gear: heavy chain (15 feet, can be used as weapon or restraint)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "heavy chain (15 feet, can be used as weapon or restraint)"));
                 break;
 
             case 12:
                 AddItemByName(items, "Grappling hook");
-                descriptions.Add("Gear: grappling hook");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "grappling hook"));
                 break;
         }
     }
@@ -214,7 +215,7 @@ public sealed class StartingGearTable
     internal void ApplyGearRollB(
         int roll,
         List<string> items,
-        List<string> descriptions,
+        List<CharacterDescription> descriptions,
         List<string> scrolls,
         int presenceModifier)
     {
@@ -222,51 +223,51 @@ public sealed class StartingGearTable
         {
             case 1:
                 AddItemByName(items, "Small vicious dog");
-                descriptions.Add("Beast: small vicious dog (1 HP, d4 bite damage)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Beast, "small vicious dog (1 HP, d4 bite damage)"));
                 break;
 
             case 2:
-                descriptions.Add("Beasts: d4 monkeys (1 HP each, d2 damage)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Beast, "d4 monkeys (1 HP each, d2 damage)"));
                 break;
 
             case 3:
                 AddItemByName(items, "Life elixir");
-                descriptions.Add("Elixir: heals d6 HP when consumed");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Elixir, "heals d6 HP when consumed"));
                 break;
 
             case 4:
                 AddItemByName(items, "Exquisite perfume");
-                descriptions.Add("Gear: exquisite perfume");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "exquisite perfume"));
                 break;
 
             case 5:
                 AddItemByName(items, "Toolbox");
-                descriptions.Add("Tools: complete toolbox for repairs");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Tools, "complete toolbox for repairs"));
                 break;
 
             case 6:
                 AddItemByName(items, "Heavy chain");
-                descriptions.Add("Gear: heavy chain (15 feet, can be used as weapon or restraint)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "heavy chain (15 feet, can be used as weapon or restraint)"));
                 break;
 
             case 7:
                 AddItemByName(items, "Grappling hook");
-                descriptions.Add("Gear: grappling hook");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "grappling hook"));
                 break;
 
             case 8:
                 AddItemByName(items, "Shield");
-                descriptions.Add("Gear: shield (-1 hp damage or break to ignore one attack)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "shield (-1 hp damage or break to ignore one attack)"));
                 break;
 
             case 9:
                 AddItemByName(items, "Crowbar");
-                descriptions.Add("Gear: crowbar (can be used as improvised weapon d4)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "crowbar (can be used as improvised weapon d4)"));
                 break;
 
             case 10:
                 AddItemByName(items, "Lard");
-                descriptions.Add("Gear: lard (may function as 5 meals)");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "lard (may function as 5 meals)"));
                 break;
 
             case 11:
@@ -279,14 +280,14 @@ public sealed class StartingGearTable
 
             case 12:
                 AddItemByName(items, "Tent");
-                descriptions.Add("Gear: tent");
+                descriptions.Add(new CharacterDescription(DescriptionCategory.Gear, "tent"));
                 break;
         }
     }
 
     private void ApplyClassStartingItems(
         List<string> items,
-        List<string> descriptions,
+        List<CharacterDescription> descriptions,
         ClassData? classData,
         List<string>? scrollsList = null)
     {

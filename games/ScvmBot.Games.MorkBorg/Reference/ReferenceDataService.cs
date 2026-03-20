@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Reference;
 
 public class MorkBorgReferenceDataService
 {
@@ -25,10 +25,21 @@ public class MorkBorgReferenceDataService
     public VignetteData Vignettes => _vignettes;
 
     /// <summary>
+    /// Creates a fully-initialized service. Throws if required data files are missing or malformed.
+    /// This is the only way to obtain an instance; construction and loading are atomic.
+    /// </summary>
+    public static async Task<MorkBorgReferenceDataService> CreateAsync(string? dataRootPath = null)
+    {
+        var service = new MorkBorgReferenceDataService(dataRootPath);
+        await service.LoadDataAsync();
+        return service;
+    }
+
+    /// <summary>
     /// Uses AppContext.BaseDirectory if no path provided, which works across
     /// dev, tests, publish, Docker, and hosted environments.
     /// </summary>
-    public MorkBorgReferenceDataService(string? dataRootPath = null)
+    private MorkBorgReferenceDataService(string? dataRootPath = null)
     {
         if (!string.IsNullOrWhiteSpace(dataRootPath))
         {
@@ -38,20 +49,20 @@ public class MorkBorgReferenceDataService
         {
             // Use AppContext.BaseDirectory which is consistent across all execution contexts
             var baseDir = AppContext.BaseDirectory;
-            _dataRootPath = Path.Combine(baseDir, "Data", "MorkBorg");
+            _dataRootPath = Path.Combine(baseDir, "Data");
         }
     }
 
-    public async Task LoadDataAsync()
+    private async Task LoadDataAsync()
     {
-        // Load required datasets - these must succeed or startup fails
+        // Required gameplay datasets — missing or malformed stops startup immediately.
         _classes = await LoadJsonAsync<List<ClassData>>(Path.Combine(_dataRootPath, "classes.json"));
         _scrolls = await LoadJsonAsync<List<ScrollData>>(Path.Combine(_dataRootPath, "spells.json"));
+        _names = await LoadJsonAsync<List<string>>(Path.Combine(_dataRootPath, "names.json"));
+        _weapons = await LoadJsonAsync<List<WeaponData>>(Path.Combine(_dataRootPath, "weapons.json"));
+        _armor = await LoadJsonAsync<List<ArmorData>>(Path.Combine(_dataRootPath, "armor.json"));
 
-        // Load optional or supplementary datasets
-        _names = await LoadJsonOptionalAsync<List<string>>(Path.Combine(_dataRootPath, "names.json")) ?? new();
-        _weapons = await LoadJsonOptionalAsync<List<WeaponData>>(Path.Combine(_dataRootPath, "weapons.json")) ?? new();
-        _armor = await LoadJsonOptionalAsync<List<ArmorData>>(Path.Combine(_dataRootPath, "armor.json")) ?? new();
+        // Supplementary datasets — missing file is tolerated; malformed JSON still throws.
         _items = await LoadJsonOptionalAsync<List<ItemData>>(Path.Combine(_dataRootPath, "items.json")) ?? new();
         _descriptions = await LoadJsonOptionalAsync<DescriptionTables>(Path.Combine(_dataRootPath, "descriptions.json")) ?? new();
         _vignettes = await LoadJsonOptionalAsync<VignetteData>(Path.Combine(_dataRootPath, "vignettes.json")) ?? new();

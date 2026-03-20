@@ -27,6 +27,11 @@ internal static class TestUtilities
         return Path.Combine(GetRepositoryRoot(), "bot");
     }
 
+    public static string GetMorkBorgDataPath()
+    {
+        return Path.Combine(GetRepositoryRoot(), "games", "ScvmBot.Games.MorkBorg", "Data");
+    }
+
     public static string CreateTempDirectory()
     {
         var path = Path.Combine(Path.GetTempPath(), "ScvmBotTests", Guid.NewGuid().ToString("N"));

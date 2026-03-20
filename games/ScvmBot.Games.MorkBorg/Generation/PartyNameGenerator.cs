@@ -1,6 +1,6 @@
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Generation;
 
 /// <summary>Generates random party names for groups of adventurers.</summary>
 public static class PartyNameGenerator

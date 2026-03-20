@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace ScvmBot.Bot.Models.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Pdf;
 
 /// <summary>Strongly-typed representation of every fillable field on the MÖRK BORG character sheet PDF.</summary>
 [ExcludeFromCodeCoverage(Justification = "Pure data model; no logic to test.")]

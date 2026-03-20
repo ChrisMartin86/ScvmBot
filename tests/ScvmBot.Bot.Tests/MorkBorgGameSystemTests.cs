@@ -1,24 +1,27 @@
 using Discord;
 using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Pdf;
+using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Bot.Tests;
 
 public class MorkBorgGameSystemTests
 {
     [Fact]
-    public void BuildCommandGroupOptions_HasCorrectName()
+    public async Task BuildCommandGroupOptions_HasCorrectName()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var builder = gs.BuildCommandGroupOptions();
         Assert.Equal("morkborg", builder.Name);
         Assert.Equal(ApplicationCommandOptionType.SubCommandGroup, builder.Type);
     }
 
     [Fact]
-    public void BuildCommandGroupOptions_HasCharacterSubcommand()
+    public async Task BuildCommandGroupOptions_HasCharacterSubcommand()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var builder = gs.BuildCommandGroupOptions();
         var characterSubcommand = builder.Options?.FirstOrDefault(o => o.Name == "character");
         Assert.NotNull(characterSubcommand);
@@ -26,9 +29,9 @@ public class MorkBorgGameSystemTests
     }
 
     [Fact]
-    public void BuildCommandGroupOptions_CharacterSubcommandHasRollMethodOption()
+    public async Task BuildCommandGroupOptions_CharacterSubcommandHasRollMethodOption()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var builder = gs.BuildCommandGroupOptions();
         var characterSubcommand = builder.Options!.First(o => o.Name == "character");
         var rollMethodOpt = characterSubcommand.Options?.FirstOrDefault(o => o.Name == "roll-method");
@@ -38,9 +41,9 @@ public class MorkBorgGameSystemTests
     }
 
     [Fact]
-    public void BuildCommandGroupOptions_CharacterSubcommandHasClassOption()
+    public async Task BuildCommandGroupOptions_CharacterSubcommandHasClassOption()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var builder = gs.BuildCommandGroupOptions();
         var characterSubcommand = builder.Options!.First(o => o.Name == "character");
         var classOpt = characterSubcommand.Options?.FirstOrDefault(o => o.Name == "class");
@@ -50,9 +53,9 @@ public class MorkBorgGameSystemTests
     }
 
     [Fact]
-    public void BuildCommandGroupOptions_CharacterSubcommandHasNameOption()
+    public async Task BuildCommandGroupOptions_CharacterSubcommandHasNameOption()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var builder = gs.BuildCommandGroupOptions();
         var characterSubcommand = builder.Options!.First(o => o.Name == "character");
         var nameOpt = characterSubcommand.Options?.FirstOrDefault(o => o.Name == "name");
@@ -61,9 +64,9 @@ public class MorkBorgGameSystemTests
     }
 
     [Fact]
-    public void BuildCommandGroupOptions_RollMethodChoices_MatchConstants()
+    public async Task BuildCommandGroupOptions_RollMethodChoices_MatchConstants()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var builder = gs.BuildCommandGroupOptions();
         var characterSubcommand = builder.Options!.First(o => o.Name == "character");
         var rollMethodOpt = characterSubcommand.Options!.First(o => o.Name == "roll-method");
@@ -216,16 +219,16 @@ public class MorkBorgGameSystemTests
     }
 
     [Fact]
-    public void CommandKey_IsMorkborg()
+    public async Task CommandKey_IsMorkborg()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         Assert.Equal("morkborg", gs.CommandKey);
     }
 
     [Fact]
-    public void Name_IsMorkBorg()
+    public async Task Name_IsMorkBorg()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         Assert.Equal("MÖRK BORG", gs.Name);
     }
 
@@ -294,10 +297,17 @@ public class MorkBorgGameSystemTests
         public IReadOnlyCollection<IApplicationCommandInteractionDataOption>? Options { get; set; }
     }
 
-    private static MorkBorgGameSystem CreateMinimalGameSystem()
+    private static async Task<MorkBorgGameSystem> CreateMinimalGameSystemAsync()
     {
-        var refData = new MorkBorgReferenceDataService();
+        var dir = TestInfrastructure.CreateTempDirectory();
+        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+        var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
-        return new MorkBorgGameSystem(generator);
+        var pdfRenderer = new MorkBorgPdfRenderer();
+        return new MorkBorgGameSystem(generator, pdfRenderer);
     }
 }

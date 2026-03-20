@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../bot/ScvmBot.Bot.csproj" />
+    <ProjectReference Include="../../games/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj" />
   </ItemGroup>
 
 </Project>

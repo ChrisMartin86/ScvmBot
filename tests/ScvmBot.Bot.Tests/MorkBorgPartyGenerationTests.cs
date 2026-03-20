@@ -1,6 +1,10 @@
 using Discord;
 using ScvmBot.Bot.Games;
 using ScvmBot.Bot.Games.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Pdf;
+using ScvmBot.Games.MorkBorg.Reference;
 using ScvmBot.Bot.Services;
 using System.IO.Compression;
 
@@ -9,9 +13,9 @@ namespace ScvmBot.Bot.Tests;
 public class MorkBorgPartyGenerationTests
 {
     [Fact]
-    public void BuildCommandGroupOptions_HasPartySubcommand()
+    public async Task BuildCommandGroupOptions_HasPartySubcommand()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var builder = gs.BuildCommandGroupOptions();
         var partySubcommand = builder.Options?.FirstOrDefault(o => o.Name == "party");
         Assert.NotNull(partySubcommand);
@@ -19,9 +23,9 @@ public class MorkBorgPartyGenerationTests
     }
 
     [Fact]
-    public void BuildCommandGroupOptions_PartySubcommandHasSizeOption()
+    public async Task BuildCommandGroupOptions_PartySubcommandHasSizeOption()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var builder = gs.BuildCommandGroupOptions();
         var partySubcommand = builder.Options!.First(o => o.Name == "party");
         var sizeOpt = partySubcommand.Options?.FirstOrDefault(o => o.Name == "size");
@@ -33,7 +37,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task HandlePartyGenerationAsync_GeneratesMultipleCharacters()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var partySubcommandOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
@@ -52,7 +56,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task HandlePartyGenerationAsync_FirstCharacterMatchesSingleProperty()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var partySubcommandOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
@@ -71,7 +75,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task HandlePartyGenerationAsync_AllCharactersAreIndependent()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var partySubcommandOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
@@ -93,7 +97,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task HandlePartyGenerationAsync_DefaultPartySize_IsFour()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var partySubcommandOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand)
@@ -108,7 +112,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task HandleSingleCharacterAsync_StillWorks()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var charSubcommandOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("character", ApplicationCommandOptionType.SubCommand)
@@ -124,7 +128,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task HandleGenerateCommandAsync_Party_GeneratesZipFile()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var partyOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
@@ -153,7 +157,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task HandleGenerateCommandAsync_Party_GeneratesPartyEmbed()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var partyOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
@@ -174,7 +178,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task HandleGenerateCommandAsync_Party_UsesSuppliedPartyName()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var partyOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
@@ -194,7 +198,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task HandleGenerateCommandAsync_Party_GeneratesRandomName()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var partyOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
@@ -213,7 +217,7 @@ public class MorkBorgPartyGenerationTests
     [Fact]
     public async Task CharacterCardBuilder_StillWorks_ForIndividualCharacters()
     {
-        var gs = CreateMinimalGameSystem();
+        var gs = await CreateMinimalGameSystemAsync();
         var charOptions = new List<IApplicationCommandInteractionDataOption>
         {
             CreateMockSubcommand("character", ApplicationCommandOptionType.SubCommand)
@@ -228,11 +232,19 @@ public class MorkBorgPartyGenerationTests
     }
 
     // Helpers
-    private static MorkBorgGameSystem CreateMinimalGameSystem()
+
+    private static async Task<MorkBorgGameSystem> CreateMinimalGameSystemAsync()
     {
-        var refData = new MorkBorgReferenceDataService();
+        var dir = TestInfrastructure.CreateTempDirectory();
+        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+        var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
-        return new MorkBorgGameSystem(generator);
+        var pdfRenderer = new MorkBorgPdfRenderer();
+        return new MorkBorgGameSystem(generator, pdfRenderer);
     }
 
     private static IApplicationCommandInteractionDataOption CreateMockOption(

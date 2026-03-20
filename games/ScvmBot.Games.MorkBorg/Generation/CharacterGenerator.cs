@@ -1,6 +1,7 @@
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Games.MorkBorg.Generation;
 
 public sealed class CharacterGenerator
 {
@@ -60,7 +61,7 @@ public sealed class CharacterGenerator
         var armorFormatted = _armorResolver.Resolve(options, classData);
 
         var itemsList = new List<string>();
-        var descriptionsList = new List<string>();
+        var descriptionsList = new List<CharacterDescription>();
         var scrollsList = new List<string>();
 
         _startingGearTable.ApplyStartingEquipment(
@@ -72,9 +73,9 @@ public sealed class CharacterGenerator
             _scrollResolver.ResolveStartingScrolls(classData, scrollsList);
         }
 
-        descriptionsList.Add($"Trait: {_refData.GetRandomFromTable("Trait", _rng)}");
-        descriptionsList.Add($"Body: {_refData.GetRandomFromTable("BrokenBody", _rng)}");
-        descriptionsList.Add($"Habit: {_refData.GetRandomFromTable("BadHabit", _rng)}");
+        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Trait, _refData.GetRandomFromTable("Trait", _rng)));
+        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Body, _refData.GetRandomFromTable("BrokenBody", _rng)));
+        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Habit, _refData.GetRandomFromTable("BadHabit", _rng)));
 
         var character = new Character
         {

@@ -1,7 +1,8 @@
-using ScvmBot.Bot.Models.MorkBorg;
 using System.Text.RegularExpressions;
 
-namespace ScvmBot.Bot.Services.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
+
+namespace ScvmBot.Games.MorkBorg.Pdf;
 
 /// <summary>Maps a <see cref="Character"/> to a <see cref="CharacterSheetData"/> for PDF filling.</summary>
 public static class CharacterSheetMapper
@@ -23,7 +24,9 @@ public static class CharacterSheetMapper
             Silver = character.Silver.ToString(),
             ClassName = FormatClassField(character.ClassName, character.ClassAbility),
             Corruption = character.Corruption.ToString(),
-            Description = string.Join("\n", character.Descriptions.Where(IsTraitDescription)),
+            Description = string.Join("\n", character.Descriptions
+                .Where(IsTraitDescription)
+                .Select(d => $"{d.Category}: {d.Text}")),
             ArmorText = character.EquippedArmor ?? string.Empty,
             ArmorTier = ParseArmorTier(character.EquippedArmor),
         };
@@ -44,11 +47,10 @@ public static class CharacterSheetMapper
     private static string FormatModifier(int value) =>
         value >= 0 ? $"+{value}" : value.ToString();
 
-    private static bool IsTraitDescription(string description) =>
-        !description.StartsWith("Food:", StringComparison.OrdinalIgnoreCase) &&
-        !description.StartsWith("Water:", StringComparison.OrdinalIgnoreCase) &&
-        !description.StartsWith("Gear:", StringComparison.OrdinalIgnoreCase) &&
-        !description.StartsWith("Beast:", StringComparison.OrdinalIgnoreCase);
+    private static bool IsTraitDescription(CharacterDescription description) =>
+        description.Category is DescriptionCategory.Trait
+                             or DescriptionCategory.Body
+                             or DescriptionCategory.Habit;
 
     private static int ParseArmorTier(string? armorFormatted)
     {

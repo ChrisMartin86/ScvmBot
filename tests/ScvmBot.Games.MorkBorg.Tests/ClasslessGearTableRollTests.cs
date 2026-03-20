@@ -1,5 +1,5 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -76,7 +76,7 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
             StartingGearRollB = 2,   // Monkeys — description only, no item
         });
 
-        Assert.Contains(character.Descriptions, d => d.Contains("monkeys", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(character.Descriptions, d => d.Text.Contains("monkeys", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

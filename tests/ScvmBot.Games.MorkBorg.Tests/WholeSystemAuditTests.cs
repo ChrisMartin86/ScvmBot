@@ -1,6 +1,5 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
-using ScvmBot.Bot.Services.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
 using System.Text.RegularExpressions;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
@@ -404,62 +403,6 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
     #endregion
 
-    #region B2 – Command definition alignment
-
-    [Fact]
-    public async Task B2_CommandDefinition_ExposesAllClasses_PlusNone()
-    {
-        var refData = await LoadGameReferenceDataAsync();
-        var jsonClassNames = refData.Classes.Select(c => c.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var optionBuilder = MorkBorgCommandDefinition.BuildCommandGroupOptions();
-        var charSubcommand = optionBuilder.Options!
-            .First(o => o.Name == "character");
-        var classOption = charSubcommand.Options!
-            .First(o => o.Name == "class");
-
-        var commandChoices = classOption.Choices!
-            .Select(c => c.Value.ToString()!)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        Assert.Contains(MorkBorgCommandDefinition.ChoiceClassNone, commandChoices);
-
-        foreach (var name in jsonClassNames)
-        {
-            Assert.Contains(name, commandChoices);
-        }
-
-        var expectedCount = jsonClassNames.Count + 1; // +1 for "none"
-        Assert.Equal(expectedCount, commandChoices.Count);
-    }
-
-    #endregion
-
-    #region B3 – Parser alignment
-
-    [Fact]
-    public void B3_Parser_NoneProducesClassless()
-    {
-        var opts = MorkBorgGenerateOptionParser.ParseRawOptions(null, "none", null);
-        Assert.Equal("none", opts.ClassName);
-    }
-
-    [Fact]
-    public void B3_Parser_NullProducesNullClassName()
-    {
-        var opts = MorkBorgGenerateOptionParser.ParseRawOptions(null, null, null);
-        Assert.Null(opts.ClassName);
-    }
-
-    [Fact]
-    public void B3_Parser_ExplicitClassPreserved()
-    {
-        var opts = MorkBorgGenerateOptionParser.ParseRawOptions(null, "Fanged Deserter", null);
-        Assert.Equal("Fanged Deserter", opts.ClassName);
-    }
-
-    #endregion
-
     #region B4 – Classless vs classed isolation
 
     [Fact]
@@ -758,93 +701,9 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
             var gen = new CharacterGenerator(refData, new Random(seed));
             var ch = await gen.GenerateAsync(new CharacterGenerationOptions());
 
-            Assert.Contains(ch.Descriptions, d => d.StartsWith("Trait:"));
-            Assert.Contains(ch.Descriptions, d => d.StartsWith("Body:"));
-            Assert.Contains(ch.Descriptions, d => d.StartsWith("Habit:"));
-        }
-    }
-
-    [Theory]
-    [InlineData("none")]
-    [InlineData("Esoteric Hermit")]
-    [InlineData("Fanged Deserter")]
-    [InlineData("Gutterborn Scum")]
-    [InlineData("Heretical Priest")]
-    [InlineData("Occult Herbmaster")]
-    [InlineData("Wretched Royalty")]
-    public async Task E1_MappedOutput_HasPopulatedFieldsForRendering(string className)
-    {
-        var refData = await LoadGameReferenceDataAsync();
-
-        for (int seed = 0; seed < 10; seed++)
-        {
-            var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
-            {
-                ClassName = className,
-            });
-
-            var mapped = CharacterSheetMapper.Map(ch);
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.Name),
-                $"Seed {seed}: mapped Name must be populated");
-
-            if (className != "none")
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.ClassName),
-                    $"Seed {seed}: mapped ClassName must be populated for '{className}'");
-            }
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.HP_Current),
-                $"Seed {seed}: mapped HP_Current must be populated");
-            Assert.False(string.IsNullOrWhiteSpace(mapped.HP_Max),
-                $"Seed {seed}: mapped HP_Max must be populated");
-            Assert.True(int.TryParse(mapped.HP_Current, out var hpCur) && hpCur >= 1,
-                $"Seed {seed}: HP_Current '{mapped.HP_Current}' must be a positive integer");
-            Assert.True(int.TryParse(mapped.HP_Max, out var hpMax) && hpMax >= 1,
-                $"Seed {seed}: HP_Max '{mapped.HP_Max}' must be a positive integer");
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.Silver),
-                $"Seed {seed}: mapped Silver must be populated");
-            Assert.True(int.TryParse(mapped.Silver, out _),
-                $"Seed {seed}: Silver '{mapped.Silver}' must be numeric");
-
-            Assert.Matches(@"^[+-]\d+$", mapped.Strength);
-            Assert.Matches(@"^[+-]\d+$", mapped.Agility);
-            Assert.Matches(@"^[+-]\d+$", mapped.Presence);
-            Assert.Matches(@"^[+-]\d+$", mapped.Toughness);
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.Omens),
-                $"Seed {seed}: mapped Omens must be populated");
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.Description),
-                $"Seed {seed}: mapped Description must be populated");
-
-            if (ch.EquippedWeapon != null)
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.Weapons[0]),
-                    $"Seed {seed}: Weapons[0] must be populated when character has weapon");
-            }
-
-            if (ch.EquippedArmor != null)
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.ArmorText),
-                    $"Seed {seed}: ArmorText must be populated when character has armor");
-            }
-
-            if (ch.Items.Count > 0)
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.Equipment[0]),
-                    $"Seed {seed}: Equipment[0] must be populated when character has items");
-            }
-
-            if (ch.ScrollsKnown.Count > 0)
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.Powers[0]),
-                    $"Seed {seed}: Powers[0] must be populated when character has scrolls");
-            }
-
-
+            Assert.Contains(ch.Descriptions, d => d.Category == DescriptionCategory.Trait);
+            Assert.Contains(ch.Descriptions, d => d.Category == DescriptionCategory.Body);
+            Assert.Contains(ch.Descriptions, d => d.Category == DescriptionCategory.Habit);
         }
     }
 

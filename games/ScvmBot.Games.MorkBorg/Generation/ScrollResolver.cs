@@ -1,4 +1,6 @@
-namespace ScvmBot.Bot.Games.MorkBorg;
+using ScvmBot.Games.MorkBorg.Reference;
+
+namespace ScvmBot.Games.MorkBorg.Generation;
 
 public sealed class ScrollResolver
 {

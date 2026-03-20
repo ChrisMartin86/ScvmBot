@@ -1,4 +1,4 @@
-using ScvmBot.Bot.Models;
+using ScvmBot.Games.MorkBorg.Models;
 using System.IO.Compression;
 
 namespace ScvmBot.Bot.Services;

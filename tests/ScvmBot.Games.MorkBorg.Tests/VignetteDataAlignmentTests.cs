@@ -1,4 +1,4 @@
-using ScvmBot.Bot.Games.MorkBorg;
+using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -9,12 +9,11 @@ namespace ScvmBot.Games.MorkBorg.Tests;
 public class VignetteDataAlignmentTests
 {
     private static readonly string DataRoot =
-        Path.Combine(TestUtilities.GetBotProjectPath(), "Data", "MorkBorg");
+        TestUtilities.GetMorkBorgDataPath();
 
     private static Task<MorkBorgReferenceDataService> LoadAsync()
     {
-        var svc = new MorkBorgReferenceDataService(DataRoot);
-        return svc.LoadDataAsync().ContinueWith(_ => svc);
+        return MorkBorgReferenceDataService.CreateAsync(DataRoot);
     }
 
     // ── ClassIntros ─────────────────────────────────────────────────────────

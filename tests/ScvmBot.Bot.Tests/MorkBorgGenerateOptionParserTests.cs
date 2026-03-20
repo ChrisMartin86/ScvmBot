@@ -1,8 +1,8 @@
 using Discord;
 using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
 
-namespace ScvmBot.Games.MorkBorg.Tests;
+namespace ScvmBot.Bot.Tests;
 
 public class MorkBorgGenerateOptionParserTests
 {

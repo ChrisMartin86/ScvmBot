@@ -1,10 +1,11 @@
 using iText.Forms;
 using iText.Forms.Fields;
 using iText.Kernel.Pdf;
-using ScvmBot.Bot.Models.MorkBorg;
 using System.Diagnostics.CodeAnalysis;
 
-namespace ScvmBot.Bot.Services.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
+
+namespace ScvmBot.Games.MorkBorg.Pdf;
 
 /// <summary>Extension methods for filling the MÖRK BORG AcroForm character sheet PDF.</summary>
 [ExcludeFromCodeCoverage(Justification = "Requires a real AcroForm PDF file to test; covered by integration testing.")]

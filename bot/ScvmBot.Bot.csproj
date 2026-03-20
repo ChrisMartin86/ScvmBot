@@ -9,7 +9,11 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="ScvmBot.Bot.Tests" />
-    <InternalsVisibleTo Include="ScvmBot.Games.MorkBorg.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../games/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj" />
+    <ProjectReference Include="../games/ScvmBot.Games.MorkBorg.Pdf/ScvmBot.Games.MorkBorg.Pdf.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,8 +22,6 @@
 
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="3.19.1" />
-    <PackageReference Include="itext7" Version="9.5.0" />
-    <PackageReference Include="itext7.bouncy-castle-adapter" Version="9.5.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />

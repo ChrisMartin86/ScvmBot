@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Games;
 using ScvmBot.Bot.Models;
+using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Bot.Services;
 
@@ -151,13 +152,14 @@ public class GenerateCommandHandler : ISlashCommand
         byte[]? pdfBytes = null;
         string? fileName = null;
 
-        if (gameSystem.SupportsPdf)
+        var pdfSupport = gameSystem as IGamePdfSupport;
+        if (pdfSupport is not null && pdfSupport.SupportsPdf)
         {
             try
             {
-                pdfBytes = gameSystem.GeneratePdf(character);
+                pdfBytes = pdfSupport.GeneratePdf(character);
                 if (pdfBytes is not null)
-                    fileName = gameSystem.BuildFileName(character);
+                    fileName = pdfSupport.BuildFileName(character);
             }
             catch (Exception pdfEx)
             {
@@ -224,12 +226,13 @@ public class GenerateCommandHandler : ISlashCommand
             FileAttachment? zipAttachment = null;
             MemoryStream? zipStream = null;
 
-            if (gameSystem.SupportsPdf)
+            var pdfSupport = gameSystem as IGamePdfSupport;
+            if (pdfSupport is not null && pdfSupport.SupportsPdf)
             {
                 var memberPdfs = new List<(ICharacter Character, byte[] PdfBytes)>();
                 foreach (var character in characters)
                 {
-                    var pdf = gameSystem.GeneratePdf(character);
+                    var pdf = pdfSupport.GeneratePdf(character);
                     if (pdf is not null)
                         memberPdfs.Add((character, pdf));
                 }
