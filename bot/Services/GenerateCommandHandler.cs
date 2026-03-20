@@ -1,19 +1,18 @@
 using Discord;
 using Microsoft.Extensions.Logging;
-using ScvmBot.Bot.Games;
 using ScvmBot.Rendering;
 
 namespace ScvmBot.Bot.Services;
 
 /// <summary>
 /// Orchestrates the /generate slash command.
-/// Aggregates all registered <see cref="IGameSystem"/> instances and routes
+/// Aggregates all registered <see cref="IGameModule"/> instances and routes
 /// to the correct one based on the subcommand group. Rendering is delegated
 /// to <see cref="RendererRegistry"/>-resolved <see cref="IResultRenderer"/> instances.
 /// </summary>
 public class GenerateCommandHandler : ISlashCommand
 {
-    private readonly IReadOnlyDictionary<string, IGameSystem> _gameSystems;
+    private readonly IReadOnlyDictionary<string, IGameModule> _gameModules;
     private readonly RendererRegistry _rendererRegistry;
     private readonly GenerationDeliveryService _delivery;
     private readonly ILogger<GenerateCommandHandler> _logger;
@@ -21,18 +20,18 @@ public class GenerateCommandHandler : ISlashCommand
     public string Name => "generate";
 
     public GenerateCommandHandler(
-        IEnumerable<IGameSystem> gameSystems,
+        IEnumerable<IGameModule> gameModules,
         RendererRegistry rendererRegistry,
         GenerationDeliveryService delivery,
         ILogger<GenerateCommandHandler> logger)
     {
-        _gameSystems = gameSystems.ToDictionary(gs => gs.CommandKey, StringComparer.OrdinalIgnoreCase);
+        _gameModules = gameModules.ToDictionary(m => m.CommandKey, StringComparer.OrdinalIgnoreCase);
         _rendererRegistry = rendererRegistry;
         _delivery = delivery;
         _logger = logger;
     }
 
-    /// <summary>Builds the /generate command with subcommand groups from all registered game systems.</summary>
+    /// <summary>Builds the /generate command with subcommand groups from all registered game modules.</summary>
     public SlashCommandBuilder BuildCommand()
     {
         var builder = new SlashCommandBuilder()
@@ -40,13 +39,13 @@ public class GenerateCommandHandler : ISlashCommand
             .WithDescription("Generate content in various game systems")
             .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
 
-        foreach (var gs in _gameSystems.Values)
-            builder.AddOption(gs.BuildCommandGroupOptions());
+        foreach (var m in _gameModules.Values)
+            builder.AddOption(m.BuildCommandGroupOptions());
 
         return builder;
     }
 
-    private IGameSystem ParseCommandRequest(ISlashCommandContext context)
+    private IGameModule ParseCommandRequest(ISlashCommandContext context)
     {
         var subcommandGroup = context.Options
             .FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommandGroup);
@@ -57,12 +56,12 @@ public class GenerateCommandHandler : ISlashCommand
         }
 
         var gameSystemKey = subcommandGroup.Name;
-        if (!_gameSystems.TryGetValue(gameSystemKey, out var gameSystem))
+        if (!_gameModules.TryGetValue(gameSystemKey, out var gameModule))
         {
             throw new InvalidOperationException($"Unknown game system: {gameSystemKey}");
         }
 
-        return gameSystem;
+        return gameModule;
     }
 
     private IReadOnlyCollection<IApplicationCommandInteractionDataOption>? GetSubcommandGroupOptions(
@@ -80,10 +79,10 @@ public class GenerateCommandHandler : ISlashCommand
 
         try
         {
-            IGameSystem gameSystem;
+            IGameModule gameModule;
             try
             {
-                gameSystem = ParseCommandRequest(context);
+                gameModule = ParseCommandRequest(context);
             }
             catch (InvalidOperationException parseEx)
             {
@@ -97,7 +96,7 @@ public class GenerateCommandHandler : ISlashCommand
             try
             {
                 var subcommandGroupOptions = GetSubcommandGroupOptions(context);
-                result = await gameSystem.HandleGenerateCommandAsync(subcommandGroupOptions);
+                result = await gameModule.HandleGenerateCommandAsync(subcommandGroupOptions);
             }
             catch (InvalidOperationException genEx)
             {

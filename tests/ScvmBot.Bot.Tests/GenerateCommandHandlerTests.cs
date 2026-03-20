@@ -1,7 +1,5 @@
 using Discord;
 using Microsoft.Extensions.Logging.Abstractions;
-using ScvmBot.Bot.Games;
-using ScvmBot.Bot.Games.MorkBorg;
 using ScvmBot.Bot.Services;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
@@ -133,7 +131,7 @@ public class GenerateCommandHandlerTests
             new MorkBorgPartyEmbedRenderer()
         });
         var handler = new GenerateCommandHandler(
-            new ScvmBot.Bot.Games.IGameSystem[] { gs },
+            new ScvmBot.Rendering.IGameModule[] { gs },
             registry,
             CreateDeliveryService(),
             NullLogger<GenerateCommandHandler>.Instance);
@@ -173,9 +171,9 @@ public class GenerateCommandHandlerTests
         });
 
     private static GenerateCommandHandler CreateMinimalHandler() =>
-        new(Array.Empty<ScvmBot.Bot.Games.IGameSystem>(), CreateEmptyRegistry(), CreateDeliveryService(), NullLogger<GenerateCommandHandler>.Instance);
+        new(Array.Empty<ScvmBot.Rendering.IGameModule>(), CreateEmptyRegistry(), CreateDeliveryService(), NullLogger<GenerateCommandHandler>.Instance);
 
-    private static async Task<MorkBorgGameSystem> CreateMinimalGameSystemAsync()
+    private static async Task<MorkBorgModule> CreateMinimalGameSystemAsync()
     {
         var dir = TestInfrastructure.CreateTempDirectory();
         await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
@@ -186,7 +184,7 @@ public class GenerateCommandHandlerTests
         await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
-        return new MorkBorgGameSystem(generator, refData);
+        return new MorkBorgModule(generator, refData);
     }
 
     private static IApplicationCommandInteractionDataOption MakeSubCommandGroup(
@@ -216,7 +214,7 @@ public class GenerateCommandHandlerTests
         public IReadOnlyCollection<IApplicationCommandInteractionDataOption>? Options { get; set; }
     }
 
-    private class ThrowingPdfPartyGameSystem : IGameSystem
+    private class ThrowingPdfPartyGameSystem : IGameModule
     {
         public string Name => "Throwing PDF";
         public string CommandKey => "throwing-pdf";

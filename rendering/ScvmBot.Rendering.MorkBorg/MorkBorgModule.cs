@@ -2,21 +2,21 @@ using Discord;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Reference;
-using ScvmBot.Rendering;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Rendering.MorkBorg;
 
 /// <summary>
-/// MÖRK BORG implementation of <see cref="IGameSystem"/>.
-/// Responsible only for generation; rendering is handled by
-/// <see cref="Rendering.IResultRenderer"/> implementations.
+/// MÖRK BORG implementation of <see cref="IGameModule"/>.
+/// Owns command definition, option parsing, and generation dispatch.
+/// Rendering is handled by <see cref="IResultRenderer"/> implementations
+/// registered alongside this module.
 /// </summary>
-public sealed class MorkBorgGameSystem : IGameSystem
+public sealed class MorkBorgModule : IGameModule
 {
     private readonly CharacterGenerator _generator;
     private readonly MorkBorgReferenceDataService _refData;
 
-    public MorkBorgGameSystem(CharacterGenerator generator, MorkBorgReferenceDataService refData)
+    public MorkBorgModule(CharacterGenerator generator, MorkBorgReferenceDataService refData)
     {
         _generator = generator;
         _refData = refData;

@@ -3,11 +3,10 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ScvmBot.Bot.Games.MorkBorg;
 using ScvmBot.Rendering;
+using ScvmBot.Rendering.MorkBorg;
 using ScvmBot.Bot.Services;
 using ScvmBot.Bot.Services.Commands;
-using ScvmBot.Games.MorkBorg.Reference;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ScvmBot.Bot;
@@ -17,12 +16,12 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        // Load reference data before building the host so missing or invalid data fails fast.
-        // Wrap in explicit error handling so operators see a clear message rather than a raw exception.
-        MorkBorgReferenceDataService referenceData;
+        // Initialize game modules before building the host.
+        // Each module performs its own startup validation; failures are fatal.
+        Action<IServiceCollection> registerMorkBorg;
         try
         {
-            referenceData = await MorkBorgReferenceDataService.CreateAsync();
+            registerMorkBorg = await MorkBorgModuleRegistration.CreateAsync();
         }
         catch (FileNotFoundException ex)
         {
@@ -33,7 +32,7 @@ class Program
         }
         catch (InvalidOperationException ex)
         {
-            Console.Error.WriteLine("[ScvmBot] Startup failed: reference data could not be loaded.");
+            Console.Error.WriteLine("[ScvmBot] Startup failed: module could not be initialized.");
             Console.Error.WriteLine($"  {ex.Message}");
             return;
         }
@@ -41,7 +40,8 @@ class Program
         var host = Host.CreateDefaultBuilder(args)
             .ConfigureServices((context, services) =>
             {
-                services.AddMorkBorgServices(referenceData);
+                // Game modules — add new modules here
+                registerMorkBorg(services);
 
                 // Rendering infrastructure
                 services.AddSingleton<RendererRegistry>();

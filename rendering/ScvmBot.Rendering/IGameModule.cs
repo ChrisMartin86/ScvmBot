@@ -1,15 +1,13 @@
 using Discord;
-using Discord.Interactions;
-using ScvmBot.Rendering;
 
-namespace ScvmBot.Bot.Games;
+namespace ScvmBot.Rendering;
 
 /// <summary>
-/// Plugin interface for a game system under the /generate command.
-/// Implement this interface and register via DI to add a new system.
-/// Keep focused on content generation — Discord infrastructure belongs in services.
+/// Single entry point the bot uses to host a game system.
+/// Each module owns its command definitions, generation handling, and renderer
+/// registration.  The bot depends on this contract — never on a concrete game package.
 /// </summary>
-public interface IGameSystem
+public interface IGameModule
 {
     string Name { get; }
     string CommandKey { get; }

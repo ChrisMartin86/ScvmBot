@@ -40,7 +40,7 @@ public class DmGenerationTests
     }
 
     private static GenerateCommandHandler CreateMinimalHandler() =>
-        new(gameSystems: Array.Empty<Games.IGameSystem>(),
+        new(gameModules: Array.Empty<ScvmBot.Rendering.IGameModule>(),
             rendererRegistry: new RendererRegistry(Array.Empty<IResultRenderer>()),
             delivery: new GenerationDeliveryService(Microsoft.Extensions.Logging.Abstractions.NullLogger<GenerationDeliveryService>.Instance),
             logger: Microsoft.Extensions.Logging.Abstractions.NullLogger<GenerateCommandHandler>.Instance);

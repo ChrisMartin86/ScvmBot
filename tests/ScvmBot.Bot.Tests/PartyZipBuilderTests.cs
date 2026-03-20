@@ -1,6 +1,5 @@
 using Discord;
 using Microsoft.Extensions.Logging;
-using ScvmBot.Bot.Games;
 using ScvmBot.Bot.Services;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Rendering;
@@ -116,7 +115,7 @@ internal class FakeCharacter : ICharacter
     public string Name { get; set; } = "";
 }
 
-internal class FakeGameSystem : IGameSystem
+internal class FakeGameSystem : IGameModule
 {
     public string CommandKey => "test";
     public string Name => "Test System";

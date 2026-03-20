@@ -1,6 +1,6 @@
 using Discord;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Rendering.MorkBorg;
 
 /// <summary>
 /// Parses Discord slash command options for party generation.

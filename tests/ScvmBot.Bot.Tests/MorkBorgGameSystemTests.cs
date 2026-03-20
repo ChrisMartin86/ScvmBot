@@ -1,10 +1,9 @@
 using Discord;
-using ScvmBot.Bot.Games.MorkBorg;
+using ScvmBot.Rendering.MorkBorg;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Reference;
 using ScvmBot.Rendering;
-using ScvmBot.Rendering.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
 
@@ -299,7 +298,7 @@ public class MorkBorgGameSystemTests
         public IReadOnlyCollection<IApplicationCommandInteractionDataOption>? Options { get; set; }
     }
 
-    private static async Task<MorkBorgGameSystem> CreateMinimalGameSystemAsync()
+    private static async Task<MorkBorgModule> CreateMinimalGameSystemAsync()
     {
         var dir = TestInfrastructure.CreateTempDirectory();
         await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
@@ -310,6 +309,6 @@ public class MorkBorgGameSystemTests
         await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
-        return new MorkBorgGameSystem(generator, refData);
+        return new MorkBorgModule(generator, refData);
     }
 }

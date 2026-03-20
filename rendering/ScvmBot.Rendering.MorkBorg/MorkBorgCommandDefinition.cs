@@ -1,7 +1,7 @@
 using Discord;
 using ScvmBot.Games.MorkBorg.Generation;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Rendering.MorkBorg;
 
 /// <summary>Defines the Discord slash command structure for MÖRK BORG.</summary>
 public sealed class MorkBorgCommandDefinition

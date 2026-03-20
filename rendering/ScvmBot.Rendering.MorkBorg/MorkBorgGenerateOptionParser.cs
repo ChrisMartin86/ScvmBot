@@ -1,7 +1,7 @@
 using Discord;
 using ScvmBot.Games.MorkBorg.Models;
 
-namespace ScvmBot.Bot.Games.MorkBorg;
+namespace ScvmBot.Rendering.MorkBorg;
 
 /// <summary>
 /// Parses Discord slash command options into <see cref="CharacterGenerationOptions"/>.
