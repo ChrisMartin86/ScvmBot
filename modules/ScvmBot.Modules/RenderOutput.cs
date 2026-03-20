@@ -1,6 +1,6 @@
 using Discord;
 
-namespace ScvmBot.Rendering;
+namespace ScvmBot.Modules;
 
 /// <summary>Base type for renderer outputs.</summary>
 public abstract record RenderOutput;

@@ -1,4 +1,4 @@
-using ScvmBot.Rendering;
+using ScvmBot.Modules;
 using System.ComponentModel.DataAnnotations;
 
 namespace ScvmBot.Games.MorkBorg.Models;

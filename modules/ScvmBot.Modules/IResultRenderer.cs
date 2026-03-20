@@ -1,4 +1,4 @@
-namespace ScvmBot.Rendering;
+namespace ScvmBot.Modules;
 
 /// <summary>
 /// A renderer that consumes a <see cref="GenerateResult"/> and produces

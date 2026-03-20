@@ -1,7 +1,7 @@
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Pdf;
 
-namespace ScvmBot.Rendering.MorkBorg;
+namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
 /// Renders a MÖRK BORG <see cref="CharacterGenerationResult"/> as a filled PDF character sheet.

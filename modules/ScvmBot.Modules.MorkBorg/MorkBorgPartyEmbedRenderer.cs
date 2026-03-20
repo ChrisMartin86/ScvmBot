@@ -1,6 +1,6 @@
 using Discord;
 
-namespace ScvmBot.Rendering.MorkBorg;
+namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
 /// Renders a MÖRK BORG <see cref="PartyGenerationResult"/> as a Discord embed

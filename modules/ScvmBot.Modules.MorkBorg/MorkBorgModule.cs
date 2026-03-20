@@ -3,7 +3,7 @@ using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Reference;
 
-namespace ScvmBot.Rendering.MorkBorg;
+namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
 /// MÖRK BORG implementation of <see cref="IGameModule"/>.

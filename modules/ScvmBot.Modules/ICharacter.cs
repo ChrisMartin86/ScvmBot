@@ -1,4 +1,4 @@
-namespace ScvmBot.Rendering;
+namespace ScvmBot.Modules;
 
 /// <summary>Base interface for all TTRPG characters across game systems.</summary>
 public interface ICharacter

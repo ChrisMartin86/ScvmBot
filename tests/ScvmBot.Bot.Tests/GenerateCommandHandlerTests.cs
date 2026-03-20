@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Bot.Services;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Reference;
-using ScvmBot.Rendering;
-using ScvmBot.Rendering.MorkBorg;
+using ScvmBot.Modules;
+using ScvmBot.Modules.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
 
@@ -130,7 +130,7 @@ public class GenerateCommandHandlerTests
             new MorkBorgPartyEmbedRenderer()
         });
         var handler = new GenerateCommandHandler(
-            new ScvmBot.Rendering.IGameModule[] { gs },
+            new ScvmBot.Modules.IGameModule[] { gs },
             registry,
             CreateDeliveryService(),
             NullLogger<GenerateCommandHandler>.Instance);
@@ -170,7 +170,7 @@ public class GenerateCommandHandlerTests
         });
 
     private static GenerateCommandHandler CreateMinimalHandler() =>
-        new(Array.Empty<ScvmBot.Rendering.IGameModule>(), CreateEmptyRegistry(), CreateDeliveryService(), NullLogger<GenerateCommandHandler>.Instance);
+        new(Array.Empty<ScvmBot.Modules.IGameModule>(), CreateEmptyRegistry(), CreateDeliveryService(), NullLogger<GenerateCommandHandler>.Instance);
 
     private static async Task<MorkBorgModule> CreateMinimalGameSystemAsync()
     {

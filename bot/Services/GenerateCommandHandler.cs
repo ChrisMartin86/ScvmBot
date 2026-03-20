@@ -1,6 +1,6 @@
 using Discord;
 using Microsoft.Extensions.Logging;
-using ScvmBot.Rendering;
+using ScvmBot.Modules;
 
 namespace ScvmBot.Bot.Services;
 
@@ -25,7 +25,18 @@ public class GenerateCommandHandler : ISlashCommand
         GenerationDeliveryService delivery,
         ILogger<GenerateCommandHandler> logger)
     {
-        _gameModules = gameModules.ToDictionary(m => m.CommandKey, StringComparer.OrdinalIgnoreCase);
+        var modules = new Dictionary<string, IGameModule>(StringComparer.OrdinalIgnoreCase);
+        foreach (var module in gameModules)
+        {
+            if (!modules.TryAdd(module.CommandKey, module))
+            {
+                throw new InvalidOperationException(
+                    $"Duplicate game module CommandKey '{module.CommandKey}': " +
+                    $"'{modules[module.CommandKey].Name}' and '{module.Name}' both register the same key. " +
+                    $"Each module must have a unique CommandKey.");
+            }
+        }
+        _gameModules = modules;
         _rendererRegistry = rendererRegistry;
         _delivery = delivery;
         _logger = logger;

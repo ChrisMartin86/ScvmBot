@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../rendering/ScvmBot.Rendering/ScvmBot.Rendering.csproj" />
+    <ProjectReference Include="../../modules/ScvmBot.Modules/ScvmBot.Modules.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,6 @@
 using System.IO.Compression;
 
-namespace ScvmBot.Rendering;
+namespace ScvmBot.Modules;
 
 /// <summary>
 /// Creates ZIP files containing character PDFs for party downloads.

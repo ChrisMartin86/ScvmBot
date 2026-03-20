@@ -3,7 +3,7 @@ using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Pdf;
 using ScvmBot.Games.MorkBorg.Reference;
 
-namespace ScvmBot.Rendering.MorkBorg;
+namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
 /// Bootstraps the MÖRK BORG game module: loads reference data (fail-fast),

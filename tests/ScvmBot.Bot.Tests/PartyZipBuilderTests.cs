@@ -1,7 +1,7 @@
 using Discord;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Services;
-using ScvmBot.Rendering;
+using ScvmBot.Modules;
 using System.IO.Compression;
 
 namespace ScvmBot.Bot.Tests;

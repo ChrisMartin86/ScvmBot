@@ -2,7 +2,7 @@ using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Pdf;
 using ScvmBot.Games.MorkBorg.Reference;
-using ScvmBot.Rendering.MorkBorg;
+using ScvmBot.Modules.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
 

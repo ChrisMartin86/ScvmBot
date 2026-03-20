@@ -1,11 +1,11 @@
 # ScvmBot
 
-A Discord bot for tabletop RPG character generation with built-in support for **MÖRK BORG** and an extensible plugin architecture for other game systems. Handles character creation, party generation, and PDF export.
+A Discord bot for tabletop RPG character generation with built-in support for **MÖRK BORG** and a modular architecture for adding game systems. Handles character creation, party generation, and PDF export.
 
 ## Features
 
 ### Core Discord Integration
-- **Slash command framework** — `/generate` command with automatic game system routing; new systems register themselves via DI with no changes required to the dispatcher
+- **Slash command framework** — `/generate` command with game-module routing; each game module owns its command definitions, option parsing, and output behavior
 - **DM delivery** — Characters sent via DM; in-channel confirmation keeps channels clean
 - **Guild-scoped commands** — Command registration can be targeted to specific guilds for near-instant propagation (~15 seconds); omit guild IDs for global registration (~1 hour)
 - **Ephemeral responses** — Private follow-ups visible only to the requesting user
@@ -23,7 +23,8 @@ A Discord bot for tabletop RPG character generation with built-in support for **
 
 ### Engineering
 - **.NET 10** with nullable reference types enabled throughout
-- **Five-project solution** — `ScvmBot.Games.MorkBorg` (pure game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering), `ScvmBot.Rendering` (shared rendering abstractions and module contract), `ScvmBot.Rendering.MorkBorg` (MÖRK BORG module, command parsing, and renderers), `ScvmBot.Bot` (Discord host)
+- **Five-project solution** — `ScvmBot.Bot` (Discord host), `ScvmBot.Modules` (shared module contracts and abstractions), `ScvmBot.Modules.MorkBorg` (MÖRK BORG module adapter — command definitions, option parsing, renderers), `ScvmBot.Games.MorkBorg` (game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering)
+- **Explicit host registration** — game modules are registered in `Program.cs`; no assembly scanning or dynamic plugin discovery
 - **420 tests** across four test projects — character generation logic, equipment flow, PDF mapping, option parsing, command handling, and party building
 - **Static factory pattern** — `MorkBorgModuleRegistration.CreateAsync()` atomically loads all required data at startup and registers the module; missing files fail fast with a non-zero exit code
 - **Testable command layer** — `ISlashCommandContext` interface decouples command handlers from the sealed Discord.Net type, enabling full unit test coverage
@@ -105,7 +106,7 @@ The build context is the repository root so the multi-project solution resolves 
 
 ```
 ScvmBot/
-├── bot/                                   # Discord host — DI entry point
+├── bot/                                   # Discord host — composition root
 │   ├── Services/
 │   │   ├── BotService.cs                  # Discord lifecycle management
 │   │   ├── CommandRegistrar.cs            # Slash command registration with Discord API
@@ -117,12 +118,12 @@ ScvmBot/
 │   │       ├── ISlashCommandContext.cs    # Testable abstraction over SocketSlashCommand
 │   │       ├── SocketSlashCommandContext.cs # Runtime adapter (excluded from coverage)
 │   │       └── HelloCommand.cs
-│   ├── Program.cs                         # DI wiring & entry point
+│   ├── Program.cs                         # Explicit module registration & entry point
 │   ├── Dockerfile
 │   └── appsettings.example.json
 │
-├── rendering/
-│   ├── ScvmBot.Rendering/                 # Shared rendering abstractions (game-neutral)
+├── modules/
+│   ├── ScvmBot.Modules/                   # Shared module contracts and abstractions
 │   │   ├── IGameModule.cs                 # Module contract — commands, generation, rendering
 │   │   ├── ICharacter.cs                  # Minimal character interface (Name)
 │   │   ├── GenerateResult.cs              # CharacterGenerationResult / PartyGenerationResult
@@ -132,17 +133,18 @@ ScvmBot/
 │   │   ├── OutputFormat.cs                # DiscordEmbed, Pdf
 │   │   └── PartyZipBuilder.cs             # ZIP archive creation for party PDFs
 │   │
-│   ├── ScvmBot.Rendering.MorkBorg/        # MÖRK BORG module, command parsing, renderers
-│   │   ├── MorkBorgModule.cs              # Implements IGameModule
-│   │   ├── MorkBorgModuleRegistration.cs  # Async factory — loads data, registers services
-│   │   ├── MorkBorgCommandDefinition.cs   # Slash command option tree
-│   │   ├── MorkBorgGenerateOptionParser.cs
-│   │   ├── MorkBorgPartyOptionParser.cs
-│   │   ├── MorkBorgCharacterEmbedRenderer.cs
-│   │   ├── MorkBorgCharacterPdfRenderer.cs
-│   │   ├── MorkBorgPartyEmbedRenderer.cs
-│   │   └── MorkBorgPartyPdfRenderer.cs
-│   │
+│   └── ScvmBot.Modules.MorkBorg/          # MÖRK BORG module adapter layer
+│       ├── MorkBorgModule.cs              # Implements IGameModule
+│       ├── MorkBorgModuleRegistration.cs  # Async factory — loads data, registers services
+│       ├── MorkBorgCommandDefinition.cs   # Slash command option tree
+│       ├── MorkBorgGenerateOptionParser.cs
+│       ├── MorkBorgPartyOptionParser.cs
+│       ├── MorkBorgCharacterEmbedRenderer.cs
+│       ├── MorkBorgCharacterPdfRenderer.cs
+│       ├── MorkBorgPartyEmbedRenderer.cs
+│       └── MorkBorgPartyPdfRenderer.cs
+│
+├── rendering/
 │   └── ScvmBot.Games.MorkBorg.Pdf/        # PDF rendering (iText7)
 │       ├── MorkBorgPdfRenderer.cs
 │       ├── PdfCharacterSheetExtensions.cs
@@ -150,7 +152,7 @@ ScvmBot/
 │       └── CharacterSheetData.cs
 │
 ├── games/
-│   └── ScvmBot.Games.MorkBorg/            # Pure MÖRK BORG game logic (no Discord dependency)
+│   └── ScvmBot.Games.MorkBorg/            # MÖRK BORG game logic
 │       ├── Data/
 │       │   ├── armor.json
 │       │   ├── classes.json
@@ -209,8 +211,8 @@ dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
 
 ## Adding a New Game System
 
-1. Create game logic and rendering projects under `games/` and `rendering/`
-2. Implement `IGameModule`:
+1. Create a game logic project under `games/` and a module adapter project under `modules/`
+2. Implement `IGameModule` in the module adapter:
    ```csharp
    public class YourGameModule : IGameModule
    {
@@ -239,13 +241,13 @@ dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
        }
    }
    ```
-4. Register in `Program.cs`:
+4. Register explicitly in `Program.cs`:
    ```csharp
    var registerYourGame = await YourGameModuleRegistration.CreateAsync(dataDir);
    registerYourGame(services);
    ```
 
-The `/generate` dispatcher picks it up automatically — no other code changes required.
+The `/generate` dispatcher routes to modules by their `CommandKey`. Duplicate keys are rejected at startup with a clear error message. Module registration is explicit — there is no assembly scanning or dynamic discovery.
 
 ## Dependencies
 

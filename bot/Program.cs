@@ -5,8 +5,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Services;
 using ScvmBot.Bot.Services.Commands;
-using ScvmBot.Rendering;
-using ScvmBot.Rendering.MorkBorg;
+using ScvmBot.Modules;
+using ScvmBot.Modules.MorkBorg;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ScvmBot.Bot;

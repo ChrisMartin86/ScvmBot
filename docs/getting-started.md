@@ -138,10 +138,11 @@ ScvmBot is open source under the MIT license. The project welcomes contributions
 
 ### Adding a new game system
 
-The bot uses a plugin architecture. To add a new TTRPG system:
+The bot uses a modular architecture with explicit host registration. To add a new TTRPG system:
 
-1. Create a directory under `bot/Games/YourSystem/`
-2. Implement the `IGameSystem` interface
-3. Register it in `Program.cs`
+1. Create a game logic project under `games/YourSystem/`
+2. Create a module adapter project under `modules/ScvmBot.Modules.YourSystem/`
+3. Implement the `IGameModule` interface
+4. Register explicitly in `Program.cs`
 
-The new system will automatically appear under `/generate yoursystem`. See the MÖRK BORG implementation in `bot/Games/MorkBorg/` as a reference.
+The new system will appear under `/generate yoursystem`. See the MÖRK BORG implementation across `games/ScvmBot.Games.MorkBorg/` and `modules/ScvmBot.Modules.MorkBorg/` as a reference.

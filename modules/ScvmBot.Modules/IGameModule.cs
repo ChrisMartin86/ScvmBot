@@ -1,6 +1,6 @@
 using Discord;
 
-namespace ScvmBot.Rendering;
+namespace ScvmBot.Modules;
 
 /// <summary>
 /// Single entry point the bot uses to host a game system.

@@ -1,4 +1,4 @@
-namespace ScvmBot.Rendering;
+namespace ScvmBot.Modules;
 
 /// <summary>Base type for results from game system generation.</summary>
 public abstract record GenerateResult;

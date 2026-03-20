@@ -3,8 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Bot.Services;
-using ScvmBot.Rendering;
-using ScvmBot.Rendering.MorkBorg;
+using ScvmBot.Modules;
+using ScvmBot.Modules.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
 
