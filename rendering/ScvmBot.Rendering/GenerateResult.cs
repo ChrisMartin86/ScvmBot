@@ -1,5 +1,3 @@
-using ScvmBot.Games.MorkBorg.Models;
-
 namespace ScvmBot.Rendering;
 
 /// <summary>Base type for results from game system generation.</summary>

@@ -23,9 +23,9 @@ A Discord bot for tabletop RPG character generation with built-in support for **
 
 ### Engineering
 - **.NET 10** with nullable reference types enabled throughout
-- **Three-project library split** — `ScvmBot.Games.MorkBorg` (pure game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering), `ScvmBot.Bot` (Discord host)
+- **Five-project solution** — `ScvmBot.Games.MorkBorg` (pure game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering), `ScvmBot.Rendering` (shared rendering abstractions and module contract), `ScvmBot.Rendering.MorkBorg` (MÖRK BORG module, command parsing, and renderers), `ScvmBot.Bot` (Discord host)
 - **420 tests** across four test projects — character generation logic, equipment flow, PDF mapping, option parsing, command handling, and party building
-- **Static factory pattern** — `MorkBorgReferenceDataService.CreateAsync()` atomically loads all required data at startup; missing files fail fast
+- **Static factory pattern** — `MorkBorgModuleRegistration.CreateAsync()` atomically loads all required data at startup and registers the module; missing files fail fast with a non-zero exit code
 - **Testable command layer** — `ISlashCommandContext` interface decouples command handlers from the sealed Discord.Net type, enabling full unit test coverage
 - **Structured logging** — `Microsoft.Extensions.Logging` integration throughout
 - **Docker ready** — `Dockerfile` and `docker-compose.yml` included
@@ -106,25 +106,12 @@ The build context is the repository root so the multi-project solution resolves 
 ```
 ScvmBot/
 ├── bot/                                   # Discord host — DI entry point
-│   ├── Games/
-│   │   ├── IGameSystem.cs                 # Plugin interface
-│   │   ├── IGamePdfSupport.cs             # Optional PDF support interface
-│   │   ├── CharacterGenerationResult.cs
-│   │   └── MorkBorg/                      # MÖRK BORG bot adapter
-│   │       ├── MorkBorgGameSystem.cs      # Implements IGameSystem + IGamePdfSupport
-│   │       ├── MorkBorgServiceExtensions.cs # DI registration for MÖRK BORG services
-│   │       ├── MorkBorgCommandDefinition.cs
-│   │       ├── MorkBorgGenerateOptionParser.cs
-│   │       ├── MorkBorgPartyOptionParser.cs
-│   │       ├── CharacterCardBuilder.cs
-│   │       └── PartyEmbedBuilder.cs
 │   ├── Services/
 │   │   ├── BotService.cs                  # Discord lifecycle management
 │   │   ├── CommandRegistrar.cs            # Slash command registration with Discord API
 │   │   ├── GenerateCommandHandler.cs      # /generate command routing
 │   │   ├── GenerationDeliveryService.cs   # DM delivery and in-channel confirmation
 │   │   ├── ResponseCardBuilder.cs         # Discord embed formatting
-│   │   ├── PartyZipBuilder.cs             # ZIP archive creation
 │   │   └── Commands/
 │   │       ├── ISlashCommand.cs           # Slash command plugin interface
 │   │       ├── ISlashCommandContext.cs    # Testable abstraction over SocketSlashCommand
@@ -134,37 +121,60 @@ ScvmBot/
 │   ├── Dockerfile
 │   └── appsettings.example.json
 │
-├── games/
-│   ├── ScvmBot.Games.MorkBorg/            # Pure MÖRK BORG game logic (no Discord dependency)
-│   │   ├── Data/
-│   │   │   ├── armor.json
-│   │   │   ├── classes.json
-│   │   │   ├── descriptions.json
-│   │   │   ├── items.json
-│   │   │   ├── names.json
-│   │   │   ├── spells.json
-│   │   │   ├── vignettes.json
-│   │   │   ├── weapons.json
-│   │   │   └── DATA_REFERENCE.md          # Full data schema documentation
-│   │   ├── Generation/
-│   │   │   ├── CharacterGenerator.cs
-│   │   │   ├── MorkBorgConstants.cs       # Shared string constants (tokens, modes, types)
-│   │   │   ├── ScrollResolver.cs
-│   │   │   ├── StartingGearTable.cs
-│   │   │   ├── WeaponResolver.cs
-│   │   │   └── ...
-│   │   ├── Models/
-│   │   └── Reference/
-│   │       ├── ReferenceDataService.cs          # Static factory; loads all data at startup
-│   │       └── ReferenceDataModels.cs
+├── rendering/
+│   ├── ScvmBot.Rendering/                 # Shared rendering abstractions (game-neutral)
+│   │   ├── IGameModule.cs                 # Module contract — commands, generation, rendering
+│   │   ├── ICharacter.cs                  # Minimal character interface (Name)
+│   │   ├── GenerateResult.cs              # CharacterGenerationResult / PartyGenerationResult
+│   │   ├── IResultRenderer.cs             # Renderer interface
+│   │   ├── RendererRegistry.cs            # Selects renderer by result type + format
+│   │   ├── RenderOutput.cs                # EmbedOutput / FileOutput discriminated union
+│   │   ├── OutputFormat.cs                # DiscordEmbed, Pdf
+│   │   └── PartyZipBuilder.cs             # ZIP archive creation for party PDFs
+│   │
+│   ├── ScvmBot.Rendering.MorkBorg/        # MÖRK BORG module, command parsing, renderers
+│   │   ├── MorkBorgModule.cs              # Implements IGameModule
+│   │   ├── MorkBorgModuleRegistration.cs  # Async factory — loads data, registers services
+│   │   ├── MorkBorgCommandDefinition.cs   # Slash command option tree
+│   │   ├── MorkBorgGenerateOptionParser.cs
+│   │   ├── MorkBorgPartyOptionParser.cs
+│   │   ├── MorkBorgCharacterEmbedRenderer.cs
+│   │   ├── MorkBorgCharacterPdfRenderer.cs
+│   │   ├── MorkBorgPartyEmbedRenderer.cs
+│   │   └── MorkBorgPartyPdfRenderer.cs
+│   │
 │   └── ScvmBot.Games.MorkBorg.Pdf/        # PDF rendering (iText7)
 │       ├── MorkBorgPdfRenderer.cs
 │       ├── PdfCharacterSheetExtensions.cs
 │       ├── CharacterSheetMapper.cs
 │       └── CharacterSheetData.cs
 │
+├── games/
+│   └── ScvmBot.Games.MorkBorg/            # Pure MÖRK BORG game logic (no Discord dependency)
+│       ├── Data/
+│       │   ├── armor.json
+│       │   ├── classes.json
+│       │   ├── descriptions.json
+│       │   ├── items.json
+│       │   ├── names.json
+│       │   ├── spells.json
+│       │   ├── vignettes.json
+│       │   ├── weapons.json
+│       │   └── DATA_REFERENCE.md          # Full data schema documentation
+│       ├── Generation/
+│       │   ├── CharacterGenerator.cs
+│       │   ├── MorkBorgConstants.cs       # Shared string constants (tokens, modes, types)
+│       │   ├── ScrollResolver.cs
+│       │   ├── StartingGearTable.cs
+│       │   ├── WeaponResolver.cs
+│       │   └── ...
+│       ├── Models/
+│       └── Reference/
+│           ├── ReferenceDataService.cs          # Static factory; loads all data at startup
+│           └── ReferenceDataModels.cs
+│
 └── tests/
-    ├── ScvmBot.Bot.Tests/                 # Command handling, party building, response cards
+    ├── ScvmBot.Bot.Tests/                 # Command handling, party building, response cards, architecture
     ├── ScvmBot.Games.MorkBorg.Tests/      # Character generation, equipment flow, data integrity
     ├── ScvmBot.Games.MorkBorg.Pdf.Tests/  # PDF field mapping
     └── ScvmBot.Tests.Shared/              # Shared test helpers (DeterministicRandom, temp dirs)
@@ -199,23 +209,40 @@ dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
 
 ## Adding a New Game System
 
-1. Create a project under `games/` or add a folder under `bot/Games/YourSystem/`
-2. Implement `IGameSystem` (and optionally `IGamePdfSupport`):
+1. Create game logic and rendering projects under `games/` and `rendering/`
+2. Implement `IGameModule`:
    ```csharp
-   public class YourGameSystem : IGameSystem
+   public class YourGameModule : IGameModule
    {
        public string Name => "Your Game";
        public string CommandKey => "yourgame";  // becomes /generate yourgame
-   
+
        public SlashCommandOptionBuilder BuildCommandGroupOptions() { ... }
        public Task<GenerateResult> HandleGenerateCommandAsync(
            IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
            CancellationToken ct = default) { ... }
    }
    ```
-3. Register in `Program.cs`:
+3. Create a registration factory (see `MorkBorgModuleRegistration` for the pattern):
    ```csharp
-   services.AddSingleton<IGameSystem, YourGameSystem>();
+   public static class YourGameModuleRegistration
+   {
+       public static async Task<Action<IServiceCollection>> CreateAsync(string dataDir)
+       {
+           // Load reference data, fail fast if missing
+           return services =>
+           {
+               services.AddSingleton<IGameModule, YourGameModule>();
+               services.AddSingleton<IResultRenderer, YourEmbedRenderer>();
+               // ... additional renderers
+           };
+       }
+   }
+   ```
+4. Register in `Program.cs`:
+   ```csharp
+   var registerYourGame = await YourGameModuleRegistration.CreateAsync(dataDir);
+   registerYourGame(services);
    ```
 
 The `/generate` dispatcher picks it up automatically — no other code changes required.
@@ -227,7 +254,7 @@ The `/generate` dispatcher picks it up automatically — no other code changes r
 | Discord.Net | 3.19.1 | Discord API |
 | iText7 | 9.5.0 | PDF form filling |
 | itext7.bouncy-castle-adapter | 9.5.0 | iText7 cryptography runtime requirement |
-| Newtonsoft.Json | 13.0.3 | Version pin only — not the active serializer (reference data uses `System.Text.Json`); declared explicitly to prevent an older, potentially vulnerable version being selected via Discord.Net's transitive dependency |
+| Newtonsoft.Json | 13.0.4 | Version pin only — not the active serializer (reference data uses `System.Text.Json`); declared explicitly to prevent an older, potentially vulnerable version being selected via Discord.Net's transitive dependency |
 | Microsoft.Extensions.Hosting | 10.0.5 | DI / hosted service |
 | Microsoft.Extensions.Logging | 10.0.5 | Structured logging |
 

@@ -1,4 +1,3 @@
-using ScvmBot.Games.MorkBorg.Models;
 using System.IO.Compression;
 
 namespace ScvmBot.Rendering;

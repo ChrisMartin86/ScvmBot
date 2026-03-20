@@ -24,7 +24,9 @@ public sealed class MorkBorgPartyPdfRenderer : IResultRenderer
     public OutputFormat Format => OutputFormat.Pdf;
 
     public bool CanRender(GenerateResult result) =>
-        result is PartyGenerationResult && _pdfRenderer.TemplateExists;
+        result is PartyGenerationResult party
+        && party.Characters.All(c => c is Character)
+        && _pdfRenderer.TemplateExists;
 
     public RenderOutput Render(GenerateResult result)
     {
@@ -35,11 +37,8 @@ public sealed class MorkBorgPartyPdfRenderer : IResultRenderer
         var memberPdfs = new List<(ICharacter Character, byte[] PdfBytes)>();
         foreach (var character in partyResult.Characters)
         {
-            if (character is not Character mbChar)
-            {
-                _logger.LogWarning("Skipping non-MÖRK BORG character '{Name}' in party PDF.", character.Name);
-                continue;
-            }
+            // CanRender guarantees all members are Character; fail hard if violated.
+            var mbChar = (Character)character;
 
             try
             {

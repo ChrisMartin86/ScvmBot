@@ -1,6 +1,6 @@
 using Discord;
-using ScvmBot.Rendering.MorkBorg;
 using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Rendering.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
 

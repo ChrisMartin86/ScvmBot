@@ -115,24 +115,19 @@ public class GenerateCommandHandler : ISlashCommand
             }
 
             // Render embed (required)
-            var embedRenderer = _rendererRegistry.GetRequiredRenderer(result, OutputFormat.DiscordEmbed);
-            var embedOutput = (EmbedOutput)embedRenderer.Render(result);
+            var embedOutput = _rendererRegistry.RenderEmbed(result);
 
             // Render file attachment (optional, best-effort)
             FileOutput? fileOutput = null;
-            var fileRenderer = _rendererRegistry.FindRenderer(result, OutputFormat.Pdf);
-            if (fileRenderer is not null)
+            try
             {
-                try
-                {
-                    fileOutput = (FileOutput)fileRenderer.Render(result);
-                }
-                catch (Exception pdfEx)
-                {
-                    _logger.LogWarning(pdfEx,
-                        "File rendering failed for {ResultType}; continuing without attachment.",
-                        result.GetType().Name);
-                }
+                fileOutput = _rendererRegistry.TryRenderFile(result);
+            }
+            catch (Exception pdfEx)
+            {
+                _logger.LogWarning(pdfEx,
+                    "File rendering failed for {ResultType}; continuing without attachment.",
+                    result.GetType().Name);
             }
 
             // Deliver

@@ -15,8 +15,4 @@
     <PackageReference Include="Discord.Net" Version="3.19.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../../games/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj" />
-  </ItemGroup>
-
 </Project>

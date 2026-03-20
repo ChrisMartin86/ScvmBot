@@ -132,8 +132,8 @@ public class GameModuleArchitectureTests
         await handler.HandleAsync(context);
 
         Assert.True(context.Deferred);
-        // The fake module generates a character named "FakeChar-beta"
-        Assert.True(channel.SendMessageCallCount > 0, "Module should have been invoked and result delivered.");
+        Assert.Equal(0, module1.InvocationCount);
+        Assert.Equal(1, module2.InvocationCount);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class GameModuleArchitectureTests
 
         Assert.Single(modules);
         Assert.IsType<MorkBorgModule>(modules[0]);
-        Assert.True(renderers.Count >= 2, "Expected at least embed renderers to be registered.");
+        Assert.Equal(4, renderers.Count);
     }
 
     // ── Test doubles ─────────────────────────────────────────────────────────
@@ -175,6 +175,7 @@ public class GameModuleArchitectureTests
 
         public string Name { get; }
         public string CommandKey { get; }
+        public int InvocationCount { get; private set; }
 
         public SlashCommandOptionBuilder BuildCommandGroupOptions() =>
             new SlashCommandOptionBuilder()
@@ -190,6 +191,7 @@ public class GameModuleArchitectureTests
             IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
             CancellationToken ct = default)
         {
+            InvocationCount++;
             return Task.FromResult<GenerateResult>(
                 new CharacterGenerationResult(
                     new FakeCharacter { Name = $"FakeChar-{CommandKey}" }));

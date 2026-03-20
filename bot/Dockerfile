@@ -6,13 +6,16 @@ WORKDIR /src
 COPY ScvmBot.sln ./
 COPY bot/ScvmBot.Bot.csproj bot/
 COPY games/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj games/ScvmBot.Games.MorkBorg/
-COPY games/ScvmBot.Games.MorkBorg.Pdf/ScvmBot.Games.MorkBorg.Pdf.csproj games/ScvmBot.Games.MorkBorg.Pdf/
+COPY rendering/ScvmBot.Rendering/ScvmBot.Rendering.csproj rendering/ScvmBot.Rendering/
+COPY rendering/ScvmBot.Rendering.MorkBorg/ScvmBot.Rendering.MorkBorg.csproj rendering/ScvmBot.Rendering.MorkBorg/
+COPY rendering/ScvmBot.Games.MorkBorg.Pdf/ScvmBot.Games.MorkBorg.Pdf.csproj rendering/ScvmBot.Games.MorkBorg.Pdf/
 
 RUN dotnet restore bot/ScvmBot.Bot.csproj
 
 # Copy source and publish
 COPY bot/ bot/
 COPY games/ games/
+COPY rendering/ rendering/
 RUN dotnet publish bot/ScvmBot.Bot.csproj -c Release -o /app/publish --no-restore
 
 # Runtime stage

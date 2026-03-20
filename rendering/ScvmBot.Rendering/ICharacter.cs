@@ -1,4 +1,4 @@
-namespace ScvmBot.Games.MorkBorg.Models;
+namespace ScvmBot.Rendering;
 
 /// <summary>Base interface for all TTRPG characters across game systems.</summary>
 public interface ICharacter

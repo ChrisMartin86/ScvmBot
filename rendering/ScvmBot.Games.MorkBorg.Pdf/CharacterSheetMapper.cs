@@ -1,6 +1,5 @@
-using System.Text.RegularExpressions;
-
 using ScvmBot.Games.MorkBorg.Models;
+using System.Text.RegularExpressions;
 
 namespace ScvmBot.Games.MorkBorg.Pdf;
 

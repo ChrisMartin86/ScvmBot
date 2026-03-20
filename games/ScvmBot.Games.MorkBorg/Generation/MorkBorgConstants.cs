@@ -13,8 +13,8 @@ public static class MorkBorgConstants
     public static class EquipmentMode
     {
         public const string Classless = "classless";
-        public const string Ordinary  = "ordinary";
-        public const string Custom    = "custom";
+        public const string Ordinary = "ordinary";
+        public const string Custom = "custom";
     }
 
     /// <summary>
@@ -24,18 +24,18 @@ public static class MorkBorgConstants
     public static class ScrollToken
     {
         /// <summary>In <c>startingItems</c>: generate a random Sacred scroll.</summary>
-        public const string RandomSacredScroll  = "random_sacred_scroll";
+        public const string RandomSacredScroll = "random_sacred_scroll";
 
         /// <summary>In <c>startingItems</c>: generate a random Unclean scroll.</summary>
         public const string RandomUncleanScroll = "random_unclean_scroll";
 
         /// <summary>In <c>startingScrolls</c> or <c>startingItems</c>: generate a random scroll of either type.</summary>
-        public const string RandomAnyScroll     = "random_any_scroll";
+        public const string RandomAnyScroll = "random_any_scroll";
 
         /// <summary>In <c>startingScrolls</c>: generate a random Unclean scroll.</summary>
         public const string RandomUnclean = "random_unclean";
 
         /// <summary>In <c>startingScrolls</c>: generate a random Sacred scroll.</summary>
-        public const string RandomSacred  = "random_sacred";
+        public const string RandomSacred = "random_sacred";
     }
 }

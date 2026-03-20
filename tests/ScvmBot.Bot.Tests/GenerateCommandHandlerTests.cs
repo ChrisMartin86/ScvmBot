@@ -2,7 +2,6 @@ using Discord;
 using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Bot.Services;
 using ScvmBot.Games.MorkBorg.Generation;
-using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Reference;
 using ScvmBot.Rendering;
 using ScvmBot.Rendering.MorkBorg;

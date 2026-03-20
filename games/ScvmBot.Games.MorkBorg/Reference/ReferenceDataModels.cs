@@ -1,5 +1,5 @@
-using System.Text.Json.Serialization;
 using ScvmBot.Games.MorkBorg.Generation;
+using System.Text.Json.Serialization;
 
 namespace ScvmBot.Games.MorkBorg.Reference;
 

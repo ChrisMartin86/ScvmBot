@@ -1,9 +1,8 @@
 using iText.Forms;
 using iText.Forms.Fields;
 using iText.Kernel.Pdf;
-using System.Diagnostics.CodeAnalysis;
-
 using ScvmBot.Games.MorkBorg.Models;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ScvmBot.Games.MorkBorg.Pdf;
 

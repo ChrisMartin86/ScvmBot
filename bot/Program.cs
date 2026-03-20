@@ -3,10 +3,10 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ScvmBot.Rendering;
-using ScvmBot.Rendering.MorkBorg;
 using ScvmBot.Bot.Services;
 using ScvmBot.Bot.Services.Commands;
+using ScvmBot.Rendering;
+using ScvmBot.Rendering.MorkBorg;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ScvmBot.Bot;
@@ -14,7 +14,7 @@ namespace ScvmBot.Bot;
 [ExcludeFromCodeCoverage(Justification = "Application entry point; bootstrapping code is not unit-testable.")]
 class Program
 {
-    static async Task Main(string[] args)
+    static async Task<int> Main(string[] args)
     {
         // Initialize game modules before building the host.
         // Each module performs its own startup validation; failures are fatal.
@@ -28,13 +28,13 @@ class Program
             Console.Error.WriteLine("[ScvmBot] Startup failed: a required data file is missing.");
             Console.Error.WriteLine($"  {ex.Message}");
             Console.Error.WriteLine("  Ensure the Data/ directory is present and contains all required JSON files.");
-            return;
+            return 1;
         }
         catch (InvalidOperationException ex)
         {
             Console.Error.WriteLine("[ScvmBot] Startup failed: module could not be initialized.");
             Console.Error.WriteLine($"  {ex.Message}");
-            return;
+            return 1;
         }
 
         var host = Host.CreateDefaultBuilder(args)
@@ -66,5 +66,7 @@ class Program
             .Build();
 
         await host.RunAsync();
+
+        return 0;
     }
 }

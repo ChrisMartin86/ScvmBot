@@ -1,4 +1,3 @@
-using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
