@@ -1,5 +1,5 @@
 using Discord;
-using ScvmBot.Bot.Games.MorkBorg;
+using ScvmBot.Bot.Rendering.MorkBorg;
 using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Bot.Tests;
@@ -23,7 +23,7 @@ public class CharacterCardBuilderTests
             EquippedArmor = "No Armor"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         Assert.Equal(EmbedType.Rich, embed.Type);
         Assert.Equal("Karg the Doomed", embed.Title);
@@ -43,7 +43,7 @@ public class CharacterCardBuilderTests
             EquippedArmor = "Leather"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         Assert.Equal("Fanged Deserter — HP 8 | Omens 4 | 20s", embed.Description);
     }
@@ -62,7 +62,7 @@ public class CharacterCardBuilderTests
             EquippedArmor = "No Armor"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         Assert.StartsWith("No Class", embed.Description);
     }
@@ -80,7 +80,7 @@ public class CharacterCardBuilderTests
             EquippedArmor = "No Armor"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         Assert.StartsWith("No Class", embed.Description);
     }
@@ -100,7 +100,7 @@ public class CharacterCardBuilderTests
             EquippedArmor = "No Armor"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         var field = embed.Fields.First(f => f.Name == "Abilities");
         Assert.Equal("STR +2 · AGI -1 · PRE 0 · TGH +3", field.Value);
@@ -118,7 +118,7 @@ public class CharacterCardBuilderTests
             Items = new List<string> { "Rope", "Torches (3)" }
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         var field = embed.Fields.First(f => f.Name == "Equipment");
         Assert.Contains("Femur (d6)", field.Value);
@@ -145,7 +145,7 @@ public class CharacterCardBuilderTests
             }
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         var field = embed.Fields.First(f => f.Name == "Description");
         Assert.Contains("Trait: Endlessly Cursed", field.Value);
@@ -166,7 +166,7 @@ public class CharacterCardBuilderTests
             ScrollsKnown = new List<string> { "Daemon of the Pit", "Grace of a Dead Saint" }
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         var field = embed.Fields.First(f => f.Name == "Scrolls");
         Assert.Contains("Daemon of the Pit", field.Value);
@@ -185,7 +185,7 @@ public class CharacterCardBuilderTests
             ScrollsKnown = new List<string>()
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         Assert.DoesNotContain(embed.Fields, f => f.Name == "Scrolls");
     }
@@ -216,7 +216,7 @@ public class CharacterCardBuilderTests
             ScrollsKnown = new List<string> { "Fireball" }
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(character);
 
         Assert.Equal("Abilities", embed.Fields[0].Name);
         Assert.Equal("Equipment", embed.Fields[1].Name);

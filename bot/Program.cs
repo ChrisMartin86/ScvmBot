@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Games.MorkBorg;
+using ScvmBot.Bot.Rendering;
 using ScvmBot.Bot.Services;
 using ScvmBot.Bot.Services.Commands;
 using ScvmBot.Games.MorkBorg.Reference;
@@ -41,6 +42,9 @@ class Program
             .ConfigureServices((context, services) =>
             {
                 services.AddMorkBorgServices(referenceData);
+
+                // Rendering infrastructure
+                services.AddSingleton<RendererRegistry>();
 
                 // Slash commands registered via ISlashCommand; BotService discovers them automatically.
                 services.AddSingleton<ISlashCommand, HelloCommand>();

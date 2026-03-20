@@ -1,19 +1,20 @@
 using Discord;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Games;
-using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Bot.Rendering;
 
 namespace ScvmBot.Bot.Services;
 
 /// <summary>
 /// Orchestrates the /generate slash command.
 /// Aggregates all registered <see cref="IGameSystem"/> instances and routes
-/// to the correct one based on the subcommand group.
-/// To add a new game system, implement IGameSystem and register it in DI.
+/// to the correct one based on the subcommand group. Rendering is delegated
+/// to <see cref="RendererRegistry"/>-resolved <see cref="IResultRenderer"/> instances.
 /// </summary>
 public class GenerateCommandHandler : ISlashCommand
 {
     private readonly IReadOnlyDictionary<string, IGameSystem> _gameSystems;
+    private readonly RendererRegistry _rendererRegistry;
     private readonly GenerationDeliveryService _delivery;
     private readonly ILogger<GenerateCommandHandler> _logger;
 
@@ -21,10 +22,12 @@ public class GenerateCommandHandler : ISlashCommand
 
     public GenerateCommandHandler(
         IEnumerable<IGameSystem> gameSystems,
+        RendererRegistry rendererRegistry,
         GenerationDeliveryService delivery,
         ILogger<GenerateCommandHandler> logger)
     {
         _gameSystems = gameSystems.ToDictionary(gs => gs.CommandKey, StringComparer.OrdinalIgnoreCase);
+        _rendererRegistry = rendererRegistry;
         _delivery = delivery;
         _logger = logger;
     }
@@ -104,19 +107,63 @@ public class GenerateCommandHandler : ISlashCommand
                 return;
             }
 
-            switch (result)
+            if (result is PartyGenerationResult { Characters.Count: 0 })
             {
-                case PartyGenerationResult partyResult:
-                    await HandlePartyGenerationAsync(context, gameSystem, partyResult);
-                    break;
-                case CharacterGenerationResult charResult:
-                    await HandleSingleCharacterGenerationAsync(context, gameSystem, charResult);
-                    break;
-                default:
-                    await context.FollowupAsync(
-                        embed: ResponseCardBuilder.Build("Error", "Unrecognized generation result.", new Color(200, 50, 50)),
-                        ephemeral: true);
-                    break;
+                await context.FollowupAsync(
+                    embed: ResponseCardBuilder.Build("Error", "Party generation produced no characters.", new Color(200, 50, 50)),
+                    ephemeral: true);
+                return;
+            }
+
+            // Render embed (required)
+            var embedRenderer = _rendererRegistry.GetRequiredRenderer(result, OutputFormat.DiscordEmbed);
+            var embedOutput = (EmbedOutput)embedRenderer.Render(result);
+
+            // Render file attachment (optional, best-effort)
+            FileOutput? fileOutput = null;
+            var fileRenderer = _rendererRegistry.FindRenderer(result, OutputFormat.Pdf);
+            if (fileRenderer is not null)
+            {
+                try
+                {
+                    fileOutput = (FileOutput)fileRenderer.Render(result);
+                }
+                catch (Exception pdfEx)
+                {
+                    _logger.LogWarning(pdfEx,
+                        "File rendering failed for {ResultType}; continuing without attachment.",
+                        result.GetType().Name);
+                }
+            }
+
+            // Deliver
+            MemoryStream? stream = null;
+            FileAttachment? attachment = null;
+            if (fileOutput is not null)
+            {
+                stream = new MemoryStream(fileOutput.Bytes);
+                attachment = new FileAttachment(stream, fileOutput.FileName);
+            }
+
+            try
+            {
+                var isDm = context.GuildId is null;
+                var followupText = isDm
+                    ? (result is PartyGenerationResult ? "Here's your party!" : "Here's your character!")
+                    : "Check your DMs.";
+                await _delivery.DeliverAsync(context, embedOutput.Embed, attachment, followupText);
+            }
+            catch (Exception sendEx)
+            {
+                _logger.LogError(sendEx, "Failed to deliver generation result via DM");
+                await context.FollowupAsync(
+                    embed: ResponseCardBuilder.Build("Send Failed",
+                        "Something went wrong sending your result. Please try again.", new Color(200, 50, 50)),
+                    ephemeral: true);
+            }
+            finally
+            {
+                stream?.Dispose();
             }
         }
         catch (Exception ex)
@@ -126,149 +173,6 @@ public class GenerateCommandHandler : ISlashCommand
                 embed: ResponseCardBuilder.Build("Generation Failed",
                     "Something went wrong. Please try again.", new Color(200, 50, 50)),
                 ephemeral: true);
-        }
-    }
-
-    private async Task HandleSingleCharacterGenerationAsync(
-        ISlashCommandContext context,
-        IGameSystem gameSystem,
-        CharacterGenerationResult result)
-    {
-        var character = result.Character;
-        var embed = result.Card;
-
-        byte[]? pdfBytes = null;
-        string? fileName = null;
-
-        var pdfSupport = gameSystem as IGamePdfSupport;
-        if (pdfSupport is not null && pdfSupport.SupportsPdf)
-        {
-            try
-            {
-                pdfBytes = pdfSupport.GeneratePdf(character);
-                if (pdfBytes is not null)
-                    fileName = pdfSupport.BuildFileName(character);
-            }
-            catch (Exception pdfEx)
-            {
-                _logger.LogWarning(pdfEx,
-                    "PDF generation failed for {GameSystem} character; continuing without PDF.",
-                    gameSystem.Name);
-            }
-        }
-
-        MemoryStream? stream = null;
-        FileAttachment? attachment = null;
-        if (pdfBytes is not null)
-        {
-            stream = new MemoryStream(pdfBytes);
-            attachment = new FileAttachment(stream, fileName!);
-        }
-
-        try
-        {
-            var isDm = context.GuildId is null;
-            await _delivery.DeliverAsync(context, embed, attachment,
-                isDm ? "Here's your character!" : "Check your DMs.");
-        }
-        catch (Exception sendEx)
-        {
-            _logger.LogError(sendEx, "Failed to send character card via DM");
-            await context.FollowupAsync(
-                embed: ResponseCardBuilder.Build("Send Failed",
-                    "Something went wrong sending your character. Please try again.", new Color(200, 50, 50)),
-                ephemeral: true);
-        }
-        finally
-        {
-            stream?.Dispose();
-        }
-    }
-
-    private async Task HandlePartyGenerationAsync(
-        ISlashCommandContext context,
-        IGameSystem gameSystem,
-        PartyGenerationResult result)
-    {
-        var characters = result.Characters;
-
-        if (characters.Count == 0)
-        {
-            await context.FollowupAsync(
-                embed: ResponseCardBuilder.Build("Error", "Party generation produced no characters.", new Color(200, 50, 50)),
-                ephemeral: true);
-            return;
-        }
-
-        MemoryStream? zipStream = null;
-        FileAttachment? zipAttachment = null;
-
-        // PDF rendering and archiving are best-effort: failures here must not prevent delivery
-        // of the party card embed. Each stage is isolated so one failure doesn't cascade.
-        var pdfSupport = gameSystem as IGamePdfSupport;
-        if (pdfSupport is not null && pdfSupport.SupportsPdf)
-        {
-            var memberPdfs = new List<(ICharacter Character, byte[] PdfBytes)>();
-            foreach (var character in characters)
-            {
-                try
-                {
-                    var pdf = pdfSupport.GeneratePdf(character);
-                    if (pdf is not null)
-                        memberPdfs.Add((character, pdf));
-                }
-                catch (Exception pdfEx)
-                {
-                    _logger.LogWarning(pdfEx,
-                        "PDF rendering failed for character '{CharacterName}'; skipping.",
-                        character.Name);
-                }
-            }
-
-            if (memberPdfs.Count > 0)
-            {
-                try
-                {
-                    var zipBytes = PartyZipBuilder.CreatePartyZip(memberPdfs);
-                    if (zipBytes.Length > 0)
-                    {
-                        var zipFileName = PartyZipBuilder.GeneratePartyZipFileName(result.PartyName);
-                        zipStream = new MemoryStream(zipBytes);
-                        zipAttachment = new FileAttachment(zipStream, zipFileName);
-                    }
-                }
-                catch (Exception zipEx)
-                {
-                    _logger.LogWarning(zipEx,
-                        "Failed to create party ZIP from {RenderedCount}/{TotalCount} PDF(s); continuing without archive.",
-                        memberPdfs.Count, characters.Count);
-                }
-            }
-            else
-            {
-                _logger.LogWarning(
-                    "All {TotalCount} party member PDF(s) failed to render; delivering party card without archive.",
-                    characters.Count);
-            }
-        }
-
-        try
-        {
-            var isDm = context.GuildId is null;
-            await _delivery.DeliverAsync(context, result.PartyCard, zipAttachment,
-                isDm ? "Here's your party!" : "Check your DMs.");
-        }
-        catch (Exception sendEx)
-        {
-            _logger.LogError(sendEx, "Failed to send party cards to user {UserId}", context.UserId);
-            await context.FollowupAsync(
-                embed: ResponseCardBuilder.Build("Party Send Failed",
-                    "Something went wrong sending your party. Please try again.", new Color(200, 50, 50)),
-                ephemeral: true);
-        }
-        finally
-        {
-            zipStream?.Dispose();
         }
     }
 }

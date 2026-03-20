@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using ScvmBot.Bot.Games;
+using ScvmBot.Bot.Rendering;
+using ScvmBot.Bot.Rendering.MorkBorg;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Pdf;
 using ScvmBot.Games.MorkBorg.Reference;
@@ -21,6 +23,13 @@ internal static class MorkBorgServiceExtensions
         services.AddSingleton<CharacterGenerator>();
         services.AddSingleton<MorkBorgPdfRenderer>();
         services.AddSingleton<IGameSystem, MorkBorgGameSystem>();
+
+        // Renderers
+        services.AddSingleton<IResultRenderer, MorkBorgCharacterEmbedRenderer>();
+        services.AddSingleton<IResultRenderer, MorkBorgPartyEmbedRenderer>();
+        services.AddSingleton<IResultRenderer, MorkBorgCharacterPdfRenderer>();
+        services.AddSingleton<IResultRenderer, MorkBorgPartyPdfRenderer>();
+
         return services;
     }
 }

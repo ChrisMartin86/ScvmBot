@@ -1,5 +1,5 @@
 using Discord;
-using ScvmBot.Bot.Games.MorkBorg;
+using ScvmBot.Bot.Rendering.MorkBorg;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 
@@ -75,7 +75,7 @@ public class PartyEmbedBuilderTests
     public void Build_IncludesPartyName_AsTitle()
     {
         var members = CreateMembers(2);
-        var embed = PartyEmbedBuilder.Build("The Doomed", members);
+        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("The Doomed", members);
 
         Assert.Equal("The Doomed", embed.Title);
     }
@@ -84,7 +84,7 @@ public class PartyEmbedBuilderTests
     public void Build_IncludesPartySize_InDescription()
     {
         var members = CreateMembers(3);
-        var embed = PartyEmbedBuilder.Build("Squad", members);
+        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("Squad", members);
 
         Assert.Contains("Party of 3", embed.Description);
     }
@@ -99,7 +99,7 @@ public class PartyEmbedBuilderTests
             new FakeCharacter { Name = "Gamma" }
         };
 
-        var embed = PartyEmbedBuilder.Build("Party", members);
+        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("Party", members);
 
         Assert.Contains("Alpha", embed.Description);
         Assert.Contains("Beta", embed.Description);
@@ -110,7 +110,7 @@ public class PartyEmbedBuilderTests
     public void Build_FormatsCorrectly_WithMultipleMembers()
     {
         var members = CreateMembers(5);
-        var embed = PartyEmbedBuilder.Build("Big Party", members);
+        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("Big Party", members);
 
         // Description contains "Party of 5" plus one bullet line per member
         var lines = embed.Description!.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -124,7 +124,7 @@ public class PartyEmbedBuilderTests
     public void Build_HasNoFields()
     {
         var members = CreateMembers(3);
-        var embed = PartyEmbedBuilder.Build("Party", members);
+        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("Party", members);
 
         Assert.Empty(embed.Fields);
     }
