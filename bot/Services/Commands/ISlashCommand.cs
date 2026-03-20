@@ -1,5 +1,4 @@
 using Discord;
-using Discord.WebSocket;
 
 namespace ScvmBot.Bot.Services;
 
@@ -11,5 +10,5 @@ public interface ISlashCommand
 {
     string Name { get; }
     SlashCommandBuilder BuildCommand();
-    Task HandleAsync(SocketSlashCommand command);
+    Task HandleAsync(ISlashCommandContext context);
 }

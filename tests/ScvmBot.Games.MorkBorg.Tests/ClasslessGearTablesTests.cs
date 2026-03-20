@@ -40,9 +40,9 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
             var rng = new Random(seed);
             var generator = new CharacterGenerator(refData, rng);
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
-                ClassName = "none",
+                ClassName = MorkBorgConstants.ClasslessClassName,
             });
 
             // Collect and normalize gear for comparison
@@ -66,9 +66,9 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
             var rng = new Random(seed);
             var generator = new CharacterGenerator(refData, rng);
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
-                ClassName = "none",
+                ClassName = MorkBorgConstants.ClasslessClassName,
             });
 
             // Verify no descriptions contain "placeholder"
@@ -91,17 +91,17 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
 
         var rng1 = new Random(seed);
         var gen1 = new CharacterGenerator(refData, rng1);
-        var char1 = await gen1.GenerateAsync(new CharacterGenerationOptions
+        var char1 = gen1.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
         });
         char1Items.AddRange(char1.Items.OrderBy(x => x));
 
         var rng2 = new Random(seed);
         var gen2 = new CharacterGenerator(refData, rng2);
-        var char2 = await gen2.GenerateAsync(new CharacterGenerationOptions
+        var char2 = gen2.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
         });
         char2Items.AddRange(char2.Items.OrderBy(x => x));
 
@@ -120,9 +120,9 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
             var rng = new Random(seed);
             var generator = new CharacterGenerator(refData, rng);
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
-                ClassName = "none",
+                ClassName = MorkBorgConstants.ClasslessClassName,
             });
 
             // Classless should always have these basic items
@@ -143,9 +143,9 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
             var rng = new Random(seed);
             var generator = new CharacterGenerator(refData, rng);
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
-                ClassName = "none",
+                ClassName = MorkBorgConstants.ClasslessClassName,
             });
 
             // Collect all non-basic items (exclude waterskin and food)
@@ -176,9 +176,9 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         for (int seed = 1; seed <= 30 && !foundScrollInGear; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
-                ClassName = "none",
+                ClassName = MorkBorgConstants.ClasslessClassName,
             });
 
             // If any character has scrolls, they should come from the structured path
@@ -206,10 +206,10 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         for (int seed = 100; seed < 110; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
                 Name = "Test",
-                ClassName = "none",
+                ClassName = MorkBorgConstants.ClasslessClassName,
             });
 
             // If we have scrolls, verify they're real entries

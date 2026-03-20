@@ -1,7 +1,9 @@
 using Discord;
+using ScvmBot.Bot.Services;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Pdf;
+using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Bot.Games.MorkBorg;
 
@@ -10,11 +12,13 @@ public sealed class MorkBorgGameSystem : IGameSystem, IGamePdfSupport
 {
     private readonly CharacterGenerator _generator;
     private readonly MorkBorgPdfRenderer _pdfRenderer;
+    private readonly MorkBorgReferenceDataService _refData;
 
-    public MorkBorgGameSystem(CharacterGenerator generator, MorkBorgPdfRenderer pdfRenderer)
+    public MorkBorgGameSystem(CharacterGenerator generator, MorkBorgPdfRenderer pdfRenderer, MorkBorgReferenceDataService refData)
     {
         _generator = generator;
         _pdfRenderer = pdfRenderer;
+        _refData = refData;
     }
 
     public string Name => "MÖRK BORG";
@@ -24,60 +28,45 @@ public sealed class MorkBorgGameSystem : IGameSystem, IGamePdfSupport
     public bool SupportsPdf => _pdfRenderer.TemplateExists;
 
     public SlashCommandOptionBuilder BuildCommandGroupOptions() =>
-        MorkBorgCommandDefinition.BuildCommandGroupOptions();
+        MorkBorgCommandDefinition.BuildCommandGroupOptions(
+            _refData.Classes.Select(c => c.Name).ToList());
 
-    public async Task<GenerateResult> HandleGenerateCommandAsync(
+    public Task<GenerateResult> HandleGenerateCommandAsync(
         IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
         CancellationToken ct = default)
     {
-        // Determine which subcommand (character or party)
         var subcommand = subCommandOptions
             ?.FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommand);
 
         if (subcommand == null)
-        {
             throw new InvalidOperationException(
                 "No subcommand provided. Expected: /generate morkborg character|party [options]");
-        }
 
         if (string.Equals(subcommand.Name, "party", StringComparison.OrdinalIgnoreCase))
-        {
-            return await HandlePartyGenerationAsync(subCommandOptions, ct);
-        }
+            return Task.FromResult<GenerateResult>(BuildPartyResult(subCommandOptions));
 
         if (string.Equals(subcommand.Name, "character", StringComparison.OrdinalIgnoreCase))
         {
             var options = MorkBorgGenerateOptionParser.Parse(subCommandOptions);
-            var character = await _generator.GenerateAsync(options, ct);
+            var character = _generator.Generate(options);
             var embed = CharacterCardBuilder.Build(character, options.RollMethod);
-            return new CharacterGenerationResult(character, embed);
+            return Task.FromResult<GenerateResult>(new CharacterGenerationResult(character, embed));
         }
 
         throw new InvalidOperationException(
             $"Unknown subcommand '{subcommand.Name}'. Expected 'character' or 'party'.");
     }
 
-    private async Task<PartyGenerationResult> HandlePartyGenerationAsync(
-        IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
-        CancellationToken ct = default)
+    private PartyGenerationResult BuildPartyResult(
+        IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions)
     {
         var partySize = MorkBorgPartyOptionParser.ParsePartySize(subCommandOptions);
-        var suppliedPartyName = MorkBorgPartyOptionParser.ParsePartyName(subCommandOptions);
 
-        var characters = new List<Character>();
+        var characters = Enumerable.Range(0, partySize)
+            .Select(_ => _generator.Generate(new CharacterGenerationOptions()))
+            .ToList();
 
-        var defaultOptions = new CharacterGenerationOptions();
-
-        for (int i = 0; i < partySize; i++)
-        {
-            var character = await _generator.GenerateAsync(defaultOptions, ct);
-            characters.Add(character);
-        }
-
-        // Generate or use supplied party name
-        var partyName = PartyNameGenerator.Generate(characters, suppliedPartyName);
-
-        // Create party embed for Discord display
+        var partyName = PartyNameGenerator.Generate(characters);
         var partyEmbed = PartyEmbedBuilder.Build(partyName, characters);
 
         return new PartyGenerationResult(
@@ -100,13 +89,7 @@ public sealed class MorkBorgGameSystem : IGameSystem, IGamePdfSupport
     /// <summary>Static helper for testability without the full object graph.</summary>
     internal static string BuildFileNameInternal(ICharacter character)
     {
-        var safeName = string.IsNullOrWhiteSpace(character.Name)
-            ? "character"
-            : new string(character.Name
-                .Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_')
-                .ToArray())
-                .Trim('_');
-
+        var safeName = PartyZipBuilder.SanitizeFileName(character.Name ?? "", fallback: "character");
         return $"{safeName}.pdf";
     }
 }

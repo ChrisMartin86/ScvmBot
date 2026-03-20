@@ -61,9 +61,9 @@ public class MorkBorgReferenceDataService
         _names = await LoadJsonAsync<List<string>>(Path.Combine(_dataRootPath, "names.json"));
         _weapons = await LoadJsonAsync<List<WeaponData>>(Path.Combine(_dataRootPath, "weapons.json"));
         _armor = await LoadJsonAsync<List<ArmorData>>(Path.Combine(_dataRootPath, "armor.json"));
+        _items = await LoadJsonAsync<List<ItemData>>(Path.Combine(_dataRootPath, "items.json"));
 
         // Supplementary datasets — missing file is tolerated; malformed JSON still throws.
-        _items = await LoadJsonOptionalAsync<List<ItemData>>(Path.Combine(_dataRootPath, "items.json")) ?? new();
         _descriptions = await LoadJsonOptionalAsync<DescriptionTables>(Path.Combine(_dataRootPath, "descriptions.json")) ?? new();
         _vignettes = await LoadJsonOptionalAsync<VignetteData>(Path.Combine(_dataRootPath, "vignettes.json")) ?? new();
     }
@@ -151,6 +151,11 @@ public class MorkBorgReferenceDataService
         return _items.Count > 0 ? _items[random.Next(_items.Count)] : null;
     }
 
+    public WeaponData? GetWeaponByTableIndex(int tableIndex)
+    {
+        return _weapons.FirstOrDefault(w => w.TableIndex == tableIndex);
+    }
+
     public WeaponData? GetWeaponByName(string name)
     {
         return _weapons.FirstOrDefault(w => w.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
@@ -171,18 +176,14 @@ public class MorkBorgReferenceDataService
         return _items.FirstOrDefault(i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
-    public string GetRandomFromTable(string tableName, Random random)
-    {
-        var table = tableName switch
-        {
-            "Trait" => _descriptions.Trait,
-            "BrokenBody" => _descriptions.BrokenBody,
-            "BadHabit" => _descriptions.BadHabit,
-            _ => new List<string>()
-        };
+    public string GetRandomTrait(Random random) =>
+        _descriptions.Trait.Count > 0 ? _descriptions.Trait[random.Next(_descriptions.Trait.Count)] : "";
 
-        return table.Count > 0 ? table[random.Next(table.Count)] : "";
-    }
+    public string GetRandomBody(Random random) =>
+        _descriptions.BrokenBody.Count > 0 ? _descriptions.BrokenBody[random.Next(_descriptions.BrokenBody.Count)] : "";
+
+    public string GetRandomHabit(Random random) =>
+        _descriptions.BadHabit.Count > 0 ? _descriptions.BadHabit[random.Next(_descriptions.BadHabit.Count)] : "";
 
     public ClassData? GetRandomClass(Random random)
     {
@@ -194,9 +195,9 @@ public class MorkBorgReferenceDataService
         return _classes.FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
-    public ScrollData? GetRandomScroll(string scrollType, Random random)
+    public ScrollData? GetRandomScroll(ScrollKind kind, Random random)
     {
-        var matching = _scrolls.Where(s => s.ScrollType.Equals(scrollType, StringComparison.OrdinalIgnoreCase)).ToList();
+        var matching = _scrolls.Where(s => s.Kind == kind).ToList();
         return matching.Count > 0 ? matching[random.Next(matching.Count)] : null;
     }
 }

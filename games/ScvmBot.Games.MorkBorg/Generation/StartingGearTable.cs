@@ -39,23 +39,23 @@ public sealed class StartingGearTable
         }
         else
         {
-            var equipMode = classData?.StartingEquipmentMode ?? "ordinary";
+            var equipMode = classData?.StartingEquipmentMode ?? MorkBorgConstants.EquipmentMode.Ordinary;
 
             switch (equipMode)
             {
-                case "classless":
+                case MorkBorgConstants.EquipmentMode.Classless:
                     AddBaseKit(items);
                     ApplyStartingContainer(items, descriptions, options);
                     ApplyStartingEquipmentTables(items, descriptions, scrolls, options, presenceModifier);
                     break;
 
-                case "ordinary":
+                case MorkBorgConstants.EquipmentMode.Ordinary:
                     AddBaseKit(items);
                     ApplyStartingContainer(items, descriptions, options);
                     ApplyClassStartingItems(items, descriptions, classData, scrolls);
                     break;
 
-                case "custom":
+                case MorkBorgConstants.EquipmentMode.Custom:
                     ApplyClassStartingItems(items, descriptions, classData, scrolls);
                     break;
 
@@ -271,7 +271,7 @@ public sealed class StartingGearTable
                 break;
 
             case 11:
-                var scroll = _refData.GetRandomScroll("Sacred", _rng);
+                var scroll = _refData.GetRandomScroll(ScrollKind.Sacred, _rng);
                 if (scroll != null)
                 {
                     scrolls.Add(scroll.ToFormattedString());
@@ -304,18 +304,24 @@ public sealed class StartingGearTable
             if (_scrollResolver.TryProcessStartingItemToken(trimmed, scrollsList))
                 continue;
 
-            AddItemByName(items, trimmed);
+            AddItemByName(items, trimmed, required: true);
         }
     }
 
-    private void AddItemByName(List<string> items, string itemName)
+    private void AddItemByName(List<string> items, string itemName, bool required = false)
     {
         var item = _refData.GetItemByName(itemName);
-        if (item != null)
+        if (item is null)
         {
-            var formatted = item.ToFormattedString();
-            if (!items.Contains(formatted))
-                items.Add(formatted);
+            if (required || _refData.Items.Count > 0)
+                throw new InvalidOperationException(
+                    $"Item '{itemName}' not found in items data. Check items.json for a missing or misspelled entry.");
+            // Items database is empty; add item name as plain text.
+            items.Add(itemName);
+            return;
         }
+        var formatted = item.ToFormattedString();
+        if (!items.Contains(formatted))
+            items.Add(formatted);
     }
 }

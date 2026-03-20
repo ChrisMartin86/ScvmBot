@@ -53,7 +53,7 @@ public sealed class VignetteGenerator
             : character.EquippedWeapon.Trim();
     }
 
-    private string PickFromKeyed(Dictionary<string, List<string>> dict, string? key)
+    private string PickFromKeyed(Dictionary<string, IReadOnlyList<string>> dict, string? key)
     {
         if (key != null && dict.TryGetValue(key, out var pool) && pool.Count > 0)
             return pool[_rng.Next(pool.Count)];
@@ -83,7 +83,7 @@ public sealed class VignetteGenerator
         return "a scvm";
     }
 
-    private string PickRandom(List<string> pool)
+    private string PickRandom(IReadOnlyList<string> pool)
     {
         return pool.Count > 0 ? pool[_rng.Next(pool.Count)] : "";
     }

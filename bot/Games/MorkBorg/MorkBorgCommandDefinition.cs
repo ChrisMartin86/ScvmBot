@@ -1,4 +1,5 @@
 using Discord;
+using ScvmBot.Games.MorkBorg.Generation;
 
 namespace ScvmBot.Bot.Games.MorkBorg;
 
@@ -7,10 +8,21 @@ public sealed class MorkBorgCommandDefinition
 {
     public const string Choice3D6 = "3d6";
     public const string ChoiceFourD6Drop = "4d6-drop-lowest";
-    public const string ChoiceClassNone = "none";
+    public const string ChoiceClassNone = MorkBorgConstants.ClasslessClassName;
 
-    public static SlashCommandOptionBuilder BuildCommandGroupOptions() =>
-        new SlashCommandOptionBuilder()
+    public static SlashCommandOptionBuilder BuildCommandGroupOptions(IReadOnlyList<string> classNames)
+    {
+        var classOption = new SlashCommandOptionBuilder()
+            .WithName("class")
+            .WithDescription("Select class, 'None' for classless, or omit for random.")
+            .WithType(ApplicationCommandOptionType.String)
+            .WithRequired(false)
+            .AddChoice("None", ChoiceClassNone);
+
+        foreach (var name in classNames)
+            classOption.AddChoice(name, name);
+
+        return new SlashCommandOptionBuilder()
             .WithName("morkborg")
             .WithDescription("MÖRK BORG game system")
             .WithType(ApplicationCommandOptionType.SubCommandGroup)
@@ -25,18 +37,7 @@ public sealed class MorkBorgCommandDefinition
                     .WithRequired(false)
                     .AddChoice("3d6 (standard)", Choice3D6)
                     .AddChoice("4d6 drop lowest (heroic)", ChoiceFourD6Drop))
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("class")
-                    .WithDescription("Select class, 'None' for classless, or omit for random.")
-                    .WithType(ApplicationCommandOptionType.String)
-                    .WithRequired(false)
-                    .AddChoice("None", ChoiceClassNone)
-                    .AddChoice("Fanged Deserter", "Fanged Deserter")
-                    .AddChoice("Gutterborn Scum", "Gutterborn Scum")
-                    .AddChoice("Esoteric Hermit", "Esoteric Hermit")
-                    .AddChoice("Heretical Priest", "Heretical Priest")
-                    .AddChoice("Occult Herbmaster", "Occult Herbmaster")
-                    .AddChoice("Wretched Royalty", "Wretched Royalty"))
+                .AddOption(classOption)
                 .AddOption(new SlashCommandOptionBuilder()
                     .WithName("name")
                     .WithDescription("Override the character name")
@@ -53,4 +54,5 @@ public sealed class MorkBorgCommandDefinition
                     .WithRequired(false)
                     .WithMinValue(1)
                     .WithMaxValue(4)));
+    }
 }

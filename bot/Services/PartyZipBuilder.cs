@@ -70,14 +70,16 @@ public static class PartyZipBuilder
         return $"{safeName}.zip";
     }
 
-    private static string SanitizeFileName(string name)
+    internal static string SanitizeFileName(string name, string fallback = "party")
     {
         if (string.IsNullOrWhiteSpace(name))
-            return "party";
+            return fallback;
 
-        return new string(name
+        var sanitized = new string(name
             .Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_')
             .ToArray())
             .Trim('_');
+
+        return string.IsNullOrEmpty(sanitized) ? fallback : sanitized;
     }
 }

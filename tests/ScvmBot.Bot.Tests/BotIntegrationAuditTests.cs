@@ -27,7 +27,8 @@ public class BotIntegrationAuditTests
         var refData = await LoadGameReferenceDataAsync();
         var jsonClassNames = refData.Classes.Select(c => c.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var optionBuilder = MorkBorgCommandDefinition.BuildCommandGroupOptions();
+        var classNames = refData.Classes.Select(c => c.Name).ToList();
+        var optionBuilder = MorkBorgCommandDefinition.BuildCommandGroupOptions(classNames);
         var charSubcommand = optionBuilder.Options!
             .First(o => o.Name == "character");
         var classOption = charSubcommand.Options!
@@ -92,7 +93,7 @@ public class BotIntegrationAuditTests
         for (int seed = 0; seed < 10; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
             });

@@ -1,5 +1,6 @@
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 using System.Text.RegularExpressions;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
@@ -9,7 +10,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     #region A1 – Character identity invariants
 
     [Theory]
-    [InlineData("none")]
+    [InlineData(MorkBorgConstants.ClasslessClassName)]
     [InlineData("Esoteric Hermit")]
     [InlineData("Fanged Deserter")]
     [InlineData("Gutterborn Scum")]
@@ -23,7 +24,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
             });
@@ -56,7 +57,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
             for (int seed = 0; seed < 30; seed++)
             {
                 var gen = new CharacterGenerator(refData, new Random(seed));
-                var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+                var ch = gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = cls.Name,
                 });
@@ -74,7 +75,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     #region A3 – HP invariants
 
     [Theory]
-    [InlineData("none", "d8")]
+    [InlineData(MorkBorgConstants.ClasslessClassName, "d8")]
     [InlineData("Esoteric Hermit", "d4")]
     [InlineData("Fanged Deserter", "d6")]
     [InlineData("Gutterborn Scum", "d6")]
@@ -89,7 +90,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 50; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
             });
@@ -157,9 +158,9 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var gen = new CharacterGenerator(refData, new Random(42));
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
         });
 
         Assert.Contains(ch.Items, i => i.Contains("Waterskin"));
@@ -172,7 +173,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var gen = new CharacterGenerator(refData, new Random(42));
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
         });
@@ -187,7 +188,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var gen = new CharacterGenerator(refData, new Random(42));
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             ClassName = "Occult Herbmaster",
         });
@@ -207,8 +208,8 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         try
         {
             var gen = new CharacterGenerator(refData, new Random(1));
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => gen.GenerateAsync(new CharacterGenerationOptions
+            var ex = Assert.Throws<InvalidOperationException>(
+                () => gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = cls.Name,
                 }));
@@ -233,7 +234,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 50; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
             });
 
@@ -282,7 +283,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         };
         opts.ForceItemNames.Add("Rope");
 
-        var ch = await gen.GenerateAsync(opts);
+        var ch = gen.Generate(opts);
 
         Assert.Equal("Override Test", ch.Name);
         Assert.Equal("Fanged Deserter", ch.ClassName);
@@ -310,7 +311,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var gen = new CharacterGenerator(refData, new DeterministicRandom(dice));
 
         // Wretched Royalty: STR-1, PRE+2
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             ClassName = "Wretched Royalty",
             Strength = 1,
@@ -346,7 +347,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     {
         var refData = await LoadGameReferenceDataAsync();
         var supportedSilver = new HashSet<string> { "d6x10", "2d6x10", "d6x10x3" };
-        var supportedEquipModes = new HashSet<string> { "classless", "ordinary", "custom" };
+        var supportedEquipModes = new HashSet<string> { MorkBorgConstants.EquipmentMode.Classless, MorkBorgConstants.EquipmentMode.Ordinary, MorkBorgConstants.EquipmentMode.Custom };
         var classNames = new HashSet<string>();
 
         foreach (var cls in refData.Classes)
@@ -376,7 +377,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
             Assert.Contains(cls.StartingEquipmentMode, supportedEquipModes);
 
-            var supportedScrollTokens = new HashSet<string> { "random_unclean", "random_sacred", "random_any_scroll" };
+            var supportedScrollTokens = new HashSet<string> { MorkBorgConstants.ScrollToken.RandomUnclean, MorkBorgConstants.ScrollToken.RandomSacred, MorkBorgConstants.ScrollToken.RandomAnyScroll };
             foreach (var token in cls.StartingScrolls)
             {
                 Assert.Contains(token, supportedScrollTokens);
@@ -388,7 +389,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
                 {
                     var supportedItemTokens = new HashSet<string>
                     {
-                        "random_sacred_scroll", "random_unclean_scroll", "random_any_scroll"
+                        MorkBorgConstants.ScrollToken.RandomSacredScroll, MorkBorgConstants.ScrollToken.RandomUncleanScroll, MorkBorgConstants.ScrollToken.RandomAnyScroll
                     };
                     Assert.Contains(item.ToLowerInvariant(), supportedItemTokens);
                 }
@@ -412,9 +413,9 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var dice = Enumerable.Repeat(2, 50).ToArray();
         var gen = new CharacterGenerator(refData, new DeterministicRandom(dice));
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
         });
 
         Assert.Null(ch.ClassName);
@@ -438,7 +439,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
             for (int seed = 0; seed < 10; seed++)
             {
                 var gen = new CharacterGenerator(refData, new Random(seed));
-                var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+                var ch = gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = cls.Name,
                 });
@@ -525,8 +526,8 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     {
         var refData = await LoadGameReferenceDataAsync();
 
-        var sacred = refData.Scrolls.Where(s => s.ScrollType.Equals("Sacred", StringComparison.OrdinalIgnoreCase)).ToList();
-        var unclean = refData.Scrolls.Where(s => s.ScrollType.Equals("Unclean", StringComparison.OrdinalIgnoreCase)).ToList();
+        var sacred = refData.Scrolls.Where(s => s.Kind == ScrollKind.Sacred).ToList();
+        var unclean = refData.Scrolls.Where(s => s.Kind == ScrollKind.Unclean).ToList();
 
         Assert.NotEmpty(sacred);
         Assert.NotEmpty(unclean);
@@ -542,8 +543,8 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
         for (int i = 0; i < 50; i++)
         {
-            Assert.NotNull(refData.GetRandomScroll("Sacred", rng));
-            Assert.NotNull(refData.GetRandomScroll("Unclean", rng));
+            Assert.NotNull(refData.GetRandomScroll(ScrollKind.Sacred, rng));
+            Assert.NotNull(refData.GetRandomScroll(ScrollKind.Unclean, rng));
         }
     }
 
@@ -618,13 +619,9 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var rng = new Random(42);
 
-        var required = new[] { "Trait", "BrokenBody", "BadHabit" };
-
-        foreach (var table in required)
-        {
-            var result = refData.GetRandomFromTable(table, rng);
-            Assert.False(string.IsNullOrEmpty(result), $"Table '{table}' returned empty");
-        }
+        Assert.False(string.IsNullOrEmpty(refData.GetRandomTrait(rng)), "Trait table returned empty");
+        Assert.False(string.IsNullOrEmpty(refData.GetRandomBody(rng)), "BrokenBody table returned empty");
+        Assert.False(string.IsNullOrEmpty(refData.GetRandomHabit(rng)), "BadHabit table returned empty");
     }
 
     [Fact]
@@ -677,7 +674,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions());
+            var ch = gen.Generate(new CharacterGenerationOptions());
 
             Assert.NotEmpty(ch.Name);
             Assert.True(ch.HitPoints >= 1);
@@ -699,7 +696,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions());
+            var ch = gen.Generate(new CharacterGenerationOptions());
 
             Assert.Contains(ch.Descriptions, d => d.Category == DescriptionCategory.Trait);
             Assert.Contains(ch.Descriptions, d => d.Category == DescriptionCategory.Body);
@@ -723,7 +720,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
             for (int seed = 0; seed < 10; seed++)
             {
                 var gen = new CharacterGenerator(refData, new Random(seed));
-                var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+                var ch = gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = className,
                 });
@@ -750,7 +747,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions());
+            var ch = gen.Generate(new CharacterGenerationOptions());
 
             if (ch.EquippedWeapon != null)
             {
@@ -774,7 +771,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions());
+            var ch = gen.Generate(new CharacterGenerationOptions());
 
             foreach (var item in ch.Items)
             {

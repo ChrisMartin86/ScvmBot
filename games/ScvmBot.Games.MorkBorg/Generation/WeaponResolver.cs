@@ -21,36 +21,29 @@ public sealed class WeaponResolver
         if (!string.IsNullOrWhiteSpace(options.WeaponName))
         {
             var weapon = _refData.GetWeaponByName(options.WeaponName);
-            return weapon?.ToFormattedString();
+            if (weapon is null)
+                throw new InvalidOperationException(
+                    $"Weapon '{options.WeaponName}' not found in weapons data.");
+            return weapon.ToFormattedString();
         }
 
         if (classData?.StartingWeapons.Count > 0)
         {
             var classWeapon = classData.StartingWeapons[_rng.Next(classData.StartingWeapons.Count)];
             var weapon = _refData.GetWeaponByName(classWeapon);
-            if (weapon != null)
-                return weapon.ToFormattedString();
+            if (weapon is null)
+                throw new InvalidOperationException(
+                    $"Weapon '{classWeapon}' listed in class '{classData.Name}' not found in weapons data.");
+            return weapon.ToFormattedString();
         }
 
-        // Roll on the d10 weapon table
+        // Roll on the weapon table — result maps to the weapon whose tableIndex matches
         var weaponDieSize = DiceRoller.ParseDieSize(classData?.WeaponRollDie ?? "d10");
         var roll = _dice.RollDie(weaponDieSize);
-        var weaponName = roll switch
-        {
-            1 => "Femur",
-            2 => "Staff",
-            3 => "Shortsword",
-            4 => "Knife",
-            5 => "Warhammer",
-            6 => "Sword",
-            7 => "Bow",
-            8 => "Flail",
-            9 => "Crossbow",
-            10 => "Zweihänder",
-            _ => "Knife"
-        };
-
-        var selectedWeapon = _refData.GetWeaponByName(weaponName);
+        var selectedWeapon = _refData.GetWeaponByTableIndex(roll);
+        if (selectedWeapon is null && _refData.Weapons.Count > 0)
+            throw new InvalidOperationException(
+                $"No weapon found for table index {roll} (die: {classData?.WeaponRollDie ?? "d10"}). Check weapons data for a missing tableIndex entry.");
         return selectedWeapon?.ToFormattedString();
     }
 }

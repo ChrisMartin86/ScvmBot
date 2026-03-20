@@ -49,7 +49,8 @@ public class MorkBorgGameSystemTests
         var classOpt = characterSubcommand.Options?.FirstOrDefault(o => o.Name == "class");
         Assert.NotNull(classOpt);
         Assert.False(classOpt!.IsRequired ?? false);
-        Assert.Equal(7, classOpt.Choices?.Count); // None + 6 classes
+        // "None" is always present; class choices come from reference data.
+        Assert.Contains(classOpt.Choices, c => c.Value?.ToString() == MorkBorgCommandDefinition.ChoiceClassNone);
     }
 
     [Fact]
@@ -305,9 +306,10 @@ public class MorkBorgGameSystemTests
         await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
         await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
         await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
         var pdfRenderer = new MorkBorgPdfRenderer();
-        return new MorkBorgGameSystem(generator, pdfRenderer);
+        return new MorkBorgGameSystem(generator, pdfRenderer, refData);
     }
 }

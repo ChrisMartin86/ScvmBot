@@ -15,8 +15,8 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
         Assert.True(referenceData.Scrolls.Count >= 20);
 
         // Count by type
-        var sacredCount = referenceData.Scrolls.Count(s => s.ScrollType == "Sacred");
-        var uncleanCount = referenceData.Scrolls.Count(s => s.ScrollType == "Unclean");
+        var sacredCount = referenceData.Scrolls.Count(s => s.Kind == ScrollKind.Sacred);
+        var uncleanCount = referenceData.Scrolls.Count(s => s.Kind == ScrollKind.Unclean);
 
         Assert.Equal(10, sacredCount);
         Assert.Equal(10, uncleanCount);
@@ -30,7 +30,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
         foreach (var scroll in referenceData.Scrolls)
         {
             Assert.NotEmpty(scroll.Name);
-            Assert.NotEmpty(scroll.ScrollType);
+            Assert.True(scroll.Kind is ScrollKind.Sacred or ScrollKind.Unclean);
             Assert.NotEmpty(scroll.Description);
             Assert.True(scroll.UsageDR > 0);
             Assert.InRange(scroll.ScrollNumber, 1, 10);
@@ -38,12 +38,12 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     }
 
     [Theory]
-    [InlineData("Sacred")]
-    [InlineData("Unclean")]
-    public async Task ReferenceData_HasTenScrollsOfEachType(string scrollType)
+    [InlineData(ScrollKind.Sacred)]
+    [InlineData(ScrollKind.Unclean)]
+    public async Task ReferenceData_HasTenScrollsOfEachType(ScrollKind kind)
     {
         var referenceData = await LoadGameReferenceDataAsync();
-        var items = referenceData.Scrolls.Where(s => s.ScrollType == scrollType).ToList();
+        var items = referenceData.Scrolls.Where(s => s.Kind == kind).ToList();
 
         Assert.Equal(10, items.Count);
     }
@@ -52,10 +52,10 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     public async Task EsotericHermit_StartsWithUncleanScroll()
     {
         var referenceData = await LoadGameReferenceDataAsync();
-        var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 });
+        var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Esoteric Hermit",
         });
@@ -69,10 +69,10 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     public async Task HereticalPriest_StartsWithSacredScroll()
     {
         var referenceData = await LoadGameReferenceDataAsync();
-        var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 });
+        var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Heretical Priest",
         });
@@ -96,11 +96,11 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
 
         foreach (var className in nonScrollClasses)
         {
-            var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 });
+            var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
             var generator = new CharacterGenerator(
                 referenceData, rng);
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
             });
@@ -121,7 +121,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
 
             // Format: "Name (Type #N, DRXX)"
             Assert.Contains(scroll.Name, formatted);
-            Assert.Contains(scroll.ScrollType, formatted);
+            Assert.Contains(scroll.Kind.ToString(), formatted);
             Assert.Contains($"#{scroll.ScrollNumber}", formatted);
             Assert.Contains($"DR{scroll.UsageDR}", formatted);
         }
@@ -135,14 +135,14 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
 
         for (int i = 0; i < 20; i++)
         {
-            var sacredScroll = referenceData.GetRandomScroll("Sacred", rng);
-            var uncleanScroll = referenceData.GetRandomScroll("Unclean", rng);
+            var sacredScroll = referenceData.GetRandomScroll(ScrollKind.Sacred, rng);
+            var uncleanScroll = referenceData.GetRandomScroll(ScrollKind.Unclean, rng);
 
             Assert.NotNull(sacredScroll);
-            Assert.Equal("Sacred", sacredScroll.ScrollType);
+            Assert.Equal(ScrollKind.Sacred, sacredScroll.Kind);
 
             Assert.NotNull(uncleanScroll);
-            Assert.Equal("Unclean", uncleanScroll.ScrollType);
+            Assert.Equal(ScrollKind.Unclean, uncleanScroll.Kind);
         }
     }
 
@@ -175,12 +175,12 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
         var referenceData = await LoadGameReferenceDataAsync();
 
         var sacredNames = referenceData.Scrolls
-            .Where(s => s.ScrollType == "Sacred")
+            .Where(s => s.Kind == ScrollKind.Sacred)
             .Select(s => s.Name)
             .ToHashSet();
 
         var uncleanNames = referenceData.Scrolls
-            .Where(s => s.ScrollType == "Unclean")
+            .Where(s => s.Kind == ScrollKind.Unclean)
             .Select(s => s.Name)
             .ToHashSet();
 
@@ -193,10 +193,10 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     public async Task ClassStartingScrolls_AreAddedAsStructuredEntries()
     {
         var referenceData = await LoadGameReferenceDataAsync();
-        var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 });
+        var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Esoteric Hermit",  // Has starting scroll
         });
@@ -223,9 +223,9 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
         for (int seed = 1; seed <= 30 && !foundScrollInGear; seed++)
         {
             var generator = new CharacterGenerator(referenceData, new Random(seed));
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
-                ClassName = "none",  // Classless, uses gear tables
+                ClassName = MorkBorgConstants.ClasslessClassName,  // Classless, uses gear tables
             });
 
             // If this character has scrolls from the gear flow
@@ -249,15 +249,15 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
         var generator = new CharacterGenerator(refData, new Random(42));
 
         // Get an ordinary-mode class and add the token via reflection
-        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == "ordinary");
+        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
         Assert.NotNull(classToModify);
 
         var startingItemsProperty = typeof(ClassData).GetProperty(nameof(ClassData.StartingItems));
         Assert.NotNull(startingItemsProperty);
-        var itemsList = new List<string> { "random_sacred_scroll" };
+        var itemsList = new List<string> { MorkBorgConstants.ScrollToken.RandomSacredScroll };
         startingItemsProperty.SetValue(classToModify, itemsList);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = classToModify.Name,
         });
@@ -275,15 +275,15 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(42));
 
-        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == "ordinary");
+        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
         Assert.NotNull(classToModify);
 
         var startingItemsProperty = typeof(ClassData).GetProperty(nameof(ClassData.StartingItems));
         Assert.NotNull(startingItemsProperty);
-        var itemsList = new List<string> { "random_unclean_scroll" };
+        var itemsList = new List<string> { MorkBorgConstants.ScrollToken.RandomUncleanScroll };
         startingItemsProperty.SetValue(classToModify, itemsList);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = classToModify.Name,
         });
@@ -300,15 +300,15 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(42));
 
-        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == "ordinary");
+        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
         Assert.NotNull(classToModify);
 
         var startingItemsProperty = typeof(ClassData).GetProperty(nameof(ClassData.StartingItems));
         Assert.NotNull(startingItemsProperty);
-        var itemsList = new List<string> { "random_any_scroll" };
+        var itemsList = new List<string> { MorkBorgConstants.ScrollToken.RandomAnyScroll };
         startingItemsProperty.SetValue(classToModify, itemsList);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = classToModify.Name,
         });

@@ -17,11 +17,13 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="ScvmBot.Tests.Shared" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\bot\ScvmBot.Bot.csproj" />
     <ProjectReference Include="..\..\games\ScvmBot.Games.MorkBorg.Pdf\ScvmBot.Games.MorkBorg.Pdf.csproj" />
+    <ProjectReference Include="..\ScvmBot.Tests.Shared\ScvmBot.Tests.Shared.csproj" />
   </ItemGroup>
 
 </Project>

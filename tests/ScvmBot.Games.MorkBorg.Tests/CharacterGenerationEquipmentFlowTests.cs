@@ -12,7 +12,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(42));
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "none",  // Explicitly classless
         });
@@ -32,7 +32,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(42));
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",  // Classed character
         });
@@ -67,7 +67,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         var generator = new CharacterGenerator(refData, rng);
 
         // Fanged Deserter has various modifiers in the data
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
         });
@@ -89,7 +89,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         // Generate classless with same seed
         var classlessRng = new Random(seed);
         var classlessGenerator = new CharacterGenerator(refData, classlessRng);
-        var classless = await classlessGenerator.GenerateAsync(new CharacterGenerationOptions
+        var classless = classlessGenerator.Generate(new CharacterGenerationOptions
         {
             ClassName = "none",
         });
@@ -97,7 +97,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         // Generate classed with same seed
         var classedRng = new Random(seed);
         var classedGenerator = new CharacterGenerator(refData, classedRng);
-        var classed = await classedGenerator.GenerateAsync(new CharacterGenerationOptions
+        var classed = classedGenerator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
         });
@@ -113,7 +113,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(42));
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Occult Herbmaster",  // Uses "custom" mode with startingItems: ["Medicine chest"]
         });
@@ -138,7 +138,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(42));
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Esoteric Hermit",  // Uses "ordinary" mode
         });
@@ -169,14 +169,14 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
 
         // Generate Occult Herbmaster (custom mode)
         var customGenerator = new CharacterGenerator(refData, new Random(42));
-        var customChar = await customGenerator.GenerateAsync(new CharacterGenerationOptions
+        var customChar = customGenerator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Occult Herbmaster",
         });
 
         // Generate a hypothetical ordinary-mode character (using Fanged Deserter as reference)
         var ordinaryGenerator = new CharacterGenerator(refData, new Random(42));
-        var ordinaryChar = await ordinaryGenerator.GenerateAsync(new CharacterGenerationOptions
+        var ordinaryChar = ordinaryGenerator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
         });
@@ -207,8 +207,8 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         property.SetValue(classToMutate, "bogus-mode");
 
         // Attempt to generate a character with the invalid equipment mode
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => generator.GenerateAsync(new CharacterGenerationOptions
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = classToMutate.Name,
             }));
@@ -224,7 +224,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         var generator = new CharacterGenerator(refData, new Random(42));
 
         // Occult Herbmaster uses custom mode with "Medicine chest" as a concrete item
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Occult Herbmaster",
         });
@@ -240,16 +240,16 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         var generator = new CharacterGenerator(refData, new Random(42));
 
         // Get a class and add mixed items via reflection
-        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == "ordinary");
+        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
         Assert.NotNull(classToModify);
 
         var startingItemsProperty = typeof(ClassData).GetProperty(nameof(ClassData.StartingItems));
         Assert.NotNull(startingItemsProperty);
         // Mix concrete item with token
-        var mixedItems = new List<string> { "Lockpicks", "random_sacred_scroll" };
+        var mixedItems = new List<string> { "Lockpicks", MorkBorgConstants.ScrollToken.RandomSacredScroll };
         startingItemsProperty.SetValue(classToModify, mixedItems);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = classToModify.Name,
         });
@@ -268,7 +268,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(42));
 
-        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == "ordinary");
+        var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
         Assert.NotNull(classToModify);
 
         var startingItemsProperty = typeof(ClassData).GetProperty(nameof(ClassData.StartingItems));
@@ -276,13 +276,164 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         // Use an invalid token that looks like a real token
         startingItemsProperty.SetValue(classToModify, new List<string> { "random_bogus_scroll" });
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => generator.GenerateAsync(new CharacterGenerationOptions
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = classToModify.Name,
             }));
 
         Assert.Contains("Unsupported generation token", ex.Message);
         Assert.Contains("random_bogus_scroll", ex.Message);
+    }
+
+    // ── Missing data: weapon resolution ──────────────────────────────────────
+
+    [Fact]
+    public async Task Generate_Throws_WhenWeaponNameOverride_IsNotInWeaponsData()
+    {
+        var refData = await LoadGameReferenceDataAsync();
+        var generator = new CharacterGenerator(refData, new Random(42));
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            generator.Generate(new CharacterGenerationOptions
+            {
+                ClassName = MorkBorgConstants.ClasslessClassName,
+                WeaponName = "NonExistentBlade",
+            }));
+
+        Assert.Contains("NonExistentBlade", ex.Message);
+        Assert.Contains("not found in weapons data", ex.Message);
+    }
+
+    [Fact]
+    public async Task Generate_Throws_WhenClassStartingWeapon_IsNotInWeaponsData()
+    {
+        var dir = TestUtilities.CreateTempDirectory();
+        try
+        {
+            var classJson = @"[{
+                ""name"": ""TestClass"",
+                ""startingWeapons"": [""GhostBlade""],
+                ""startingArmor"": [],
+                ""startingScrolls"": [],
+                ""startingItems"": [],
+                ""startingEquipmentMode"": ""ordinary""
+            }]";
+            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), classJson);
+            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[\"Tester\"]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+
+            var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
+            var generator = new CharacterGenerator(refData, new Random(42));
+
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                generator.Generate(new CharacterGenerationOptions { ClassName = "TestClass" }));
+
+            Assert.Contains("GhostBlade", ex.Message);
+            Assert.Contains("TestClass", ex.Message);
+            Assert.Contains("not found in weapons data", ex.Message);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    // ── Missing data: armor resolution ───────────────────────────────────────
+
+    [Fact]
+    public async Task Generate_Throws_WhenArmorNameOverride_IsNotInArmorData()
+    {
+        var refData = await LoadGameReferenceDataAsync();
+        var generator = new CharacterGenerator(refData, new Random(42));
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            generator.Generate(new CharacterGenerationOptions
+            {
+                ClassName = MorkBorgConstants.ClasslessClassName,
+                ArmorName = "PhantomPlate",
+            }));
+
+        Assert.Contains("PhantomPlate", ex.Message);
+        Assert.Contains("not found in armor data", ex.Message);
+    }
+
+    [Fact]
+    public async Task Generate_Throws_WhenClassStartingArmor_IsNotInArmorData()
+    {
+        var dir = TestUtilities.CreateTempDirectory();
+        try
+        {
+            var classJson = @"[{
+                ""name"": ""IronTestClass"",
+                ""startingWeapons"": [],
+                ""startingArmor"": [""ZephyrMail""],
+                ""startingScrolls"": [],
+                ""startingItems"": [],
+                ""startingEquipmentMode"": ""ordinary""
+            }]";
+            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), classJson);
+            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[\"Tester\"]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+
+            var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
+            var generator = new CharacterGenerator(refData, new Random(42));
+
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                generator.Generate(new CharacterGenerationOptions { ClassName = "IronTestClass" }));
+
+            Assert.Contains("ZephyrMail", ex.Message);
+            Assert.Contains("IronTestClass", ex.Message);
+            Assert.Contains("not found in armor data", ex.Message);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    // ── Missing data: item resolution ─────────────────────────────────────────
+
+    [Fact]
+    public async Task Generate_Throws_WhenClassStartingItem_IsNotInItemsData()
+    {
+        var dir = TestUtilities.CreateTempDirectory();
+        try
+        {
+            var classJson = @"[{
+                ""name"": ""ItemTestClass"",
+                ""startingWeapons"": [],
+                ""startingArmor"": [],
+                ""startingScrolls"": [],
+                ""startingItems"": [""SpecterPouch""],
+                ""startingEquipmentMode"": ""ordinary""
+            }]";
+            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), classJson);
+            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[\"Tester\"]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            // items.json present but missing the referenced item
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+
+            var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
+            var generator = new CharacterGenerator(refData, new Random(42));
+
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                generator.Generate(new CharacterGenerationOptions { ClassName = "ItemTestClass" }));
+
+            Assert.Contains("SpecterPouch", ex.Message);
+            Assert.Contains("not found in items data", ex.Message);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
     }
 }

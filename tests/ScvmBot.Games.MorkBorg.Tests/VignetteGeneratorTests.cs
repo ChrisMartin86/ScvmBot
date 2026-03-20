@@ -164,7 +164,7 @@ public class VignetteGeneratorTests
             TestUtilities.GetMorkBorgDataPath());
 
         var generator = new CharacterGenerator(refData);
-        var character = await generator.GenerateAsync();
+        var character = generator.Generate();
 
         Assert.False(string.IsNullOrWhiteSpace(character.Vignette));
     }
@@ -176,7 +176,7 @@ public class VignetteGeneratorTests
             TestUtilities.GetMorkBorgDataPath());
 
         var generator = new CharacterGenerator(refData);
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions { Name = "Grittr" });
+        var character = generator.Generate(new CharacterGenerationOptions { Name = "Grittr" });
 
         Assert.Contains("Grittr", character.Vignette);
     }
@@ -203,14 +203,14 @@ public class VignetteGeneratorTests
         return new VignetteData
         {
             Templates = new List<string> { template },
-            ClassIntros = new Dictionary<string, List<string>>(),
-            Bodies = new Dictionary<string, List<string>>(),
-            Habits = new Dictionary<string, List<string>>(),
-            Items = new Dictionary<string, List<string>>
+            ClassIntros = new Dictionary<string, IReadOnlyList<string>>(),
+            Bodies = new Dictionary<string, IReadOnlyList<string>>(),
+            Habits = new Dictionary<string, IReadOnlyList<string>>(),
+            Items = new Dictionary<string, IReadOnlyList<string>>
             {
                 ["Default"] = new List<string> { "armed with junk" }
             },
-            Traits = new Dictionary<string, List<string>>(),
+            Traits = new Dictionary<string, IReadOnlyList<string>>(),
             Closers = new List<string> { "good luck" }
         };
     }

@@ -1,8 +1,6 @@
 using Discord;
-using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Games;
-using ScvmBot.Bot.Models;
 using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Bot.Services;
@@ -16,15 +14,18 @@ namespace ScvmBot.Bot.Services;
 public class GenerateCommandHandler : ISlashCommand
 {
     private readonly IReadOnlyDictionary<string, IGameSystem> _gameSystems;
+    private readonly GenerationDeliveryService _delivery;
     private readonly ILogger<GenerateCommandHandler> _logger;
 
     public string Name => "generate";
 
     public GenerateCommandHandler(
         IEnumerable<IGameSystem> gameSystems,
+        GenerationDeliveryService delivery,
         ILogger<GenerateCommandHandler> logger)
     {
         _gameSystems = gameSystems.ToDictionary(gs => gs.CommandKey, StringComparer.OrdinalIgnoreCase);
+        _delivery = delivery;
         _logger = logger;
     }
 
@@ -42,20 +43,9 @@ public class GenerateCommandHandler : ISlashCommand
         return builder;
     }
 
-    /// <summary>Returns true when the interaction originated from a DM (no guild context).</summary>
-    internal static bool IsDmInteraction(ulong? guildId) => guildId is null;
-
-    /// <summary>Returns the appropriate followup text based on whether the interaction is in a DM or guild.</summary>
-    internal static string GetFollowupText(bool isDm) =>
-        isDm ? "Here's your character!" : "Check your DMs.";
-
-    /// <summary>Returns the appropriate party followup text based on whether the interaction is in a DM or guild.</summary>
-    internal static string GetPartyFollowupText(bool isDm) =>
-        isDm ? "Here's your party!" : "Check your DMs.";
-
-    private IGameSystem ParseCommandRequest(SocketSlashCommand command)
+    private IGameSystem ParseCommandRequest(ISlashCommandContext context)
     {
-        var subcommandGroup = command.Data.Options
+        var subcommandGroup = context.Options
             .FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommandGroup);
 
         if (subcommandGroup is null)
@@ -73,30 +63,28 @@ public class GenerateCommandHandler : ISlashCommand
     }
 
     private IReadOnlyCollection<IApplicationCommandInteractionDataOption>? GetSubcommandGroupOptions(
-        SocketSlashCommand command)
+        ISlashCommandContext context)
     {
-        var subcommandGroup = command.Data.Options
+        var subcommandGroup = context.Options
             .FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommandGroup);
 
         return subcommandGroup?.Options;
     }
 
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(
-        Justification = "Discord socket wiring; SocketSlashCommand cannot be constructed in unit tests.")]
-    public async Task HandleAsync(SocketSlashCommand command)
+    public async Task HandleAsync(ISlashCommandContext context)
     {
-        await command.DeferAsync(ephemeral: true);
+        await context.DeferAsync(ephemeral: true);
 
         try
         {
             IGameSystem gameSystem;
             try
             {
-                gameSystem = ParseCommandRequest(command);
+                gameSystem = ParseCommandRequest(context);
             }
             catch (InvalidOperationException parseEx)
             {
-                await command.FollowupAsync(
+                await context.FollowupAsync(
                     embed: ResponseCardBuilder.Build("Error", parseEx.Message, new Color(200, 50, 50)),
                     ephemeral: true);
                 return;
@@ -105,12 +93,12 @@ public class GenerateCommandHandler : ISlashCommand
             GenerateResult result;
             try
             {
-                var subcommandGroupOptions = GetSubcommandGroupOptions(command);
+                var subcommandGroupOptions = GetSubcommandGroupOptions(context);
                 result = await gameSystem.HandleGenerateCommandAsync(subcommandGroupOptions);
             }
             catch (InvalidOperationException genEx)
             {
-                await command.FollowupAsync(
+                await context.FollowupAsync(
                     embed: ResponseCardBuilder.Build("Error", genEx.Message, new Color(200, 50, 50)),
                     ephemeral: true);
                 return;
@@ -119,13 +107,13 @@ public class GenerateCommandHandler : ISlashCommand
             switch (result)
             {
                 case PartyGenerationResult partyResult:
-                    await HandlePartyGenerationAsync(command, gameSystem, partyResult);
+                    await HandlePartyGenerationAsync(context, gameSystem, partyResult);
                     break;
                 case CharacterGenerationResult charResult:
-                    await HandleSingleCharacterGenerationAsync(command, gameSystem, charResult);
+                    await HandleSingleCharacterGenerationAsync(context, gameSystem, charResult);
                     break;
                 default:
-                    await command.FollowupAsync(
+                    await context.FollowupAsync(
                         embed: ResponseCardBuilder.Build("Error", "Unrecognized generation result.", new Color(200, 50, 50)),
                         ephemeral: true);
                     break;
@@ -134,7 +122,7 @@ public class GenerateCommandHandler : ISlashCommand
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled error during /generate command");
-            await command.FollowupAsync(
+            await context.FollowupAsync(
                 embed: ResponseCardBuilder.Build("Generation Failed",
                     "Something went wrong. Please try again.", new Color(200, 50, 50)),
                 ephemeral: true);
@@ -142,7 +130,7 @@ public class GenerateCommandHandler : ISlashCommand
     }
 
     private async Task HandleSingleCharacterGenerationAsync(
-        SocketSlashCommand command,
+        ISlashCommandContext context,
         IGameSystem gameSystem,
         CharacterGenerationResult result)
     {
@@ -169,45 +157,36 @@ public class GenerateCommandHandler : ISlashCommand
             }
         }
 
+        MemoryStream? stream = null;
+        FileAttachment? attachment = null;
+        if (pdfBytes is not null)
+        {
+            stream = new MemoryStream(pdfBytes);
+            attachment = new FileAttachment(stream, fileName!);
+        }
+
         try
         {
-            var isDm = IsDmInteraction(command.GuildId);
-            IMessageChannel targetChannel = isDm
-                ? command.Channel
-                : await command.User.CreateDMChannelAsync();
-
-            if (pdfBytes is not null)
-            {
-                using var stream = new MemoryStream(pdfBytes);
-                var attachment = new FileAttachment(stream, fileName!);
-                await targetChannel.SendFileAsync(attachment, embed: embed);
-            }
-            else
-            {
-                await targetChannel.SendMessageAsync(embed: embed);
-            }
-
-            await command.FollowupAsync(text: GetFollowupText(isDm), ephemeral: true);
-        }
-        catch (Discord.Net.HttpException httpEx) when (httpEx.DiscordCode == DiscordErrorCode.CannotSendMessageToUser)
-        {
-            _logger.LogWarning(httpEx, "Cannot DM user {UserId}", command.User.Id);
-            await command.FollowupAsync(
-                text: "I couldn't send you a DM. Please enable DMs from server members and try again.",
-                ephemeral: true);
+            var isDm = context.GuildId is null;
+            await _delivery.DeliverAsync(context, embed, attachment,
+                isDm ? "Here's your character!" : "Check your DMs.");
         }
         catch (Exception sendEx)
         {
             _logger.LogError(sendEx, "Failed to send character card via DM");
-            await command.FollowupAsync(
+            await context.FollowupAsync(
                 embed: ResponseCardBuilder.Build("Send Failed",
                     "Something went wrong sending your character. Please try again.", new Color(200, 50, 50)),
                 ephemeral: true);
         }
+        finally
+        {
+            stream?.Dispose();
+        }
     }
 
     private async Task HandlePartyGenerationAsync(
-        SocketSlashCommand command,
+        ISlashCommandContext context,
         IGameSystem gameSystem,
         PartyGenerationResult result)
     {
@@ -215,29 +194,40 @@ public class GenerateCommandHandler : ISlashCommand
 
         if (characters.Count == 0)
         {
-            await command.FollowupAsync(
+            await context.FollowupAsync(
                 embed: ResponseCardBuilder.Build("Error", "Party generation produced no characters.", new Color(200, 50, 50)),
                 ephemeral: true);
             return;
         }
 
-        try
-        {
-            FileAttachment? zipAttachment = null;
-            MemoryStream? zipStream = null;
+        MemoryStream? zipStream = null;
+        FileAttachment? zipAttachment = null;
 
-            var pdfSupport = gameSystem as IGamePdfSupport;
-            if (pdfSupport is not null && pdfSupport.SupportsPdf)
+        // PDF rendering and archiving are best-effort: failures here must not prevent delivery
+        // of the party card embed. Each stage is isolated so one failure doesn't cascade.
+        var pdfSupport = gameSystem as IGamePdfSupport;
+        if (pdfSupport is not null && pdfSupport.SupportsPdf)
+        {
+            var memberPdfs = new List<(ICharacter Character, byte[] PdfBytes)>();
+            foreach (var character in characters)
             {
-                var memberPdfs = new List<(ICharacter Character, byte[] PdfBytes)>();
-                foreach (var character in characters)
+                try
                 {
                     var pdf = pdfSupport.GeneratePdf(character);
                     if (pdf is not null)
                         memberPdfs.Add((character, pdf));
                 }
+                catch (Exception pdfEx)
+                {
+                    _logger.LogWarning(pdfEx,
+                        "PDF rendering failed for character '{CharacterName}'; skipping.",
+                        character.Name);
+                }
+            }
 
-                if (memberPdfs.Count > 0)
+            if (memberPdfs.Count > 0)
+            {
+                try
                 {
                     var zipBytes = PartyZipBuilder.CreatePartyZip(memberPdfs);
                     if (zipBytes.Length > 0)
@@ -247,47 +237,38 @@ public class GenerateCommandHandler : ISlashCommand
                         zipAttachment = new FileAttachment(zipStream, zipFileName);
                     }
                 }
-            }
-
-            var partyEmbed = result.PartyCard;
-
-            try
-            {
-                var isDm = IsDmInteraction(command.GuildId);
-                IMessageChannel targetChannel = isDm
-                    ? command.Channel
-                    : await command.User.CreateDMChannelAsync();
-
-                if (zipAttachment is not null)
+                catch (Exception zipEx)
                 {
-                    await targetChannel.SendFileAsync(zipAttachment.Value, embed: partyEmbed);
+                    _logger.LogWarning(zipEx,
+                        "Failed to create party ZIP from {RenderedCount}/{TotalCount} PDF(s); continuing without archive.",
+                        memberPdfs.Count, characters.Count);
                 }
-                else
-                {
-                    await targetChannel.SendMessageAsync(embed: partyEmbed);
-                }
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "All {TotalCount} party member PDF(s) failed to render; delivering party card without archive.",
+                    characters.Count);
+            }
+        }
 
-                await command.FollowupAsync(text: GetPartyFollowupText(isDm), ephemeral: true);
-            }
-            catch (Discord.Net.HttpException httpEx) when (httpEx.DiscordCode == DiscordErrorCode.CannotSendMessageToUser)
-            {
-                _logger.LogWarning(httpEx, "Cannot DM user {UserId}", command.User.Id);
-                await command.FollowupAsync(
-                    text: "I couldn't send you a DM. Please enable DMs from server members and try again.",
-                    ephemeral: true);
-            }
-            finally
-            {
-                zipStream?.Dispose();
-            }
+        try
+        {
+            var isDm = context.GuildId is null;
+            await _delivery.DeliverAsync(context, result.PartyCard, zipAttachment,
+                isDm ? "Here's your party!" : "Check your DMs.");
         }
         catch (Exception sendEx)
         {
-            _logger.LogError(sendEx, "Failed to send party cards");
-            await command.FollowupAsync(
+            _logger.LogError(sendEx, "Failed to send party cards to user {UserId}", context.UserId);
+            await context.FollowupAsync(
                 embed: ResponseCardBuilder.Build("Party Send Failed",
                     "Something went wrong sending your party. Please try again.", new Color(200, 50, 50)),
                 ephemeral: true);
+        }
+        finally
+        {
+            zipStream?.Dispose();
         }
     }
 }

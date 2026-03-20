@@ -1,6 +1,4 @@
 using Discord;
-using Discord.WebSocket;
-using System.Diagnostics.CodeAnalysis;
 
 namespace ScvmBot.Bot.Services.Commands;
 
@@ -15,9 +13,6 @@ public sealed class HelloCommand : ISlashCommand
             .WithDescription("Say hello to ScvmBot!")
             .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
 
-    [ExcludeFromCodeCoverage(Justification = "Accepts sealed SocketSlashCommand; trivial one-liner.")]
-    public Task HandleAsync(SocketSlashCommand command)
-    {
-        return command.RespondAsync($"Hello, {command.User.Mention}! I'm ScvmBot!");
-    }
+    public Task HandleAsync(ISlashCommandContext context) =>
+        context.RespondAsync($"Hello, {context.UserMention}! I'm ScvmBot!");
 }

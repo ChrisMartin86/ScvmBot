@@ -68,10 +68,10 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         // High rolls to differentiate 3d6 from 4d6
-        var rng = new DeterministicRandom(new[] { 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 });
+        var rng = new DeterministicRandom(Enumerable.Repeat(6, 12).Concat(Enumerable.Repeat(1, 18)));
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
             RollMethod = AbilityRollMethod.FourD6DropLowest,  // Should be ignored!
@@ -102,9 +102,9 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
             var rng = new Random(seed);
             var generator = new CharacterGenerator(referenceData, rng);
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
-                ClassName = "none",  // Explicitly classless
+                ClassName = MorkBorgConstants.ClasslessClassName,  // Explicitly classless
                 RollMethod = AbilityRollMethod.FourD6DropLowest,
             });
 
@@ -140,7 +140,7 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
         var rng = new Random(42);
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
         });
 

@@ -40,28 +40,17 @@ public sealed class MorkBorgGenerateOptionParser
 
         var opts = subcommand.Options;
         return ParseRawOptions(
-            rollMethod: FindOptionValueByName<string>(opts, "roll-method"),
-            className: FindOptionValueByName<string>(opts, "class"),
-            nameOverride: FindOptionValueByName<string>(opts, "name"));
+            rollMethod: FindOptionValueByName(opts, "roll-method"),
+            className: FindOptionValueByName(opts, "class"),
+            nameOverride: FindOptionValueByName(opts, "name"));
     }
 
-    private static T? FindOptionValueByName<T>(
+    private static string? FindOptionValueByName(
         IReadOnlyCollection<IApplicationCommandInteractionDataOption> options,
         string optionName)
     {
         var option = options.FirstOrDefault(o => o.Name == optionName);
-        if (option?.Value == null)
-            return default;
-
-        // Type-safe cast
-        try
-        {
-            return (T?)(object?)option.Value;
-        }
-        catch
-        {
-            return default;
-        }
+        return option?.Value?.ToString();
     }
 
     /// <summary>

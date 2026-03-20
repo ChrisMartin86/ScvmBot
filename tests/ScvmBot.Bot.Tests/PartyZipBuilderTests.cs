@@ -84,6 +84,26 @@ public class PartyZipBuilderTests
 
         Assert.Equal("TestParty.zip", result);
     }
+
+    [Theory]
+    [InlineData("@#$", "party")]
+    [InlineData("!!!", "party")]
+    [InlineData("---", "---")]
+    [InlineData("_name_", "name")]
+    public void SanitizeFileName_ReturnsNonEmpty_WhenInputReducesToAllUnderscores(string name, string expected)
+    {
+        var result = PartyZipBuilder.SanitizeFileName(name);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void SanitizeFileName_UsesCustomFallback_WhenResultIsEmpty()
+    {
+        var result = PartyZipBuilder.SanitizeFileName("@#$", fallback: "character");
+
+        Assert.Equal("character", result);
+    }
 }
 
 // =====================================================================

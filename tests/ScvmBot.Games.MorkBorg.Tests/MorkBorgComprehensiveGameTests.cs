@@ -19,7 +19,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
         var rng = new Random(444);
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = className.Length > 0 ? className : null,
         });
@@ -54,7 +54,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
         {
             var rng = new Random(seed);
             var generator = new CharacterGenerator(referenceData, rng);
-            char1 = await generator.GenerateAsync(new CharacterGenerationOptions
+            char1 = generator.Generate(new CharacterGenerationOptions
             {
             });
         }
@@ -62,7 +62,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
         {
             var rng = new Random(seed);
             var generator = new CharacterGenerator(referenceData, rng);
-            char2 = await generator.GenerateAsync(new CharacterGenerationOptions
+            char2 = generator.Generate(new CharacterGenerationOptions
             {
             });
         }
@@ -87,7 +87,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
 
         for (int i = 0; i < 1000; i++)
         {
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
             });
 
@@ -125,7 +125,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
                 var rng = new Random(baseRng.Next());
                 var generator = new CharacterGenerator(referenceData, rng);
 
-                var character = await generator.GenerateAsync(new CharacterGenerationOptions
+                var character = generator.Generate(new CharacterGenerationOptions
                 {
                     ClassName = className,
                 });
@@ -144,7 +144,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
         var rng = new Random(888);
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             Name = "Test Character",
             ClassName = "Fanged Deserter",
@@ -183,7 +183,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
         var rng = new Random(999);
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(null);
+        var character = generator.Generate(null);
 
         // Should still generate valid character
         Assert.False(string.IsNullOrWhiteSpace(character.Name));
@@ -204,7 +204,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
             var rng = new Random(i);
             var generator = new CharacterGenerator(referenceData, rng);
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = null,  // Allow random
             });
@@ -228,10 +228,10 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
     public async Task Character_Output_IncludesAllGameInformation()
     {
         var referenceData = await LoadGameReferenceDataAsync();
-        var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 });
+        var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Esoteric Hermit",
         });

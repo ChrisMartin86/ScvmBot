@@ -1,3 +1,4 @@
+using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
@@ -120,13 +121,15 @@ public class ReferenceDataServiceErrorTests
         var dir = TestUtilities.CreateTempDirectory();
         try
         {
-            // All five required files must be present: classes, spells, names, weapons, armor.
-            // items.json, descriptions.json, and vignettes.json are supplementary and may be absent.
+            // Six required files: classes, spells, names, weapons, armor, items.
+            // Only descriptions.json and vignettes.json are optional.
             await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+            // descriptions.json and vignettes.json intentionally absent
 
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
 
@@ -144,7 +147,28 @@ public class ReferenceDataServiceErrorTests
     }
 
     [Fact]
-    public async Task CreateAsync_Throws_WhenOptionalFileContainsMalformedJson()
+    public async Task CreateAsync_Throws_WhenItemsFileIsMissing()
+    {
+        var dir = TestUtilities.CreateTempDirectory();
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            // items.json intentionally absent
+
+            await Assert.ThrowsAsync<FileNotFoundException>(() => MorkBorgReferenceDataService.CreateAsync(dir));
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public async Task CreateAsync_Throws_WhenItemsFileContainsMalformedJson()
     {
         var dir = TestUtilities.CreateTempDirectory();
         try
@@ -157,7 +181,7 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "NOT VALID JSON {{{");
 
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => MorkBorgReferenceDataService.CreateAsync(dir));
-            Assert.Contains("Malformed JSON", ex.Message);
+            Assert.Contains("Invalid JSON", ex.Message);
             Assert.Contains("items.json", ex.Message);
         }
         finally
@@ -177,6 +201,7 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
             Assert.Equal("Unknown", service.GetRandomName(new Random(42)));
         }
@@ -197,6 +222,7 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
             Assert.Null(service.GetRandomWeapon(new Random(42)));
         }
@@ -217,6 +243,7 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
             Assert.Null(service.GetRandomArmor(new Random(42)));
         }
@@ -237,6 +264,7 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
             Assert.Null(service.GetRandomItem(new Random(42)));
         }
@@ -257,28 +285,9 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
             Assert.Null(service.GetRandomClass(new Random(42)));
-        }
-        finally
-        {
-            Directory.Delete(dir, true);
-        }
-    }
-
-    [Fact]
-    public async Task GetRandomFromTable_ReturnsEmpty_WhenUnknownTableName()
-    {
-        var dir = TestUtilities.CreateTempDirectory();
-        try
-        {
-            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-            var service = await MorkBorgReferenceDataService.CreateAsync(dir);
-            Assert.Equal("", service.GetRandomFromTable("NonexistentTable", new Random(42)));
         }
         finally
         {
@@ -297,8 +306,9 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
-            Assert.Null(service.GetRandomScroll("Sacred", new Random(42)));
+            Assert.Null(service.GetRandomScroll(ScrollKind.Sacred, new Random(42)));
         }
         finally
         {

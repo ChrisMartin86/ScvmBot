@@ -12,28 +12,29 @@ public sealed class MorkBorgPdfRenderer
     public static readonly string DefaultTemplatePath =
         Path.Combine(AppContext.BaseDirectory, "Data", "character_sheet.pdf");
 
-    private readonly string _templatePath;
+    private readonly byte[]? _templateBytes;
 
     public MorkBorgPdfRenderer() : this(DefaultTemplatePath) { }
 
     public MorkBorgPdfRenderer(string templatePath)
     {
-        _templatePath = templatePath;
+        _templateBytes = File.Exists(templatePath)
+            ? File.ReadAllBytes(templatePath)
+            : null;
     }
 
-    /// <summary>Returns true when the PDF template file is present on disk.</summary>
-    public bool TemplateExists => File.Exists(_templatePath);
+    /// <summary>Returns true when the PDF template was loaded successfully at construction.</summary>
+    public bool TemplateExists => _templateBytes is not null;
 
     /// <summary>
     /// Fills the character sheet template with <paramref name="character"/> data and returns
-    /// the filled PDF bytes, or null if the template file is not present.
+    /// the filled PDF bytes, or null if the template was not available at startup.
     /// </summary>
     public byte[]? Render(Character character)
     {
-        if (!File.Exists(_templatePath))
+        if (_templateBytes is null)
             return null;
 
-        var templateBytes = File.ReadAllBytes(_templatePath);
-        return templateBytes.FillMorkBorgSheet(character, flatten: true);
+        return _templateBytes.FillMorkBorgSheet(character, flatten: true);
     }
 }

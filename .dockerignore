@@ -1,0 +1,17 @@
+# Build and test output
+**/bin/
+**/obj/
+**/TestResults/
+
+# Test projects — not needed in the image
+tests/
+
+# Local config with secrets
+bot/appsettings.json
+
+# Documentation and CI config
+docs/
+*.md
+.git/
+.gitignore
+.github/

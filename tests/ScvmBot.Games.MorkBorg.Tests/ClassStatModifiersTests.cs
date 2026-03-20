@@ -11,15 +11,15 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
 
         // Roll all 2s: 2+2+2 = 6 total = -2 modifier (no class modifiers apply to classless)
-        var diceRolls = new int[20];
+        var diceRolls = new int[30];
         for (int i = 0; i < diceRolls.Length; i++) diceRolls[i] = 2;
 
         var rng = new DeterministicRandom(diceRolls);
         var generator = new CharacterGenerator(refData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
         });
 
         // Classless should have all stats = -2 (from rolling all 2s with no modifiers)
@@ -41,7 +41,7 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
         var rng = new DeterministicRandom(diceRolls);
         var generator = new CharacterGenerator(refData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
         });
@@ -65,7 +65,7 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
         var rng = new DeterministicRandom(diceRolls);
         var generator = new CharacterGenerator(refData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
         });
@@ -84,14 +84,14 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
 
         var rng1 = new Random(seed);
         var gen1 = new CharacterGenerator(refData, rng1);
-        var char1 = await gen1.GenerateAsync(new CharacterGenerationOptions
+        var char1 = gen1.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
         });
 
         var rng2 = new Random(seed);
         var gen2 = new CharacterGenerator(refData, rng2);
-        var char2 = await gen2.GenerateAsync(new CharacterGenerationOptions
+        var char2 = gen2.Generate(new CharacterGenerationOptions
         {
             ClassName = "Occult Herbmaster",
         });
@@ -120,7 +120,7 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
             var rng = new Random(42);
             var generator = new CharacterGenerator(refData, rng);
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = classData.Name,
             });

@@ -1,16 +1,23 @@
 services:
   bot:
     build:
-      context: ./bot
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: bot/Dockerfile
     image: scvmbot-bot:${IMAGE_TAG:-latest}
     container_name: scvmbot-bot
     restart: unless-stopped
 
+    # Load all variables from a .env file at the repo root directly into the container.
+    # This is the mechanism that makes Discord__GuildIds__0, Discord__GuildIds__1, etc. work.
+    # The file is optional — omit it entirely for global command registration.
+    env_file:
+      - path: ./.env
+        required: false
+
     environment:
+      # Explicit entries here override anything in .env for the same key.
       - Discord__Token=${DISCORD_TOKEN}
-      - Bot__SyncCommands=${BOT_SYNC_COMMANDS:-true}
-      - Discord__GuildIds=${DISCORD_GUILD_IDS:-}
+      - Bot__SyncCommands=${BOT_SYNC_COMMANDS:-false}
       - Logging__LogLevel__Default=${LOG_LEVEL_DEFAULT:-Information}
       - Logging__LogLevel__Microsoft=${LOG_LEVEL_MICROSOFT:-Warning}
       - Logging__LogLevel__Discord=${LOG_LEVEL_DISCORD:-Information}

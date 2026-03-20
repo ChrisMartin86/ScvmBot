@@ -47,7 +47,9 @@ Array of weapon objects.  The `name` value must have a matching key in
     "damage": "string",       // die expression, e.g. "d6"
     "isRanged": false,
     "twoHanded": false,
-    "special": "string|null"  // optional rider text
+    "special": "string|null", // optional rider text
+    "tableIndex": "int|null"  // 1-based roll position in the random weapon table;
+                              // null for weapons that are not on the roll table
   }
 ]
 ```

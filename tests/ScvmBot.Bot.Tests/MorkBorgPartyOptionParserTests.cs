@@ -112,11 +112,12 @@ public class MorkBorgPartyOptionParserTests
     }
 
     [Fact]
-    public void ParsePartySize_HandlesStringConversion_IfValue()
+    public void ParsePartySize_ParsesLongValue_WhenValueIsInt()
     {
+        // Discord always delivers integer options as long. The mock uses long to match that.
         var subcommandOptions = new List<IApplicationCommandInteractionDataOption>
         {
-            CreateMockOption("size", ApplicationCommandOptionType.Integer, 3)
+            CreateMockOption("size", ApplicationCommandOptionType.Integer, 3L)
         };
 
         var options = new List<IApplicationCommandInteractionDataOption>

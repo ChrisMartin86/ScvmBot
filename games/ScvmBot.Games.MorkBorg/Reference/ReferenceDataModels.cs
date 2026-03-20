@@ -1,6 +1,11 @@
 using System.Text.Json.Serialization;
+using ScvmBot.Games.MorkBorg.Generation;
 
 namespace ScvmBot.Games.MorkBorg.Reference;
+
+/// <summary>Represents whether a scroll is Sacred or Unclean.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ScrollKind { Sacred, Unclean }
 
 public class WeaponData
 {
@@ -18,6 +23,13 @@ public class WeaponData
 
     [JsonPropertyName("special")]
     public string? Special { get; set; }
+
+    /// <summary>
+    /// 1-based position in the random weapon roll table. Only set for weapons that
+    /// appear on the equipment-table roll; weapons without a table slot leave this null.
+    /// </summary>
+    [JsonPropertyName("tableIndex")]
+    public int? TableIndex { get; set; }
 
     public string ToFormattedString()
     {
@@ -91,9 +103,9 @@ public class ScrollData
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>"Unclean" or "Sacred".</summary>
+    /// <summary>Whether this scroll is Sacred or Unclean.</summary>
     [JsonPropertyName("scrollType")]
-    public string ScrollType { get; set; } = string.Empty;
+    public ScrollKind Kind { get; set; }
 
     /// <summary>Position on the d10 table (1-10).</summary>
     [JsonPropertyName("scrollNumber")]
@@ -107,7 +119,7 @@ public class ScrollData
     public int UsageDR { get; set; } = 12;
 
     public string ToFormattedString()
-        => $"{Name} ({ScrollType} #{ScrollNumber}, DR{UsageDR})";
+        => $"{Name} ({Kind} #{ScrollNumber}, DR{UsageDR})";
 }
 
 public class ClassData
@@ -128,13 +140,13 @@ public class ClassData
     public string ClassAbility { get; set; } = string.Empty;
 
     [JsonPropertyName("startingWeapons")]
-    public List<string> StartingWeapons { get; set; } = new();
+    public IReadOnlyList<string> StartingWeapons { get; set; } = [];
 
     [JsonPropertyName("startingArmor")]
-    public List<string> StartingArmor { get; set; } = new();
+    public IReadOnlyList<string> StartingArmor { get; set; } = [];
 
     [JsonPropertyName("startingScrolls")]
-    public List<string> StartingScrolls { get; set; } = new();
+    public IReadOnlyList<string> StartingScrolls { get; set; } = [];
 
     [JsonPropertyName("startingSilver")]
     public string? StartingSilver { get; set; }
@@ -180,7 +192,7 @@ public class ClassData
     /// Any unrecognized value will throw InvalidOperationException during generation.
     /// </summary>
     [JsonPropertyName("startingEquipmentMode")]
-    public string StartingEquipmentMode { get; set; } = "ordinary";
+    public string StartingEquipmentMode { get; set; } = MorkBorgConstants.EquipmentMode.Ordinary;
 
     /// <summary>Additional starting items or features specific to this class.
     /// Supports concrete item names (e.g. "Medicine chest") and generation tokens:
@@ -189,7 +201,7 @@ public class ClassData
     /// - random_any_scroll: generates a random sacred or unclean scroll
     /// </summary>
     [JsonPropertyName("startingItems")]
-    public List<string> StartingItems { get; set; } = new();
+    public IReadOnlyList<string> StartingItems { get; set; } = [];
 
     [JsonPropertyName("canUseScrolls")]
     public bool CanUseScrolls { get; set; } = true;
@@ -207,36 +219,36 @@ public class ClassData
 public class DescriptionTables
 {
     [JsonPropertyName("Trait")]
-    public List<string> Trait { get; set; } = new();
+    public IReadOnlyList<string> Trait { get; set; } = [];
 
     [JsonPropertyName("BrokenBody")]
-    public List<string> BrokenBody { get; set; } = new();
+    public IReadOnlyList<string> BrokenBody { get; set; } = [];
 
     [JsonPropertyName("BadHabit")]
-    public List<string> BadHabit { get; set; } = new();
+    public IReadOnlyList<string> BadHabit { get; set; } = [];
 
 }
 
 public class VignetteData
 {
     [JsonPropertyName("Templates")]
-    public List<string> Templates { get; set; } = new();
+    public IReadOnlyList<string> Templates { get; set; } = [];
 
     [JsonPropertyName("ClassIntros")]
-    public Dictionary<string, List<string>> ClassIntros { get; set; } = new();
+    public Dictionary<string, IReadOnlyList<string>> ClassIntros { get; set; } = [];
 
     [JsonPropertyName("Bodies")]
-    public Dictionary<string, List<string>> Bodies { get; set; } = new();
+    public Dictionary<string, IReadOnlyList<string>> Bodies { get; set; } = [];
 
     [JsonPropertyName("Habits")]
-    public Dictionary<string, List<string>> Habits { get; set; } = new();
+    public Dictionary<string, IReadOnlyList<string>> Habits { get; set; } = [];
 
     [JsonPropertyName("Items")]
-    public Dictionary<string, List<string>> Items { get; set; } = new();
+    public Dictionary<string, IReadOnlyList<string>> Items { get; set; } = [];
 
     [JsonPropertyName("Traits")]
-    public Dictionary<string, List<string>> Traits { get; set; } = new();
+    public Dictionary<string, IReadOnlyList<string>> Traits { get; set; } = [];
 
     [JsonPropertyName("Closers")]
-    public List<string> Closers { get; set; } = new();
+    public IReadOnlyList<string> Closers { get; set; } = [];
 }

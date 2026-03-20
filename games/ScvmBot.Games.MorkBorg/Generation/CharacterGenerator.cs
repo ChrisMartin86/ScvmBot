@@ -26,9 +26,8 @@ public sealed class CharacterGenerator
         _startingGearTable = new StartingGearTable(refData, _dice, _scrollResolver, _rng);
     }
 
-    public async Task<Character> GenerateAsync(
-        CharacterGenerationOptions? options = null,
-        CancellationToken ct = default)
+    public Character Generate(
+        CharacterGenerationOptions? options = null)
     {
         options ??= new CharacterGenerationOptions();
 
@@ -73,9 +72,9 @@ public sealed class CharacterGenerator
             _scrollResolver.ResolveStartingScrolls(classData, scrollsList);
         }
 
-        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Trait, _refData.GetRandomFromTable("Trait", _rng)));
-        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Body, _refData.GetRandomFromTable("BrokenBody", _rng)));
-        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Habit, _refData.GetRandomFromTable("BadHabit", _rng)));
+        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Trait, _refData.GetRandomTrait(_rng)));
+        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Body, _refData.GetRandomBody(_rng)));
+        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Habit, _refData.GetRandomHabit(_rng)));
 
         var character = new Character
         {
@@ -113,7 +112,7 @@ public sealed class CharacterGenerator
     /// </summary>
     private ClassData? ResolveClass(CharacterGenerationOptions options)
     {
-        if (string.Equals(options.ClassName, "none", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(options.ClassName, MorkBorgConstants.ClasslessClassName, StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }

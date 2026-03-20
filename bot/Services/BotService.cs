@@ -16,6 +16,10 @@ public class BotService : IHostedService
     private readonly IReadOnlyDictionary<string, ISlashCommand> _slashCommands;
     private readonly ILogger<BotService> _logger;
 
+    // Tracks whether command registration has been completed for this process lifetime.
+    // ReadyAsync fires on every reconnect; registration must only run once.
+    private bool _commandsRegistered;
+
     public BotService(
         DiscordSocketClient client,
         IConfiguration configuration,
@@ -34,12 +38,12 @@ public class BotService : IHostedService
             ?? throw new InvalidOperationException("Discord token not found in configuration.");
 
         _client.Log += OnDiscordLog;
-        _client.Ready += ReadyAsync;
+        _client.Ready += OnReadyAsync;
         _client.SlashCommandExecuted += SlashCommandHandler;
 
         await _client.LoginAsync(TokenType.Bot, token);
 
-        // Stay invisible until ReadyAsync registers commands.
+        // Stay invisible until OnReadyAsync promotes status to Online.
         await _client.SetStatusAsync(UserStatus.Invisible);
 
         await _client.StartAsync();
@@ -47,6 +51,10 @@ public class BotService : IHostedService
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
+        _client.Log -= OnDiscordLog;
+        _client.Ready -= OnReadyAsync;
+        _client.SlashCommandExecuted -= SlashCommandHandler;
+
         await _client.SetStatusAsync(UserStatus.Invisible);
         await _client.LogoutAsync();
         await _client.StopAsync();
@@ -69,61 +77,76 @@ public class BotService : IHostedService
         return Task.CompletedTask;
     }
 
-    private async Task ReadyAsync()
+    private async Task OnReadyAsync()
     {
         _logger.LogInformation("Connected as {BotUser}.", _client.CurrentUser);
 
-        var syncCommands = _configuration.GetValue<bool>("Bot:SyncCommands");
-        if (syncCommands)
+        // Command registration is a startup/deployment concern. ReadyAsync fires on every
+        // reconnect, so gate registration behind a flag that is set exactly once per
+        // process lifetime to prevent duplicate registration on reconnect.
+        if (!_commandsRegistered)
         {
-            _logger.LogInformation("Bot:SyncCommands is enabled. Registering {CommandCount} slash command(s)...",
-                _slashCommands.Count);
-
-            try
-            {
-                var commandProperties = _slashCommands.Values
-                    .Select(cmd => cmd.BuildCommand().Build())
-                    .ToArray();
-
-                var strategy = CommandRegistrar.ResolveStrategy(_configuration);
-                if (strategy.Mode == RegistrationMode.Guild)
-                {
-                    foreach (var guildId in strategy.GuildIds)
-                    {
-                        var guild = _client.GetGuild(guildId);
-                        if (guild is null)
-                        {
-                            _logger.LogWarning("Discord:GuildIds contains {GuildId} but the guild was not found. Skipping.", guildId);
-                            continue;
-                        }
-
-                        await guild.BulkOverwriteApplicationCommandAsync(commandProperties);
-                        _logger.LogInformation("Registered {CommandCount} slash command(s) to guild {GuildName} ({GuildId}).",
-                            _slashCommands.Count, guild.Name, guild.Id);
-                    }
-                }
-                else
-                {
-                    await _client.BulkOverwriteGlobalApplicationCommandsAsync(commandProperties);
-                    _logger.LogInformation("Registered {CommandCount} slash command(s) globally.", _slashCommands.Count);
-                }
-
-                foreach (var cmd in _slashCommands.Values)
-                    _logger.LogDebug("  Registered /{CommandName}", cmd.Name);
-            }
-            catch (HttpException ex)
-            {
-                _logger.LogCritical(ex, "Failed to register slash commands. Bot will not be functional.");
-                throw;
-            }
+            await RegisterCommandsAsync();
+            _commandsRegistered = true;
         }
         else
         {
-            _logger.LogInformation("Skipping command registration (Bot:SyncCommands is not enabled).");
+            _logger.LogInformation("Reconnected. Skipping command registration (already completed this session).");
         }
 
         await _client.SetStatusAsync(UserStatus.Online);
         _logger.LogInformation("Bot is ready.");
+    }
+
+    private async Task RegisterCommandsAsync()
+    {
+        var syncCommands = _configuration.GetValue<bool>("Bot:SyncCommands");
+        if (!syncCommands)
+        {
+            _logger.LogInformation("Skipping command registration (Bot:SyncCommands is not enabled).");
+            return;
+        }
+
+        _logger.LogInformation("Bot:SyncCommands is enabled. Registering {CommandCount} slash command(s)...",
+            _slashCommands.Count);
+
+        try
+        {
+            var commandProperties = _slashCommands.Values
+                .Select(cmd => cmd.BuildCommand().Build())
+                .ToArray();
+
+            var strategy = CommandRegistrar.ResolveStrategy(_configuration);
+            if (strategy.Mode == RegistrationMode.Guild)
+            {
+                foreach (var guildId in strategy.GuildIds)
+                {
+                    var guild = _client.GetGuild(guildId);
+                    if (guild is null)
+                    {
+                        _logger.LogWarning("Discord:GuildIds contains {GuildId} but the guild was not found. Skipping.", guildId);
+                        continue;
+                    }
+
+                    await guild.BulkOverwriteApplicationCommandAsync(commandProperties);
+                    _logger.LogInformation("Registered {CommandCount} slash command(s) to guild {GuildName} ({GuildId}).",
+                        _slashCommands.Count, guild.Name, guild.Id);
+                }
+            }
+            else
+            {
+                await _client.BulkOverwriteGlobalApplicationCommandsAsync(commandProperties);
+                _logger.LogInformation("Registered {CommandCount} slash command(s) globally.", _slashCommands.Count);
+            }
+
+            foreach (var cmd in _slashCommands.Values)
+                _logger.LogDebug("  Registered /{CommandName}", cmd.Name);
+        }
+        catch (HttpException ex)
+        {
+            _logger.LogCritical(ex, "Failed to register slash commands. Bot will not be functional.");
+            throw;
+        }
     }
 
     private Task SlashCommandHandler(SocketSlashCommand command)
@@ -137,7 +160,8 @@ public class BotService : IHostedService
             // Fire and forget: handlers defer their response immediately, so the gateway task
             // can continue without waiting for the entire command processing to complete.
             // This prevents the "handler is blocking the gateway task" warning.
-            _ = handler.HandleAsync(command).ContinueWith(task =>
+            var context = new SocketSlashCommandContext(command);
+            _ = handler.HandleAsync(context).ContinueWith(task =>
             {
                 if (task.IsFaulted)
                 {

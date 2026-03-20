@@ -9,25 +9,29 @@
     "name": "Femur",
     "damage": "d4",
     "isRanged": false,
-    "twoHanded": false
+    "twoHanded": false,
+    "tableIndex": 1
   },
   {
     "name": "Staff",
     "damage": "d4",
     "isRanged": false,
-    "twoHanded": true
+    "twoHanded": true,
+    "tableIndex": 2
   },
   {
     "name": "Knife",
     "damage": "d4",
     "isRanged": false,
-    "twoHanded": false
+    "twoHanded": false,
+    "tableIndex": 4
   },
   {
     "name": "Shortsword",
     "damage": "d4",
     "isRanged": false,
-    "twoHanded": false
+    "twoHanded": false,
+    "tableIndex": 3
   },
   {
     "name": "Shortbow",
@@ -63,19 +67,22 @@
     "name": "Sword",
     "damage": "d6",
     "isRanged": false,
-    "twoHanded": false
+    "twoHanded": false,
+    "tableIndex": 6
   },
   {
     "name": "Warhammer",
     "damage": "d6",
     "isRanged": false,
-    "twoHanded": false
+    "twoHanded": false,
+    "tableIndex": 5
   },
   {
     "name": "Bow",
     "damage": "d6",
     "isRanged": true,
-    "twoHanded": true
+    "twoHanded": true,
+    "tableIndex": 7
   },
   {
     "name": "Battle axe",
@@ -87,13 +94,15 @@
     "name": "Flail",
     "damage": "d8",
     "isRanged": false,
-    "twoHanded": false
+    "twoHanded": false,
+    "tableIndex": 8
   },
   {
     "name": "Crossbow",
     "damage": "d8",
     "isRanged": true,
-    "twoHanded": true
+    "twoHanded": true,
+    "tableIndex": 9
   },
   {
     "name": "Whip",
@@ -106,7 +115,8 @@
     "damage": "d10",
     "isRanged": false,
     "twoHanded": true,
-    "special": "Scrolls will never work when wielding zweihand weapons or medium/heavy armor."
+    "special": "Scrolls will never work when wielding zweihand weapons or medium/heavy armor.",
+    "tableIndex": 10
   },
   {
     "name": "Dagger",

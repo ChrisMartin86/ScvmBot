@@ -15,10 +15,9 @@ public sealed class ScrollResolver
 
     public string GetRandomAnyScroll()
     {
-        var sacred = _refData.Scrolls.Where(s => s.ScrollType.Equals("Sacred", StringComparison.OrdinalIgnoreCase)).ToList();
-        var unclean = _refData.Scrolls.Where(s => s.ScrollType.Equals("Unclean", StringComparison.OrdinalIgnoreCase)).ToList();
-
-        var all = sacred.Concat(unclean).ToList();
+        var all = _refData.Scrolls
+            .Where(s => s.Kind == ScrollKind.Sacred || s.Kind == ScrollKind.Unclean)
+            .ToList();
 
         if (all.Count == 0)
         {
@@ -35,17 +34,23 @@ public sealed class ScrollResolver
 
         foreach (var scrollKey in classData.StartingScrolls)
         {
-            if (scrollKey == "random_unclean")
+            if (scrollKey == MorkBorgConstants.ScrollToken.RandomUnclean)
             {
-                var scroll = _refData.GetRandomScroll("Unclean", _rng);
-                if (scroll != null) scrollsList.Add(scroll.ToFormattedString());
+                var scroll = _refData.GetRandomScroll(ScrollKind.Unclean, _rng);
+                if (scroll is null)
+                    throw new InvalidOperationException(
+                        $"Class '{classData.Name}' requires an Unclean scroll but no Unclean scrolls exist in the data.");
+                scrollsList.Add(scroll.ToFormattedString());
             }
-            else if (scrollKey == "random_sacred")
+            else if (scrollKey == MorkBorgConstants.ScrollToken.RandomSacred)
             {
-                var scroll = _refData.GetRandomScroll("Sacred", _rng);
-                if (scroll != null) scrollsList.Add(scroll.ToFormattedString());
+                var scroll = _refData.GetRandomScroll(ScrollKind.Sacred, _rng);
+                if (scroll is null)
+                    throw new InvalidOperationException(
+                        $"Class '{classData.Name}' requires a Sacred scroll but no Sacred scrolls exist in the data.");
+                scrollsList.Add(scroll.ToFormattedString());
             }
-            else if (scrollKey == "random_any_scroll")
+            else if (scrollKey == MorkBorgConstants.ScrollToken.RandomAnyScroll)
             {
                 var scrollName = GetRandomAnyScroll();
                 if (!string.IsNullOrEmpty(scrollName)) scrollsList.Add(scrollName);
@@ -61,19 +66,23 @@ public sealed class ScrollResolver
     {
         switch (token.ToLowerInvariant())
         {
-            case "random_sacred_scroll":
-                var sacredScroll = _refData.GetRandomScroll("Sacred", _rng);
-                if (sacredScroll != null && scrollsList != null)
-                    scrollsList.Add(sacredScroll.ToFormattedString());
+            case MorkBorgConstants.ScrollToken.RandomSacredScroll:
+                var sacredScroll = _refData.GetRandomScroll(ScrollKind.Sacred, _rng);
+                if (sacredScroll is null)
+                    throw new InvalidOperationException(
+                        "A Sacred scroll is required by starting item data but no Sacred scrolls exist in the data.");
+                scrollsList?.Add(sacredScroll.ToFormattedString());
                 return true;
 
-            case "random_unclean_scroll":
-                var uncleanScroll = _refData.GetRandomScroll("Unclean", _rng);
-                if (uncleanScroll != null && scrollsList != null)
-                    scrollsList.Add(uncleanScroll.ToFormattedString());
+            case MorkBorgConstants.ScrollToken.RandomUncleanScroll:
+                var uncleanScroll = _refData.GetRandomScroll(ScrollKind.Unclean, _rng);
+                if (uncleanScroll is null)
+                    throw new InvalidOperationException(
+                        "An Unclean scroll is required by starting item data but no Unclean scrolls exist in the data.");
+                scrollsList?.Add(uncleanScroll.ToFormattedString());
                 return true;
 
-            case "random_any_scroll":
+            case MorkBorgConstants.ScrollToken.RandomAnyScroll:
                 var anyScroll = GetRandomAnyScroll();
                 if (!string.IsNullOrEmpty(anyScroll) && scrollsList != null)
                     scrollsList.Add(anyScroll);

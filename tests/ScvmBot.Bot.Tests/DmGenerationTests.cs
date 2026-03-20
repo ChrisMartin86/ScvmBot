@@ -7,46 +7,6 @@ namespace ScvmBot.Bot.Tests;
 public class DmGenerationTests
 {
     [Fact]
-    public void IsDmInteraction_ReturnsTrue_WhenGuildIdIsNull()
-    {
-        Assert.True(GenerateCommandHandler.IsDmInteraction(null));
-    }
-
-    [Fact]
-    public void IsDmInteraction_ReturnsFalse_WhenGuildIdHasValue()
-    {
-        Assert.False(GenerateCommandHandler.IsDmInteraction(123456789UL));
-    }
-
-    [Fact]
-    public void GetFollowupText_ReturnsDmText_WhenDm()
-    {
-        var text = GenerateCommandHandler.GetFollowupText(isDm: true);
-        Assert.Equal("Here's your character!", text);
-    }
-
-    [Fact]
-    public void GetFollowupText_ReturnsGuildText_WhenNotDm()
-    {
-        var text = GenerateCommandHandler.GetFollowupText(isDm: false);
-        Assert.Equal("Check your DMs.", text);
-    }
-
-    [Fact]
-    public void GetPartyFollowupText_ReturnsDmText_WhenDm()
-    {
-        var text = GenerateCommandHandler.GetPartyFollowupText(isDm: true);
-        Assert.Equal("Here's your party!", text);
-    }
-
-    [Fact]
-    public void GetPartyFollowupText_ReturnsGuildText_WhenNotDm()
-    {
-        var text = GenerateCommandHandler.GetPartyFollowupText(isDm: false);
-        Assert.Equal("Check your DMs.", text);
-    }
-
-    [Fact]
     public void GenerateCommand_HasDmContextTypes()
     {
         var handler = CreateMinimalHandler();
@@ -66,10 +26,21 @@ public class DmGenerationTests
         Assert.Contains(InteractionContextType.PrivateChannel, builder.ContextTypes);
     }
 
-    private static GenerateCommandHandler CreateMinimalHandler()
+    [Fact]
+    public async Task HelloCommand_HandleAsync_RespondsWithUserMention()
     {
-        return new GenerateCommandHandler(
-            gameSystems: Array.Empty<Games.IGameSystem>(),
-            logger: new Microsoft.Extensions.Logging.Abstractions.NullLogger<GenerateCommandHandler>());
+        var command = new HelloCommand();
+        var context = new FakeCommandContext { UserMention = "<@123>" };
+
+        await command.HandleAsync(context);
+
+        Assert.Single(context.RespondTexts);
+        Assert.Contains("<@123>", context.RespondTexts[0]);
     }
+
+    private static GenerateCommandHandler CreateMinimalHandler() =>
+        new(gameSystems: Array.Empty<Games.IGameSystem>(),
+            delivery: new GenerationDeliveryService(Microsoft.Extensions.Logging.Abstractions.NullLogger<GenerationDeliveryService>.Instance),
+            logger: Microsoft.Extensions.Logging.Abstractions.NullLogger<GenerateCommandHandler>.Instance);
 }
+

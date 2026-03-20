@@ -35,6 +35,31 @@ public class MorkBorgPartyGenerationTests
     }
 
     [Fact]
+    public async Task BuildCommandGroupOptions_PartySubcommandHasNoNameOption()
+    {
+        // Party names are always randomly generated; there is no user-supplied name option.
+        // This test guards against accidentally re-introducing a ghost option that the parser
+        // no longer supports.
+        var gs = await CreateMinimalGameSystemAsync();
+        var builder = gs.BuildCommandGroupOptions();
+        var partySubcommand = builder.Options!.First(o => o.Name == "party");
+        var nameOpt = partySubcommand.Options?.FirstOrDefault(o => o.Name == "name");
+        Assert.Null(nameOpt);
+    }
+
+    [Fact]
+    public async Task BuildCommandGroupOptions_PartySubcommandExposesOnlySizeOption()
+    {
+        // The command surface and the parser must agree. If this count changes, the parser
+        // and command definition need to be updated together.
+        var gs = await CreateMinimalGameSystemAsync();
+        var builder = gs.BuildCommandGroupOptions();
+        var partySubcommand = builder.Options!.First(o => o.Name == "party");
+        var optionNames = partySubcommand.Options?.Select(o => o.Name).ToList() ?? [];
+        Assert.Equal(["size"], optionNames);
+    }
+
+    [Fact]
     public async Task HandlePartyGenerationAsync_GeneratesMultipleCharacters()
     {
         var gs = await CreateMinimalGameSystemAsync();
@@ -134,8 +159,7 @@ public class MorkBorgPartyGenerationTests
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
                 new List<IApplicationCommandInteractionDataOption>
                 {
-                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 2L),
-                    CreateMockOption("name", ApplicationCommandOptionType.String, "The Doomed")
+                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 2L)
                 })
         };
 
@@ -163,36 +187,15 @@ public class MorkBorgPartyGenerationTests
             CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
                 new List<IApplicationCommandInteractionDataOption>
                 {
-                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 3L),
-                    CreateMockOption("name", ApplicationCommandOptionType.String, "Test Squad")
+                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 3L)
                 })
         };
 
         var result = await gs.HandleGenerateCommandAsync(partyOptions);
 
         var partyResult = Assert.IsType<PartyGenerationResult>(result);
-        Assert.Equal("Test Squad", partyResult.PartyCard.Title);
+        Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyCard.Title));
         Assert.Contains("Party of 3", partyResult.PartyCard.Description);
-    }
-
-    [Fact]
-    public async Task HandleGenerateCommandAsync_Party_UsesSuppliedPartyName()
-    {
-        var gs = await CreateMinimalGameSystemAsync();
-        var partyOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
-                new List<IApplicationCommandInteractionDataOption>
-                {
-                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 2L),
-                    CreateMockOption("name", ApplicationCommandOptionType.String, "Custom Name")
-                })
-        };
-
-        var result = await gs.HandleGenerateCommandAsync(partyOptions);
-
-        var partyResult = Assert.IsType<PartyGenerationResult>(result);
-        Assert.Equal("Custom Name", partyResult.PartyName);
     }
 
     [Fact]
@@ -241,10 +244,11 @@ public class MorkBorgPartyGenerationTests
         await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
         await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
         await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
         var pdfRenderer = new MorkBorgPdfRenderer();
-        return new MorkBorgGameSystem(generator, pdfRenderer);
+        return new MorkBorgGameSystem(generator, pdfRenderer, refData);
     }
 
     private static IApplicationCommandInteractionDataOption CreateMockOption(
