@@ -3,9 +3,9 @@ using ScvmBot.Bot.Games;
 using ScvmBot.Bot.Games.MorkBorg;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
-using ScvmBot.Games.MorkBorg.Pdf;
 using ScvmBot.Games.MorkBorg.Reference;
-using ScvmBot.Bot.Services;
+using ScvmBot.Rendering;
+using ScvmBot.Rendering.MorkBorg;
 using System.IO.Compression;
 
 namespace ScvmBot.Bot.Tests;
@@ -94,7 +94,7 @@ public class MorkBorgPartyGenerationTests
         var result = await gs.HandleGenerateCommandAsync(partySubcommandOptions);
 
         var partyResult = Assert.IsType<PartyGenerationResult>(result);
-        Assert.NotNull(partyResult.PartyCard.Title);
+        Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
     }
 
     [Fact]
@@ -147,7 +147,6 @@ public class MorkBorgPartyGenerationTests
 
         var charResult = Assert.IsType<CharacterGenerationResult>(result);
         Assert.NotNull(charResult.Character);
-        Assert.NotNull(charResult.Card);
     }
 
     [Fact]
@@ -166,9 +165,9 @@ public class MorkBorgPartyGenerationTests
         var result = await gs.HandleGenerateCommandAsync(partyOptions);
         var partyResult = Assert.IsType<PartyGenerationResult>(result);
 
-        // Verify ZIP can be created from pre-generated PDFs
+        // Verify ZIP can be created from character data
         var members = partyResult.Characters
-            .Select(c => (c, gs.GeneratePdf(c)!))
+            .Select(c => (c, new byte[] { 0x25, 0x50, 0x44, 0x46 }))
             .ToList();
         var zipBytes = PartyZipBuilder.CreatePartyZip(members);
         Assert.True(zipBytes.Length > 0);
@@ -194,8 +193,9 @@ public class MorkBorgPartyGenerationTests
         var result = await gs.HandleGenerateCommandAsync(partyOptions);
 
         var partyResult = Assert.IsType<PartyGenerationResult>(result);
-        Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyCard.Title));
-        Assert.Contains("Party of 3", partyResult.PartyCard.Description);
+        Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
+        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed(partyResult.PartyName, partyResult.Characters);
+        Assert.Contains("Party of 3", embed.Description);
     }
 
     [Fact]
@@ -229,9 +229,9 @@ public class MorkBorgPartyGenerationTests
         var result = await gs.HandleGenerateCommandAsync(charOptions);
 
         var charResult = Assert.IsType<CharacterGenerationResult>(result);
-        Assert.NotNull(charResult.Card);
-        Assert.NotNull(charResult.Card.Title);
-        Assert.False(string.IsNullOrWhiteSpace(charResult.Card.Title));
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed((Character)charResult.Character);
+        Assert.NotNull(embed.Title);
+        Assert.False(string.IsNullOrWhiteSpace(embed.Title));
     }
 
     // Helpers
@@ -247,8 +247,7 @@ public class MorkBorgPartyGenerationTests
         await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
-        var pdfRenderer = new MorkBorgPdfRenderer();
-        return new MorkBorgGameSystem(generator, pdfRenderer, refData);
+        return new MorkBorgGameSystem(generator, refData);
     }
 
     private static IApplicationCommandInteractionDataOption CreateMockOption(

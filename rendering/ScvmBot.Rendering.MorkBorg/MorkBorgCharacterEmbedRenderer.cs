@@ -1,9 +1,8 @@
 using Discord;
-using ScvmBot.Bot.Games;
 using ScvmBot.Games.MorkBorg.Models;
 using System.Text;
 
-namespace ScvmBot.Bot.Rendering.MorkBorg;
+namespace ScvmBot.Rendering.MorkBorg;
 
 /// <summary>
 /// Renders a MÖRK BORG <see cref="CharacterGenerationResult"/> as a Discord embed

@@ -1,7 +1,7 @@
 using ScvmBot.Games.MorkBorg.Models;
 using System.IO.Compression;
 
-namespace ScvmBot.Bot.Services;
+namespace ScvmBot.Rendering;
 
 /// <summary>
 /// Creates ZIP files containing character PDFs for party downloads.

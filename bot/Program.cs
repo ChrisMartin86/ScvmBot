@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Rendering;
+using ScvmBot.Rendering;
 using ScvmBot.Bot.Services;
 using ScvmBot.Bot.Services.Commands;
 using ScvmBot.Games.MorkBorg.Reference;

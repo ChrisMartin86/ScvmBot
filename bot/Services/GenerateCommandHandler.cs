@@ -1,7 +1,7 @@
 using Discord;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Games;
-using ScvmBot.Bot.Rendering;
+using ScvmBot.Rendering;
 
 namespace ScvmBot.Bot.Services;
 

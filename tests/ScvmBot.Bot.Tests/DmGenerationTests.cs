@@ -1,6 +1,7 @@
 using Discord;
 using ScvmBot.Bot.Services;
 using ScvmBot.Bot.Services.Commands;
+using ScvmBot.Rendering;
 
 namespace ScvmBot.Bot.Tests;
 
@@ -40,6 +41,7 @@ public class DmGenerationTests
 
     private static GenerateCommandHandler CreateMinimalHandler() =>
         new(gameSystems: Array.Empty<Games.IGameSystem>(),
+            rendererRegistry: new RendererRegistry(Array.Empty<IResultRenderer>()),
             delivery: new GenerationDeliveryService(Microsoft.Extensions.Logging.Abstractions.NullLogger<GenerationDeliveryService>.Instance),
             logger: Microsoft.Extensions.Logging.Abstractions.NullLogger<GenerateCommandHandler>.Instance);
 }

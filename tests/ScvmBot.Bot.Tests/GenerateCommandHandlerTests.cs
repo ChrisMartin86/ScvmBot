@@ -5,8 +5,9 @@ using ScvmBot.Bot.Games.MorkBorg;
 using ScvmBot.Bot.Services;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
-using ScvmBot.Games.MorkBorg.Pdf;
 using ScvmBot.Games.MorkBorg.Reference;
+using ScvmBot.Rendering;
+using ScvmBot.Rendering.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
 
@@ -65,6 +66,7 @@ public class GenerateCommandHandlerTests
         var gs = await CreateMinimalGameSystemAsync();
         var handler = new GenerateCommandHandler(
             new[] { gs },
+            CreateMorkBorgRegistry(),
             CreateDeliveryService(),
             NullLogger<GenerateCommandHandler>.Instance);
 
@@ -94,6 +96,7 @@ public class GenerateCommandHandlerTests
         var gs = await CreateMinimalGameSystemAsync();
         var handler = new GenerateCommandHandler(
             new[] { gs },
+            CreateMorkBorgRegistry(),
             CreateDeliveryService(),
             NullLogger<GenerateCommandHandler>.Instance);
 
@@ -124,8 +127,14 @@ public class GenerateCommandHandlerTests
     public async Task HandleAsync_DeliversPartyCard_EvenWhenAllPdfRendersFail()
     {
         var gs = new ThrowingPdfPartyGameSystem();
+        // Register only embed renderers — no PDF renderer for this game system
+        var registry = new RendererRegistry(new IResultRenderer[]
+        {
+            new MorkBorgPartyEmbedRenderer()
+        });
         var handler = new GenerateCommandHandler(
             new ScvmBot.Bot.Games.IGameSystem[] { gs },
+            registry,
             CreateDeliveryService(),
             NullLogger<GenerateCommandHandler>.Instance);
 
@@ -153,8 +162,18 @@ public class GenerateCommandHandlerTests
     private static GenerationDeliveryService CreateDeliveryService() =>
         new(NullLogger<GenerationDeliveryService>.Instance);
 
+    private static RendererRegistry CreateEmptyRegistry() =>
+        new(Array.Empty<IResultRenderer>());
+
+    private static RendererRegistry CreateMorkBorgRegistry() =>
+        new(new IResultRenderer[]
+        {
+            new MorkBorgCharacterEmbedRenderer(),
+            new MorkBorgPartyEmbedRenderer()
+        });
+
     private static GenerateCommandHandler CreateMinimalHandler() =>
-        new(Array.Empty<ScvmBot.Bot.Games.IGameSystem>(), CreateDeliveryService(), NullLogger<GenerateCommandHandler>.Instance);
+        new(Array.Empty<ScvmBot.Bot.Games.IGameSystem>(), CreateEmptyRegistry(), CreateDeliveryService(), NullLogger<GenerateCommandHandler>.Instance);
 
     private static async Task<MorkBorgGameSystem> CreateMinimalGameSystemAsync()
     {
@@ -167,8 +186,7 @@ public class GenerateCommandHandlerTests
         await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
-        var pdfRenderer = new MorkBorgPdfRenderer();
-        return new MorkBorgGameSystem(generator, pdfRenderer, refData);
+        return new MorkBorgGameSystem(generator, refData);
     }
 
     private static IApplicationCommandInteractionDataOption MakeSubCommandGroup(
@@ -198,11 +216,10 @@ public class GenerateCommandHandlerTests
         public IReadOnlyCollection<IApplicationCommandInteractionDataOption>? Options { get; set; }
     }
 
-    private class ThrowingPdfPartyGameSystem : IGameSystem, IGamePdfSupport
+    private class ThrowingPdfPartyGameSystem : IGameSystem
     {
         public string Name => "Throwing PDF";
         public string CommandKey => "throwing-pdf";
-        public bool SupportsPdf => true;
 
         public SlashCommandOptionBuilder BuildCommandGroupOptions() => throw new NotImplementedException();
 
@@ -211,17 +228,10 @@ public class GenerateCommandHandlerTests
             CancellationToken ct = default)
         {
             var characters = new List<ICharacter> { new FakeCharacter { Name = "Skag" } };
-            var embed = new EmbedBuilder().WithTitle("Party").Build();
             return Task.FromResult<GenerateResult>(
                 new PartyGenerationResult(
                     Characters: characters.AsReadOnly(),
-                    PartyCard: embed,
                     PartyName: "Test Party"));
         }
-
-        public byte[]? GeneratePdf(ICharacter character) =>
-            throw new InvalidOperationException("PDF render failed intentionally.");
-
-        public string BuildFileName(ICharacter character) => "test.pdf";
     }
 }

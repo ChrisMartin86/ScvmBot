@@ -2,6 +2,7 @@ using Discord;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Reference;
+using ScvmBot.Rendering;
 
 namespace ScvmBot.Bot.Games.MorkBorg;
 

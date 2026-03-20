@@ -1,10 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using ScvmBot.Bot.Games;
-using ScvmBot.Bot.Rendering;
-using ScvmBot.Bot.Rendering.MorkBorg;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Pdf;
 using ScvmBot.Games.MorkBorg.Reference;
+using ScvmBot.Rendering;
+using ScvmBot.Rendering.MorkBorg;
 
 namespace ScvmBot.Bot.Games.MorkBorg;
 

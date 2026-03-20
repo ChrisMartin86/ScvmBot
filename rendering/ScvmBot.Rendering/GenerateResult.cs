@@ -1,8 +1,8 @@
 using ScvmBot.Games.MorkBorg.Models;
 
-namespace ScvmBot.Bot.Games;
+namespace ScvmBot.Rendering;
 
-/// <summary>Base type for results from <see cref="IGameSystem.HandleGenerateCommandAsync"/>.</summary>
+/// <summary>Base type for results from game system generation.</summary>
 public abstract record GenerateResult;
 
 /// <summary>Result for a single character generation.</summary>

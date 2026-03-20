@@ -1,6 +1,4 @@
-using ScvmBot.Bot.Games;
-
-namespace ScvmBot.Bot.Rendering;
+namespace ScvmBot.Rendering;
 
 /// <summary>
 /// A renderer that consumes a <see cref="GenerateResult"/> and produces

@@ -1,5 +1,6 @@
 using Discord;
 using Discord.Interactions;
+using ScvmBot.Rendering;
 
 namespace ScvmBot.Bot.Games;
 

@@ -1,10 +1,8 @@
 using Microsoft.Extensions.Logging;
-using ScvmBot.Bot.Games;
-using ScvmBot.Bot.Services;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Pdf;
 
-namespace ScvmBot.Bot.Rendering.MorkBorg;
+namespace ScvmBot.Rendering.MorkBorg;
 
 /// <summary>
 /// Renders a MÖRK BORG <see cref="PartyGenerationResult"/> as a ZIP archive

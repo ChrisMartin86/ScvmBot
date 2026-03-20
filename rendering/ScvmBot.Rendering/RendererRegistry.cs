@@ -1,6 +1,4 @@
-using ScvmBot.Bot.Games;
-
-namespace ScvmBot.Bot.Rendering;
+namespace ScvmBot.Rendering;
 
 /// <summary>
 /// Selects an appropriate <see cref="IResultRenderer"/> based on the generated
@@ -22,8 +20,7 @@ public sealed class RendererRegistry
 
     /// <summary>
     /// Returns the first renderer that supports the given result and format.
-    /// Throws <see cref="InvalidOperationException"/> if no renderer matches,
-    /// providing a clear diagnostic message.
+    /// Throws <see cref="InvalidOperationException"/> if no renderer matches.
     /// </summary>
     public IResultRenderer GetRequiredRenderer(GenerateResult result, OutputFormat format) =>
         FindRenderer(result, format)

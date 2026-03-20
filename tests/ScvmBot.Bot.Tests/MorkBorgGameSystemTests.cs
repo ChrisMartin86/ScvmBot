@@ -2,8 +2,9 @@ using Discord;
 using ScvmBot.Bot.Games.MorkBorg;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
-using ScvmBot.Games.MorkBorg.Pdf;
 using ScvmBot.Games.MorkBorg.Reference;
+using ScvmBot.Rendering;
+using ScvmBot.Rendering.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
 
@@ -142,7 +143,7 @@ public class MorkBorgGameSystemTests
     public void BuildFileName_FormatsWithName()
     {
         var character = new Character { Name = "Svein" };
-        var result = MorkBorgGameSystem.BuildFileNameInternal(character);
+        var result = MorkBorgCharacterPdfRenderer.BuildFileName(character);
         Assert.Equal("Svein.pdf", result);
     }
 
@@ -150,7 +151,7 @@ public class MorkBorgGameSystemTests
     public void BuildFileName_SanitizesSpecialCharacters()
     {
         var character = new Character { Name = "Kärg the Wretched" };
-        var result = MorkBorgGameSystem.BuildFileNameInternal(character);
+        var result = MorkBorgCharacterPdfRenderer.BuildFileName(character);
         Assert.Equal("Kärg_the_Wretched.pdf", result);
     }
 
@@ -158,7 +159,7 @@ public class MorkBorgGameSystemTests
     public void BuildFileName_UsesDefaultName_WhenNameIsEmpty()
     {
         var character = new Character { Name = "" };
-        var result = MorkBorgGameSystem.BuildFileNameInternal(character);
+        var result = MorkBorgCharacterPdfRenderer.BuildFileName(character);
         Assert.Equal("character.pdf", result);
     }
 
@@ -166,7 +167,7 @@ public class MorkBorgGameSystemTests
     public void BuildFileName_UsesDefaultName_WhenNameIsWhitespace()
     {
         var character = new Character { Name = "   " };
-        var result = MorkBorgGameSystem.BuildFileNameInternal(character);
+        var result = MorkBorgCharacterPdfRenderer.BuildFileName(character);
         Assert.Equal("character.pdf", result);
     }
 
@@ -174,7 +175,7 @@ public class MorkBorgGameSystemTests
     public void BuildFileName_PreservesHyphensAndUnderscores()
     {
         var character = new Character { Name = "half-dead_one" };
-        var result = MorkBorgGameSystem.BuildFileNameInternal(character);
+        var result = MorkBorgCharacterPdfRenderer.BuildFileName(character);
         Assert.Equal("half-dead_one.pdf", result);
     }
 
@@ -182,7 +183,7 @@ public class MorkBorgGameSystemTests
     public void BuildFileName_ReplacesDangerousCharactersWithUnderscore()
     {
         var character = new Character { Name = "Kårg/\\:*?<>|" };
-        var result = MorkBorgGameSystem.BuildFileNameInternal(character);
+        var result = MorkBorgCharacterPdfRenderer.BuildFileName(character);
         Assert.EndsWith(".pdf", result);
         Assert.DoesNotContain("/", result);
         Assert.DoesNotContain("\\", result);
@@ -198,7 +199,7 @@ public class MorkBorgGameSystemTests
     public void BuildFileName_TrimsPaddingUnderscores()
     {
         var character = new Character { Name = "___test___" };
-        var result = MorkBorgGameSystem.BuildFileNameInternal(character);
+        var result = MorkBorgCharacterPdfRenderer.BuildFileName(character);
         Assert.Equal("test.pdf", result);
     }
 
@@ -206,7 +207,7 @@ public class MorkBorgGameSystemTests
     public void BuildFileName_HandlesNumbers()
     {
         var character = new Character { Name = "12345" };
-        var result = MorkBorgGameSystem.BuildFileNameInternal(character);
+        var result = MorkBorgCharacterPdfRenderer.BuildFileName(character);
         Assert.Equal("12345.pdf", result);
     }
 
@@ -215,7 +216,7 @@ public class MorkBorgGameSystemTests
     {
         var longName = new string('A', 200);
         var character = new Character { Name = longName };
-        var result = MorkBorgGameSystem.BuildFileNameInternal(character);
+        var result = MorkBorgCharacterPdfRenderer.BuildFileName(character);
         Assert.EndsWith(".pdf", result);
     }
 
@@ -309,7 +310,6 @@ public class MorkBorgGameSystemTests
         await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
-        var pdfRenderer = new MorkBorgPdfRenderer();
-        return new MorkBorgGameSystem(generator, pdfRenderer, refData);
+        return new MorkBorgGameSystem(generator, refData);
     }
 }

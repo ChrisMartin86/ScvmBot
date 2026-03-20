@@ -1,8 +1,9 @@
 using Discord;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Games;
-using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Bot.Services;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Rendering;
 using System.IO.Compression;
 
 namespace ScvmBot.Bot.Tests;
@@ -119,7 +120,6 @@ internal class FakeGameSystem : IGameSystem
 {
     public string CommandKey => "test";
     public string Name => "Test System";
-    public bool SupportsPdf => true;
 
     public SlashCommandOptionBuilder BuildCommandGroupOptions() =>
         throw new NotImplementedException();
@@ -128,14 +128,6 @@ internal class FakeGameSystem : IGameSystem
         IReadOnlyCollection<IApplicationCommandInteractionDataOption>? options,
         CancellationToken ct = default) =>
         throw new NotImplementedException();
-
-    public string BuildFileName(ICharacter character) =>
-        $"{character.Name}.pdf";
-
-    public byte[]? GeneratePdf(ICharacter character)
-    {
-        return new byte[] { 0x25, 0x50, 0x44, 0x46 }; // PDF magic bytes
-    }
 }
 
 internal class FakeLogger : ILogger<GenerateCommandHandler>

@@ -1,5 +1,5 @@
 using Discord;
-using ScvmBot.Bot.Rendering.MorkBorg;
+using ScvmBot.Rendering.MorkBorg;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 
