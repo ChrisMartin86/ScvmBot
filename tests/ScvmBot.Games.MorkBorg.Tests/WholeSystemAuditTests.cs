@@ -115,25 +115,21 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     [InlineData("d6x10x3", 30, 180)]
     public async Task A4_SilverFormula_ProducesExpectedRange(string formula, int min, int max)
     {
-        var refData = await LoadGameReferenceDataAsync();
-
         for (int seed = 0; seed < 50; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
-            var result = TestUtilities.InvokePrivate<int>(gen, "RollSilver", formula);
+            var dice = new DiceRoller(new Random(seed));
+            var result = dice.RollSilver(formula);
             Assert.InRange(result, min, max);
         }
     }
 
     [Fact]
-    public async Task A4_UnsupportedSilverFormula_Throws()
+    public void A4_UnsupportedSilverFormula_Throws()
     {
-        var refData = await LoadGameReferenceDataAsync();
-        var gen = new CharacterGenerator(refData, new Random(1));
+        var dice = new DiceRoller(new Random(1));
 
-        var ex = Assert.Throws<System.Reflection.TargetInvocationException>(
-            () => TestUtilities.InvokePrivate<int>(gen, "RollSilver", "3d8x5"));
-        Assert.IsType<InvalidOperationException>(ex.InnerException);
+        Assert.Throws<InvalidOperationException>(
+            () => dice.RollSilver("3d8x5"));
     }
 
     [Fact]

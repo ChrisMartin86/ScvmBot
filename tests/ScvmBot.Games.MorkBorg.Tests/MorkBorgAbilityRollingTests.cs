@@ -15,11 +15,11 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
     [InlineData(new[] { 6, 6, 6 }, 3)]      // 18 = +3
     public async Task ThreeD6_MapsCorrectlyToModifiers(int[] rolls, int expectedModifier)
     {
-        var referenceData = await LoadGameReferenceDataAsync();
         var rng = new DeterministicRandom(rolls);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var dice = new DiceRoller(rng);
+        var roller = new AbilityRoller(dice, rng);
 
-        var modifier = TestUtilities.InvokePrivate<int>(generator, "RollAbilityModifier", AbilityRollMethod.ThreeD6);
+        var modifier = roller.RollAbilityModifier(AbilityRollMethod.ThreeD6);
 
         Assert.Equal(expectedModifier, modifier);
     }
@@ -33,11 +33,11 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
     [InlineData(new[] { 6, 6, 6, 6 }, 3)]      // 6+6+6 drop 6 = 18 = +3
     public async Task FourD6DropLowest_MapsCorrectlyToModifiers(int[] rolls, int expectedModifier)
     {
-        var referenceData = await LoadGameReferenceDataAsync();
         var rng = new DeterministicRandom(rolls);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var dice = new DiceRoller(rng);
+        var roller = new AbilityRoller(dice, rng);
 
-        var modifier = TestUtilities.InvokePrivate<int>(generator, "RollAbilityModifier", AbilityRollMethod.FourD6DropLowest);
+        var modifier = roller.RollAbilityModifier(AbilityRollMethod.FourD6DropLowest);
 
         Assert.Equal(expectedModifier, modifier);
     }
@@ -45,18 +45,17 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
     [Fact]
     public async Task ThreeD6_and_FourD6_Produce_ValidModifierRange()
     {
-        var referenceData = await LoadGameReferenceDataAsync();
-
         // Test many random rolls to ensure modifiers stay in -3 to +3 range
         for (int seed = 1; seed <= 50; seed++)
         {
             var rng = new Random(seed);
-            var generator = new CharacterGenerator(referenceData, rng);
+            var dice = new DiceRoller(rng);
+            var roller = new AbilityRoller(dice, rng);
 
             for (int i = 0; i < 10; i++)
             {
-                var mod3d6 = TestUtilities.InvokePrivate<int>(generator, "RollAbilityModifier", AbilityRollMethod.ThreeD6);
-                var mod4d6 = TestUtilities.InvokePrivate<int>(generator, "RollAbilityModifier", AbilityRollMethod.FourD6DropLowest);
+                var mod3d6 = roller.RollAbilityModifier(AbilityRollMethod.ThreeD6);
+                var mod4d6 = roller.RollAbilityModifier(AbilityRollMethod.FourD6DropLowest);
 
                 Assert.InRange(mod3d6, -3, 3);
                 Assert.InRange(mod4d6, -3, 3);

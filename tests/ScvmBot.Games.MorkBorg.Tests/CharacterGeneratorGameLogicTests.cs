@@ -59,9 +59,11 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(new[] { roll }));
+            var rng = new DeterministicRandom(new[] { roll });
+            var dice = new DiceRoller(rng);
+            var resolver = new WeaponResolver(referenceData, dice, rng);
 
-            var result = TestUtilities.InvokePrivate<string?>(generator, "ResolveWeapon", new CharacterGenerationOptions(), null!);
+            var result = resolver.Resolve(new CharacterGenerationOptions(), null);
 
             Assert.NotNull(result);
             Assert.Contains(expectedName, result, StringComparison.OrdinalIgnoreCase);
@@ -83,9 +85,11 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(new[] { roll }));
+            var rng = new DeterministicRandom(new[] { roll });
+            var dice = new DiceRoller(rng);
+            var resolver = new ArmorResolver(referenceData, dice, rng);
 
-            var result = TestUtilities.InvokePrivate<string?>(generator, "ResolveArmor", new CharacterGenerationOptions(), null!);
+            var result = resolver.Resolve(new CharacterGenerationOptions(), null);
 
             Assert.NotNull(result);
             Assert.Contains(expectedName, result, StringComparison.OrdinalIgnoreCase);
@@ -103,9 +107,11 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = new MorkBorgReferenceDataService();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(new[] { 1 }));
+            var rng = new DeterministicRandom(new[] { 1 });
+            var dice = new DiceRoller(rng);
+            var resolver = new WeaponResolver(referenceData, dice, rng);
 
-            var result = TestUtilities.InvokePrivate<string?>(generator, "ResolveWeapon", new CharacterGenerationOptions(), null!);
+            var result = resolver.Resolve(new CharacterGenerationOptions(), null);
 
             Assert.Null(result);
         }
@@ -122,9 +128,11 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = new MorkBorgReferenceDataService();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(new[] { 1 }));
+            var rng = new DeterministicRandom(new[] { 1 });
+            var dice = new DiceRoller(rng);
+            var resolver = new ArmorResolver(referenceData, dice, rng);
 
-            var result = TestUtilities.InvokePrivate<string?>(generator, "ResolveArmor", new CharacterGenerationOptions(), null!);
+            var result = resolver.Resolve(new CharacterGenerationOptions(), null);
 
             Assert.Null(result);
         }
@@ -180,69 +188,36 @@ public class CharacterGeneratorGameLogicTests
 
 
     [Fact]
-    public async Task RollDie_Throws_WhenSidesIsNotPositive()
+    public void RollDie_Throws_WhenSidesIsNotPositive()
     {
-        var directory = TestUtilities.CreateTempDirectory();
-        try
-        {
-            var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(Array.Empty<int>()));
+        var dice = new DiceRoller(new DeterministicRandom(Array.Empty<int>()));
 
-            var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() =>
-                TestUtilities.InvokePrivate<int>(generator, "RollDie", 0));
-
-            Assert.IsType<ArgumentOutOfRangeException>(exception.InnerException);
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
+        Assert.Throws<ArgumentOutOfRangeException>(() => dice.RollDie(0));
     }
 
     [Fact]
-    public async Task RollFourD6DropLowest_DropsMinimumDie()
+    public void RollFourD6DropLowest_DropsMinimumDie()
     {
-        var directory = TestUtilities.CreateTempDirectory();
-        try
-        {
-            var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
-                referenceData,
-                new DeterministicRandom(new[] { 1, 2, 3, 4 }));
+        var dice = new DiceRoller(new DeterministicRandom(new[] { 1, 2, 3, 4 }));
 
-            var total = TestUtilities.InvokePrivate<int>(generator, "RollFourD6DropLowest");
+        var total = dice.RollFourD6DropLowest();
 
-            Assert.Equal(9, total);
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
+        Assert.Equal(9, total);
     }
 
     [Theory]
     [InlineData(new[] { 1, 1, 1, 1 }, -3)]
     [InlineData(new[] { 6, 6, 6, 6 }, 3)]
     [InlineData(new[] { 4, 4, 4, 4 }, 0)]
-    public async Task RollAbilityModifier_FourD6DropLowest_MapsCorrectly(int[] rolls, int expected)
+    public void RollAbilityModifier_FourD6DropLowest_MapsCorrectly(int[] rolls, int expected)
     {
-        var directory = TestUtilities.CreateTempDirectory();
-        try
-        {
-            var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
-                referenceData,
-                new DeterministicRandom(rolls));
+        var rng = new DeterministicRandom(rolls);
+        var dice = new DiceRoller(rng);
+        var roller = new AbilityRoller(dice, rng);
 
-            var modifier = TestUtilities.InvokePrivate<int>(
-                generator, "RollAbilityModifier", AbilityRollMethod.FourD6DropLowest);
+        var modifier = roller.RollAbilityModifier(AbilityRollMethod.FourD6DropLowest);
 
-            Assert.Equal(expected, modifier);
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
+        Assert.Equal(expected, modifier);
     }
 
     [Fact]
