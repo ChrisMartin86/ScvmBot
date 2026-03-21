@@ -16,11 +16,11 @@ public sealed class MorkBorgCharacterPdfRenderer : IResultRenderer
     public OutputFormat Format => OutputFormat.Pdf;
 
     public bool CanRender(GenerateResult result) =>
-        result is CharacterGenerationResult { Character: Character } && _pdfRenderer.TemplateExists;
+        result is CharacterGenerationResult<Character> && _pdfRenderer.TemplateExists;
 
     public RenderOutput Render(GenerateResult result)
     {
-        if (result is not CharacterGenerationResult { Character: Character character })
+        if (result is not CharacterGenerationResult<Character> { Character: var character })
             throw new InvalidOperationException(
                 $"Cannot render {result.GetType().Name} as a MÖRK BORG character PDF.");
 

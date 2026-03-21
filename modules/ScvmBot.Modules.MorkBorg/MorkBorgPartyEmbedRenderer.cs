@@ -14,20 +14,20 @@ public sealed class MorkBorgPartyEmbedRenderer : IResultRenderer
     public OutputFormat Format => OutputFormat.DiscordEmbed;
 
     public bool CanRender(GenerateResult result) =>
-        result is PartyGenerationResult;
+        result is PartyGenerationResult<Character>;
 
     public RenderOutput Render(GenerateResult result)
     {
-        if (result is not PartyGenerationResult partyResult)
+        if (result is not PartyGenerationResult<Character> partyResult)
             throw new InvalidOperationException(
                 $"Cannot render {result.GetType().Name} as a MÖRK BORG party embed.");
 
         return new EmbedOutput(BuildEmbed(partyResult.PartyName, partyResult.Characters));
     }
 
-    internal static Embed BuildEmbed(string partyName, IReadOnlyList<object> members)
+    internal static Embed BuildEmbed(string partyName, IReadOnlyList<Character> members)
     {
-        var memberList = string.Join("\n", members.Cast<Character>().Select(m => $"• {m.Name}"));
+        var memberList = string.Join("\n", members.Select(m => $"• {m.Name}"));
         var description = $"Party of {members.Count}\n\n{memberList}";
 
         var embed = new EmbedBuilder()

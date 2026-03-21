@@ -52,7 +52,7 @@ public class GameModuleArchitectureTests
         var modules = provider.GetServices<IGameModule>().ToList();
         var registry = provider.GetRequiredService<RendererRegistry>();
         var renderer = registry.FindRenderer(
-            new CharacterGenerationResult(new FakeCharacter { Name = "X" }),
+            new CharacterGenerationResult<FakeCharacter>(new FakeCharacter { Name = "X" }),
             OutputFormat.DiscordEmbed);
 
         Assert.Single(modules);
@@ -193,7 +193,7 @@ public class GameModuleArchitectureTests
         {
             InvocationCount++;
             return Task.FromResult<GenerateResult>(
-                new CharacterGenerationResult(
+                new CharacterGenerationResult<FakeCharacter>(
                     new FakeCharacter { Name = $"FakeChar-{CommandKey}" }));
         }
     }
@@ -202,7 +202,7 @@ public class GameModuleArchitectureTests
     {
         public OutputFormat Format => OutputFormat.DiscordEmbed;
 
-        public bool CanRender(GenerateResult result) => result is CharacterGenerationResult;
+        public bool CanRender(GenerateResult result) => result is CharacterGenerationResult<FakeCharacter>;
 
         public RenderOutput Render(GenerateResult result)
         {

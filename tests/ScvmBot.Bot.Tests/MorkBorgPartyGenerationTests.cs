@@ -72,7 +72,7 @@ public class MorkBorgPartyGenerationTests
 
         var result = await gs.HandleGenerateCommandAsync(partySubcommandOptions);
 
-        var partyResult = Assert.IsType<PartyGenerationResult>(result);
+        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.Equal(3, partyResult.Characters.Count);
     }
 
@@ -91,7 +91,7 @@ public class MorkBorgPartyGenerationTests
 
         var result = await gs.HandleGenerateCommandAsync(partySubcommandOptions);
 
-        var partyResult = Assert.IsType<PartyGenerationResult>(result);
+        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
     }
 
@@ -110,11 +110,11 @@ public class MorkBorgPartyGenerationTests
 
         var result = await gs.HandleGenerateCommandAsync(partySubcommandOptions);
 
-        var partyResult = Assert.IsType<PartyGenerationResult>(result);
+        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         var characters = partyResult.Characters;
 
         // All should have names (non-empty)
-        Assert.All(characters, c => Assert.False(string.IsNullOrWhiteSpace(((Character)c).Name)));
+        Assert.All(characters, c => Assert.False(string.IsNullOrWhiteSpace(c.Name)));
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class MorkBorgPartyGenerationTests
 
         var result = await gs.HandleGenerateCommandAsync(partySubcommandOptions);
 
-        var partyResult = Assert.IsType<PartyGenerationResult>(result);
+        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.Equal(4, partyResult.Characters.Count);
     }
 
@@ -143,7 +143,7 @@ public class MorkBorgPartyGenerationTests
 
         var result = await gs.HandleGenerateCommandAsync(charSubcommandOptions);
 
-        var charResult = Assert.IsType<CharacterGenerationResult>(result);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
         Assert.NotNull(charResult.Character);
     }
 
@@ -161,11 +161,11 @@ public class MorkBorgPartyGenerationTests
         };
 
         var result = await gs.HandleGenerateCommandAsync(partyOptions);
-        var partyResult = Assert.IsType<PartyGenerationResult>(result);
+        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
 
         // Verify ZIP can be created from character data
         var members = partyResult.Characters
-            .Select(c => (((ScvmBot.Games.MorkBorg.Models.Character)c).Name, new byte[] { 0x25, 0x50, 0x44, 0x46 }))
+            .Select(c => (c.Name, new byte[] { 0x25, 0x50, 0x44, 0x46 }))
             .ToList();
         var zipBytes = PartyZipBuilder.CreatePartyZip(members);
         Assert.True(zipBytes.Length > 0);
@@ -190,7 +190,7 @@ public class MorkBorgPartyGenerationTests
 
         var result = await gs.HandleGenerateCommandAsync(partyOptions);
 
-        var partyResult = Assert.IsType<PartyGenerationResult>(result);
+        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
         var embed = MorkBorgPartyEmbedRenderer.BuildEmbed(partyResult.PartyName, partyResult.Characters);
         Assert.Contains("Party of 3", embed.Description);
@@ -211,7 +211,7 @@ public class MorkBorgPartyGenerationTests
 
         var result = await gs.HandleGenerateCommandAsync(partyOptions);
 
-        var partyResult = Assert.IsType<PartyGenerationResult>(result);
+        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
     }
 
@@ -226,8 +226,8 @@ public class MorkBorgPartyGenerationTests
 
         var result = await gs.HandleGenerateCommandAsync(charOptions);
 
-        var charResult = Assert.IsType<CharacterGenerationResult>(result);
-        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed((Character)charResult.Character);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(charResult.Character);
         Assert.NotNull(embed.Title);
         Assert.False(string.IsNullOrWhiteSpace(embed.Title));
     }

@@ -15,11 +15,11 @@ public sealed class MorkBorgCharacterEmbedRenderer : IResultRenderer
     public OutputFormat Format => OutputFormat.DiscordEmbed;
 
     public bool CanRender(GenerateResult result) =>
-        result is CharacterGenerationResult { Character: Character };
+        result is CharacterGenerationResult<Character>;
 
     public RenderOutput Render(GenerateResult result)
     {
-        if (result is not CharacterGenerationResult { Character: Character character })
+        if (result is not CharacterGenerationResult<Character> { Character: var character })
             throw new InvalidOperationException(
                 $"Cannot render {result.GetType().Name} as a MÖRK BORG character embed.");
 

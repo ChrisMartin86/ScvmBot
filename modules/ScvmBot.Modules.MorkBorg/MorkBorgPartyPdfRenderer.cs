@@ -24,21 +24,18 @@ public sealed class MorkBorgPartyPdfRenderer : IResultRenderer
     public OutputFormat Format => OutputFormat.Pdf;
 
     public bool CanRender(GenerateResult result) =>
-        result is PartyGenerationResult party
-        && party.Characters.All(c => c is Character)
+        result is PartyGenerationResult<Character>
         && _pdfRenderer.TemplateExists;
 
     public RenderOutput Render(GenerateResult result)
     {
-        if (result is not PartyGenerationResult partyResult)
+        if (result is not PartyGenerationResult<Character> partyResult)
             throw new InvalidOperationException(
                 $"Cannot render {result.GetType().Name} as a MÖRK BORG party PDF archive.");
 
         var memberPdfs = new List<(string CharacterName, byte[] PdfBytes)>();
-        foreach (var character in partyResult.Characters)
+        foreach (var mbChar in partyResult.Characters)
         {
-            // CanRender guarantees all members are Character; fail hard if violated.
-            var mbChar = (Character)character;
 
             try
             {

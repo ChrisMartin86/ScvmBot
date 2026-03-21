@@ -92,7 +92,7 @@ public class PartyEmbedBuilderTests
     [Fact]
     public void Build_ListsAllMembers_InDescription()
     {
-        var members = new List<object>
+        var members = new List<Character>
         {
             new Character { Name = "Alpha" },
             new Character { Name = "Beta" },
@@ -129,10 +129,10 @@ public class PartyEmbedBuilderTests
         Assert.Empty(embed.Fields);
     }
 
-    private static List<object> CreateMembers(int count)
+    private static List<Character> CreateMembers(int count)
     {
         return Enumerable.Range(1, count)
-            .Select(i => (object)new Character { Name = $"Char{i}" })
+            .Select(i => new Character { Name = $"Char{i}" })
             .ToList();
     }
 }

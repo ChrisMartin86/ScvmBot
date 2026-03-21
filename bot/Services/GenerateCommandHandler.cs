@@ -117,7 +117,7 @@ public class GenerateCommandHandler : ISlashCommand
                 return;
             }
 
-            if (result is PartyGenerationResult { Characters.Count: 0 })
+            if (result is PartyGenerationResult { CharacterCount: 0 })
             {
                 await context.FollowupAsync(
                     embed: ResponseCardBuilder.Build("Error", "Party generation produced no characters.", new Color(200, 50, 50)),

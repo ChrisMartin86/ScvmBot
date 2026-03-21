@@ -48,14 +48,14 @@ public sealed class MorkBorgModule : IGameModule
         {
             var options = MorkBorgGenerateOptionParser.Parse(subCommandOptions);
             var character = _generator.Generate(options);
-            return Task.FromResult<GenerateResult>(new CharacterGenerationResult(character));
+            return Task.FromResult<GenerateResult>(new CharacterGenerationResult<Character>(character));
         }
 
         throw new InvalidOperationException(
             $"Unknown subcommand '{subcommand.Name}'. Expected 'character' or 'party'.");
     }
 
-    private PartyGenerationResult BuildPartyResult(
+    private PartyGenerationResult<Character> BuildPartyResult(
         IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions)
     {
         var partySize = MorkBorgPartyOptionParser.ParsePartySize(subCommandOptions);
@@ -66,8 +66,8 @@ public sealed class MorkBorgModule : IGameModule
 
         var partyName = PartyNameGenerator.Generate(characters);
 
-        return new PartyGenerationResult(
-            Characters: characters.Cast<object>().ToList().AsReadOnly(),
+        return new PartyGenerationResult<Character>(
+            Characters: characters.AsReadOnly(),
             PartyName: partyName);
     }
 }
