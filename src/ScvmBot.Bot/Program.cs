@@ -71,17 +71,21 @@ class Program
     }
 
     /// <summary>
-    /// Scans referenced assemblies for <see cref="IModuleRegistration"/> implementations,
-    /// instantiates each via its parameterless constructor, and calls
-    /// <see cref="IModuleRegistration.InitializeAsync"/>.
+    /// Scans the application base directory for module assemblies (ScvmBot.Modules.*.dll),
+    /// discovers <see cref="IModuleRegistration"/> implementations, instantiates each via
+    /// its parameterless constructor, and calls <see cref="IModuleRegistration.InitializeAsync"/>.
     /// </summary>
     private static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync()
     {
-        var registrationTypes = Assembly.GetEntryAssembly()!
-            .GetReferencedAssemblies()
-            .Select(Assembly.Load)
-            .Append(Assembly.GetEntryAssembly()!)
-            .SelectMany(a => a.GetExportedTypes())
+        var settings = new Dictionary<string, string>();
+
+        var baseDir = AppContext.BaseDirectory;
+        var registrationTypes = Directory.GetFiles(baseDir, "ScvmBot.Modules.*.dll")
+            .Select(Path.GetFileNameWithoutExtension)
+            .Where(name => name is not null)
+            .Select(name => { try { return Assembly.Load(name!); } catch { return null; } })
+            .Where(a => a is not null)
+            .SelectMany(a => a!.GetExportedTypes())
             .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
                      && !t.IsAbstract
                      && !t.IsInterface);
@@ -90,6 +94,8 @@ class Program
         foreach (var type in registrationTypes)
         {
             var module = (IModuleRegistration)Activator.CreateInstance(type)!;
+            if (settings.Count > 0)
+                module.Configure(settings);
             await module.InitializeAsync();
             modules.Add(module);
         }

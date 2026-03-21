@@ -304,11 +304,13 @@ static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync(s
     if (dataPath is not null)
         settings["DataPath"] = dataPath;
 
-    var registrationTypes = Assembly.GetEntryAssembly()!
-        .GetReferencedAssemblies()
-        .Select(Assembly.Load)
-        .Append(Assembly.GetEntryAssembly()!)
-        .SelectMany(a => a.GetExportedTypes())
+    var baseDir = AppContext.BaseDirectory;
+    var registrationTypes = Directory.GetFiles(baseDir, "ScvmBot.Modules.*.dll")
+        .Select(Path.GetFileNameWithoutExtension)
+        .Where(name => name is not null)
+        .Select(name => { try { return Assembly.Load(name!); } catch { return null; } })
+        .Where(a => a is not null)
+        .SelectMany(a => a!.GetExportedTypes())
         .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
                  && !t.IsAbstract
                  && !t.IsInterface);
@@ -367,8 +369,8 @@ static void PrintUsage()
     Console.WriteLine("  --count <n>            Number of characters to generate (1-20, default: 1)");
     Console.WriteLine("  --quiet                Benchmark mode: no output, prints timing only");
     Console.WriteLine("                         Removes the --count upper limit");
-    Console.WriteLine("  --detailed             With --quiet: per-generation timing stats and");
-    Console.WriteLine("                         class distribution summary");
+    Console.WriteLine("  --detailed             With --quiet: per-generation timing stats");
+    Console.WriteLine("                         (min, max, avg, median, P95, P99)");
     Console.WriteLine("  --pdf [path]           Output a filled PDF (or ZIP when count > 1)");
     Console.WriteLine("  --data <path>          Path to game data directory");
     Console.WriteLine();

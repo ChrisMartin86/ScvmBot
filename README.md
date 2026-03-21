@@ -229,29 +229,26 @@ dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
            CancellationToken ct = default) { ... }
    }
    ```
-3. Create a registration factory (see `MorkBorgModuleRegistration` for the pattern):
+3. Implement `IModuleRegistration` so the host discovers the module automatically (see `MorkBorgModuleRegistration` for the full pattern):
    ```csharp
-   public static class YourGameModuleRegistration
+   public sealed class YourGameModuleRegistration : IModuleRegistration
    {
-       public static async Task<Action<IServiceCollection>> CreateAsync(string dataDir)
+       public async Task InitializeAsync()
        {
            // Load reference data, fail fast if missing
-           return services =>
-           {
-               services.AddSingleton<IGameModule, YourGameModule>();
-               services.AddSingleton<IResultRenderer, YourEmbedRenderer>();
-               // ... additional renderers
-           };
+       }
+
+       public void Register(IServiceCollection services)
+       {
+           services.AddSingleton<IGameModule, YourGameModule>();
+           services.AddSingleton<IResultRenderer, YourEmbedRenderer>();
+           // ... additional renderers
        }
    }
    ```
-4. Register explicitly in `Program.cs`:
-   ```csharp
-   var registerYourGame = await YourGameModuleRegistration.CreateAsync(dataDir);
-   registerYourGame(services);
-   ```
+4. Add a project reference from `ScvmBot.Bot` (and/or `ScvmBot.Cli`) to your module adapter project. No `Program.cs` changes are needed — assembly scanning picks up the new `IModuleRegistration` at startup.
 
-The `/generate` dispatcher routes to modules by their `CommandKey`. Duplicate keys are rejected at startup with a clear error message. Module registration is explicit — there is no assembly scanning or dynamic discovery.
+The `/generate` dispatcher routes to modules by their `CommandKey`. Duplicate keys are rejected at startup with a clear error message.
 
 ## Dependencies
 
