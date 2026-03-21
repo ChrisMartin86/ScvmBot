@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Services;
 using ScvmBot.Bot.Services.Commands;
 using ScvmBot.Modules;
-using ScvmBot.Modules.MorkBorg;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
 namespace ScvmBot.Bot;
 
@@ -16,12 +16,12 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-        // Initialize game modules before building the host.
+        // Discover and initialize game modules via assembly scanning.
         // Each module performs its own startup validation; failures are fatal.
-        Action<IServiceCollection> registerMorkBorg;
+        List<IModuleRegistration> modules;
         try
         {
-            registerMorkBorg = await MorkBorgModuleRegistration.CreateAsync();
+            modules = await DiscoverAndInitializeModulesAsync();
         }
         catch (FileNotFoundException ex)
         {
@@ -40,8 +40,8 @@ class Program
         var host = Host.CreateDefaultBuilder(args)
             .ConfigureServices((context, services) =>
             {
-                // Game modules — add new modules here
-                registerMorkBorg(services);
+                foreach (var module in modules)
+                    module.Register(services);
 
                 // Rendering infrastructure
                 services.AddSingleton<RendererRegistry>();
@@ -68,5 +68,32 @@ class Program
         await host.RunAsync();
 
         return 0;
+    }
+
+    /// <summary>
+    /// Scans referenced assemblies for <see cref="IModuleRegistration"/> implementations,
+    /// instantiates each via its parameterless constructor, and calls
+    /// <see cref="IModuleRegistration.InitializeAsync"/>.
+    /// </summary>
+    private static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync()
+    {
+        var registrationTypes = Assembly.GetEntryAssembly()!
+            .GetReferencedAssemblies()
+            .Select(Assembly.Load)
+            .Append(Assembly.GetEntryAssembly()!)
+            .SelectMany(a => a.GetExportedTypes())
+            .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
+                     && !t.IsAbstract
+                     && !t.IsInterface);
+
+        var modules = new List<IModuleRegistration>();
+        foreach (var type in registrationTypes)
+        {
+            var module = (IModuleRegistration)Activator.CreateInstance(type)!;
+            await module.InitializeAsync();
+            modules.Add(module);
+        }
+
+        return modules;
     }
 }

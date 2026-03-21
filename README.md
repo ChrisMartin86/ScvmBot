@@ -24,9 +24,9 @@ A Discord bot for tabletop RPG character generation with built-in support for **
 ### Engineering
 - **.NET 10** with nullable reference types enabled throughout
 - **Five-project solution** — `ScvmBot.Bot` (Discord host), `ScvmBot.Modules` (shared module contracts and abstractions), `ScvmBot.Modules.MorkBorg` (MÖRK BORG module adapter — command definitions, option parsing, renderers), `ScvmBot.Games.MorkBorg` (game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering)
-- **Explicit host registration** — game modules are registered in `Program.cs`; no assembly scanning or dynamic plugin discovery
+- **Automatic module discovery** — game modules implement `IModuleRegistration` and are discovered at startup via assembly scanning; adding a new game requires only a project reference — no `Program.cs` edits
 - **420 tests** across four test projects — character generation logic, equipment flow, PDF mapping, option parsing, command handling, and party building
-- **Static factory pattern** — `MorkBorgModuleRegistration.CreateAsync()` atomically loads all required data at startup and registers the module; missing files fail fast with a non-zero exit code
+- **Fail-fast module initialization** — each `IModuleRegistration` loads required data during `InitializeAsync()`; missing files abort startup with a non-zero exit code
 - **Testable command layer** — `ISlashCommandContext` interface decouples command handlers from the sealed Discord.Net type, enabling full unit test coverage
 - **Structured logging** — `Microsoft.Extensions.Logging` integration throughout
 - **Docker ready** — `Dockerfile` and `docker-compose.yml` included
@@ -119,7 +119,7 @@ ScvmBot/
 │   │   │       ├── ISlashCommandContext.cs # Testable abstraction over SocketSlashCommand
 │   │   │       ├── SocketSlashCommandContext.cs # Runtime adapter (excluded from coverage)
 │   │   │       └── HelloCommand.cs
-│   │   ├── Program.cs                     # Explicit module registration & entry point
+│   │   ├── Program.cs                     # Assembly-scanning module discovery & entry point
 │   │   ├── Dockerfile
 │   │   └── appsettings.example.json
 │   │
@@ -127,6 +127,7 @@ ScvmBot/
 │   │   └── Program.cs
 │   │
 │   ├── ScvmBot.Modules/                   # Shared module contracts and abstractions
+│   │   ├── IModuleRegistration.cs          # Discovery contract — async init + DI registration
 │   │   ├── IGameModule.cs                 # Module contract — commands, generation, rendering
 │   │   ├── GenerateResult.cs              # CharacterGenerationResult / PartyGenerationResult
 │   │   ├── IResultRenderer.cs             # Renderer interface
@@ -138,7 +139,7 @@ ScvmBot/
 │   │
 │   ├── ScvmBot.Modules.MorkBorg/          # MÖRK BORG module adapter layer
 │   │   ├── MorkBorgModule.cs              # Implements IGameModule
-│   │   ├── MorkBorgModuleRegistration.cs  # Async factory — loads data, registers services
+│   │   ├── MorkBorgModuleRegistration.cs  # IModuleRegistration — loads data, registers services
 │   │   ├── MorkBorgCommandDefinition.cs   # Slash command option tree
 │   │   ├── MorkBorgGenerateOptionParser.cs
 │   │   ├── MorkBorgPartyOptionParser.cs

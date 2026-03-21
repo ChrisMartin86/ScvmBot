@@ -7,33 +7,49 @@ namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
 /// Bootstraps the MÖRK BORG game module: loads reference data (fail-fast),
-/// then returns a delegate that registers all module services with the DI container.
+/// then registers all module services with the DI container.
+/// Discovered automatically by the bot via assembly scanning for <see cref="IModuleRegistration"/>.
 /// </summary>
-public static class MorkBorgModuleRegistration
+public sealed class MorkBorgModuleRegistration : IModuleRegistration
 {
+    private readonly string? _dataPath;
+    private MorkBorgReferenceDataService? _refData;
+
+    /// <summary>Parameterless constructor used by automatic discovery.</summary>
+    public MorkBorgModuleRegistration() : this(null) { }
+
+    /// <summary>Constructor for tests that need a custom data directory.</summary>
+    public MorkBorgModuleRegistration(string? dataPath) => _dataPath = dataPath;
+
+    public async Task InitializeAsync()
+    {
+        _refData = _dataPath is not null
+            ? await MorkBorgReferenceDataService.CreateAsync(_dataPath)
+            : await MorkBorgReferenceDataService.CreateAsync();
+    }
+
+    public void Register(IServiceCollection services)
+    {
+        services.AddSingleton(_refData!);
+        services.AddSingleton<CharacterGenerator>();
+        services.AddSingleton<MorkBorgPdfRenderer>();
+        services.AddSingleton<IGameModule, MorkBorgModule>();
+
+        // Renderers
+        services.AddSingleton<IResultRenderer, MorkBorgCharacterEmbedRenderer>();
+        services.AddSingleton<IResultRenderer, MorkBorgPartyEmbedRenderer>();
+        services.AddSingleton<IResultRenderer, MorkBorgCharacterPdfRenderer>();
+        services.AddSingleton<IResultRenderer, MorkBorgPartyPdfRenderer>();
+    }
+
     /// <summary>
-    /// Performs async startup validation (reference data loading) and returns
-    /// a synchronous delegate that registers all MÖRK BORG services.
-    /// Throws immediately if required data files are missing or invalid.
+    /// Convenience factory that initializes and returns a registration delegate.
+    /// Used by tests that need a custom data directory.
     /// </summary>
     public static async Task<Action<IServiceCollection>> CreateAsync(string? dataPath = null)
     {
-        var refData = dataPath is not null
-            ? await MorkBorgReferenceDataService.CreateAsync(dataPath)
-            : await MorkBorgReferenceDataService.CreateAsync();
-
-        return services =>
-        {
-            services.AddSingleton(refData);
-            services.AddSingleton<CharacterGenerator>();
-            services.AddSingleton<MorkBorgPdfRenderer>();
-            services.AddSingleton<IGameModule, MorkBorgModule>();
-
-            // Renderers
-            services.AddSingleton<IResultRenderer, MorkBorgCharacterEmbedRenderer>();
-            services.AddSingleton<IResultRenderer, MorkBorgPartyEmbedRenderer>();
-            services.AddSingleton<IResultRenderer, MorkBorgCharacterPdfRenderer>();
-            services.AddSingleton<IResultRenderer, MorkBorgPartyPdfRenderer>();
-        };
+        var reg = new MorkBorgModuleRegistration(dataPath);
+        await reg.InitializeAsync();
+        return reg.Register;
     }
 }

@@ -1,81 +1,123 @@
-using System.Diagnostics;
-using ScvmBot.Games.MorkBorg.Generation;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Games.MorkBorg.Models;
-using ScvmBot.Games.MorkBorg.Pdf;
-using ScvmBot.Games.MorkBorg.Reference;
 using ScvmBot.Modules;
+using ScvmBot.Modules.MorkBorg;
+using System.Diagnostics;
+using System.Reflection;
 
-if (args.Length == 0 || args[0] is "-h" or "--help")
+// ── Pre-parse --data (extracted before module discovery) ──────────────────
+string? dataPath = null;
+var filteredArgs = new List<string>();
+for (var i = 0; i < args.Length; i++)
+{
+    if (args[i] == "--data" && i + 1 < args.Length)
+        dataPath = args[++i];
+    else
+        filteredArgs.Add(args[i]);
+}
+var commandArgs = filteredArgs.ToArray();
+
+if (commandArgs.Length == 0 || commandArgs[0] is "-h" or "--help")
 {
     PrintUsage();
-    return;
+    return 0;
 }
 
-if (!string.Equals(args[0], "generate", StringComparison.OrdinalIgnoreCase))
+// ── Module discovery & initialization ────────────────────────────────────
+List<IModuleRegistration> registrations;
+try
 {
-    Console.Error.WriteLine($"Unknown command: {args[0]}");
+    registrations = await DiscoverAndInitializeModulesAsync(dataPath);
+}
+catch (FileNotFoundException ex)
+{
+    Console.Error.WriteLine("[scvmbot-cli] Startup failed: a required data file is missing.");
+    Console.Error.WriteLine($"  {ex.Message}");
+    Console.Error.WriteLine("  Ensure the Data/ directory is present and contains all required JSON files.");
+    return 1;
+}
+catch (InvalidOperationException ex)
+{
+    Console.Error.WriteLine("[scvmbot-cli] Startup failed: module could not be initialized.");
+    Console.Error.WriteLine($"  {ex.Message}");
+    return 1;
+}
+
+// ── Build DI container from discovered modules ──────────────────────────
+var services = new ServiceCollection();
+foreach (var reg in registrations)
+    reg.Register(services);
+services.AddSingleton<RendererRegistry>();
+services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+using var provider = services.BuildServiceProvider();
+
+var gameModules = provider.GetServices<IGameModule>()
+    .ToDictionary(m => m.CommandKey, StringComparer.OrdinalIgnoreCase);
+var registry = provider.GetRequiredService<RendererRegistry>();
+
+// ── Parse command structure ─────────────────────────────────────────────
+if (!string.Equals(commandArgs[0], "generate", StringComparison.OrdinalIgnoreCase))
+{
+    Console.Error.WriteLine($"Unknown command: {commandArgs[0]}");
     Console.Error.WriteLine("Run with --help for usage.");
-    return;
+    return 1;
 }
 
-if (args.Length < 2)
+if (commandArgs.Length < 2)
 {
-    Console.Error.WriteLine("Missing game system. Expected: scvmbot-cli generate morkborg character");
-    return;
+    Console.Error.WriteLine("Missing game system. Available: " + string.Join(", ", gameModules.Keys));
+    return 1;
 }
 
-if (!string.Equals(args[1], "morkborg", StringComparison.OrdinalIgnoreCase))
+if (!gameModules.TryGetValue(commandArgs[1], out var module))
 {
-    Console.Error.WriteLine($"Unknown game system: {args[1]}");
-    Console.Error.WriteLine("Available: morkborg");
-    return;
+    Console.Error.WriteLine($"Unknown game system: {commandArgs[1]}");
+    Console.Error.WriteLine("Available: " + string.Join(", ", gameModules.Keys));
+    return 1;
 }
 
-if (args.Length < 3)
+if (commandArgs.Length < 3)
 {
-    Console.Error.WriteLine("Missing subcommand. Expected: scvmbot-cli generate morkborg character");
-    return;
+    var subNames = string.Join(", ", module.SubCommands.Select(sc => sc.Name));
+    Console.Error.WriteLine($"Missing subcommand. Available: {subNames}");
+    return 1;
 }
 
-if (!string.Equals(args[2], "character", StringComparison.OrdinalIgnoreCase))
+var subCommandName = commandArgs[2];
+var subCommandDef = module.SubCommands
+    .FirstOrDefault(sc => string.Equals(sc.Name, subCommandName, StringComparison.OrdinalIgnoreCase));
+
+if (subCommandDef is null)
 {
-    Console.Error.WriteLine($"Unknown subcommand: {args[2]}");
-    Console.Error.WriteLine("Available: character");
-    return;
+    var subNames = string.Join(", ", module.SubCommands.Select(sc => sc.Name));
+    Console.Error.WriteLine($"Unknown subcommand: {subCommandName}");
+    Console.Error.WriteLine($"Available: {subNames}");
+    return 1;
 }
 
-// Parse options after "generate morkborg character"
-string? nameOverride = null;
-string? className = null;
-string? rollMethod = null;
-string? dataPath = null;
-string? pdfPath = null;
-bool generatePdf = false;
+// ── Parse options ───────────────────────────────────────────────────────
+var moduleOptionNames = new HashSet<string>(
+    subCommandDef.Options?.Select(o => o.Name) ?? [],
+    StringComparer.OrdinalIgnoreCase);
+
+var optionsDict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+int count = 1;
 bool quiet = false;
 bool detailed = false;
-int count = 1;
+bool generatePdf = false;
+string? pdfPath = null;
 
-for (var i = 3; i < args.Length; i++)
+for (var i = 3; i < commandArgs.Length; i++)
 {
-    switch (args[i])
+    switch (commandArgs[i])
     {
-        case "--name" when i + 1 < args.Length:
-            nameOverride = args[++i];
-            break;
-        case "--class" when i + 1 < args.Length:
-            className = args[++i];
-            break;
-        case "--roll" when i + 1 < args.Length:
-            rollMethod = args[++i];
-            break;
-        case "--data" when i + 1 < args.Length:
-            dataPath = args[++i];
-            break;
-        case "--count" when i + 1 < args.Length:
-            if (!int.TryParse(args[++i], out count) || count < 1)
+        case "--count" when i + 1 < commandArgs.Length:
+            if (!int.TryParse(commandArgs[++i], out count) || count < 1)
             {
                 Console.Error.WriteLine("--count must be a positive integer.");
-                return;
+                return 1;
             }
             break;
         case "--quiet":
@@ -86,40 +128,50 @@ for (var i = 3; i < args.Length; i++)
             break;
         case "--pdf":
             generatePdf = true;
-            // Next arg is the path if it exists and isn't another flag
-            if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
-                pdfPath = args[++i];
+            if (i + 1 < commandArgs.Length && !commandArgs[i + 1].StartsWith("--"))
+                pdfPath = commandArgs[++i];
             break;
         default:
-            Console.Error.WriteLine($"Unknown option: {args[i]}");
-            return;
+        {
+            var optName = commandArgs[i].TrimStart('-');
+            if (moduleOptionNames.Contains(optName))
+            {
+                if (i + 1 >= commandArgs.Length)
+                {
+                    Console.Error.WriteLine($"Missing value for --{optName}");
+                    return 1;
+                }
+                var optDef = subCommandDef.Options!
+                    .First(o => string.Equals(o.Name, optName, StringComparison.OrdinalIgnoreCase));
+                var rawValue = commandArgs[++i];
+                optionsDict[optDef.Name] = optDef.Type == CommandOptionType.Integer
+                    && long.TryParse(rawValue, out var longVal)
+                        ? longVal
+                        : rawValue;
+            }
+            else
+            {
+                Console.Error.WriteLine($"Unknown option: {commandArgs[i]}");
+                return 1;
+            }
+            break;
+        }
     }
 }
 
 if (!quiet && count > 20)
 {
     Console.Error.WriteLine("--count maximum is 20 without --quiet mode.");
-    return;
+    return 1;
 }
 
 if (detailed && !quiet)
 {
     Console.Error.WriteLine("--detailed requires --quiet.");
-    return;
+    return 1;
 }
 
-var refData = await MorkBorgReferenceDataService.CreateAsync(dataPath);
-var generator = new CharacterGenerator(refData);
-
-var options = new CharacterGenerationOptions
-{
-    Name = nameOverride,
-    ClassName = className,
-    RollMethod = string.Equals(rollMethod, "4d6-drop-lowest", StringComparison.OrdinalIgnoreCase)
-        ? AbilityRollMethod.FourD6DropLowest
-        : AbilityRollMethod.ThreeD6,
-};
-
+// ── Benchmark mode ──────────────────────────────────────────────────────
 if (quiet)
 {
     if (detailed)
@@ -135,15 +187,18 @@ if (quiet)
         for (var n = 0; n < count; n++)
         {
             sw.Restart();
-            var character = generator.Generate(options);
+            var result = await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict);
             sw.Stop();
             ticksPerGeneration[n] = sw.ElapsedTicks;
-            totalHp += character.HitPoints;
-            totalSilver += character.Silver;
 
-            var key = character.ClassName ?? "Classless";
-            classCounts.TryGetValue(key, out var c);
-            classCounts[key] = c + 1;
+            if (result is CharacterGenerationResult<Character> { Character: var character })
+            {
+                totalHp += character.HitPoints;
+                totalSilver += character.Silver;
+                var key = character.ClassName ?? "Classless";
+                classCounts.TryGetValue(key, out var c);
+                classCounts[key] = c + 1;
+            }
         }
 
         totalSw.Stop();
@@ -155,8 +210,6 @@ if (quiet)
         var maxMs = ticksPerGeneration[count - 1] / tickFreq * 1000;
         var medianMs = ticksPerGeneration[count / 2] / tickFreq * 1000;
         var avgMs = ticksPerGeneration.Average() / tickFreq * 1000;
-
-        // P95 / P99
         var p95Ms = ticksPerGeneration[(int)(count * 0.95)] / tickFreq * 1000;
         var p99Ms = ticksPerGeneration[(int)(count * 0.99)] / tickFreq * 1000;
 
@@ -190,9 +243,12 @@ if (quiet)
 
         for (var n = 0; n < count; n++)
         {
-            var character = generator.Generate(options);
-            totalHp += character.HitPoints;
-            totalSilver += character.Silver;
+            var result = await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict);
+            if (result is CharacterGenerationResult<Character> { Character: var character })
+            {
+                totalHp += character.HitPoints;
+                totalSilver += character.Silver;
+            }
         }
 
         sw.Stop();
@@ -207,71 +263,62 @@ if (quiet)
         Console.WriteLine($"  Avg HP:    {(double)totalHp / count:F2}");
         Console.WriteLine($"  Total Silver: {totalSilver:N0}");
     }
-    return;
+    return 0;
 }
 
-var characters = new List<Character>(count);
+// ── Normal generation mode ──────────────────────────────────────────────
+var results = new List<(GenerateResult Result, CardOutput Card)>(count);
 for (var n = 0; n < count; n++)
 {
-    // Only apply name override to the first character when generating multiples,
-    // so each subsequent character gets a random name.
-    var charOptions = n == 0
-        ? options
-        : new CharacterGenerationOptions
-        {
-            ClassName = options.ClassName,
-            RollMethod = options.RollMethod,
-        };
-    characters.Add(generator.Generate(charOptions));
+    // Only apply name override to the first character when generating multiples
+    var iterOptions = (n == 0 || !optionsDict.ContainsKey("name"))
+        ? optionsDict
+        : new Dictionary<string, object?>(
+            optionsDict.Where(kv => !string.Equals(kv.Key, "name", StringComparison.OrdinalIgnoreCase)),
+            StringComparer.OrdinalIgnoreCase);
+
+    var result = await module.HandleGenerateCommandAsync(subCommandDef.Name, iterOptions);
+    var card = registry.RenderCard(result);
+    results.Add((result, card));
 }
 
-for (var n = 0; n < characters.Count; n++)
+for (var n = 0; n < results.Count; n++)
 {
     if (n > 0) Console.WriteLine(new string('-', 40));
-    PrintCharacter(characters[n]);
+    PrintCard(results[n].Card);
 }
 
 if (generatePdf)
 {
-    var pdfRenderer = new MorkBorgPdfRenderer();
-    if (!pdfRenderer.TemplateExists)
+    if (results.Count == 1)
     {
-        Console.Error.WriteLine("PDF template not found. Cannot generate PDF.");
-        return;
-    }
-
-    if (characters.Count == 1)
-    {
-        pdfPath ??= SanitizeFileName(characters[0].Name) + ".pdf";
-        var pdfBytes = pdfRenderer.Render(characters[0]);
-        if (pdfBytes is null)
+        var file = registry.TryRenderFile(results[0].Result);
+        if (file is null)
         {
-            Console.Error.WriteLine("PDF rendering failed.");
-            return;
+            Console.Error.WriteLine("PDF rendering is not available.");
+            return 1;
         }
-
-        File.WriteAllBytes(pdfPath, pdfBytes);
+        pdfPath ??= file.FileName;
+        File.WriteAllBytes(pdfPath, file.Bytes);
         Console.WriteLine();
         Console.WriteLine($"  PDF saved to {pdfPath}");
     }
     else
     {
         var memberPdfs = new List<(string CharacterName, byte[] PdfBytes)>();
-        foreach (var character in characters)
+        foreach (var (result, card) in results)
         {
-            var pdfBytes = pdfRenderer.Render(character);
-            if (pdfBytes is null)
-            {
-                Console.Error.WriteLine($"PDF rendering failed for '{character.Name}'; skipping.");
-                continue;
-            }
-            memberPdfs.Add((character.Name, pdfBytes));
+            var file = registry.TryRenderFile(result);
+            if (file is not null)
+                memberPdfs.Add((card.Title ?? "character", file.Bytes));
+            else
+                Console.Error.WriteLine($"PDF rendering failed for '{card.Title}'; skipping.");
         }
 
         if (memberPdfs.Count == 0)
         {
             Console.Error.WriteLine("All PDF renders failed.");
-            return;
+            return 1;
         }
 
         pdfPath ??= "characters.zip";
@@ -282,62 +329,79 @@ if (generatePdf)
     }
 }
 
-static void PrintCharacter(Character character)
+return 0;
+
+// ── Helper methods ──────────────────────────────────────────────────────
+
+static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync(string? dataPath)
 {
-    Console.WriteLine($"  Name:      {character.Name}");
-    Console.WriteLine($"  Class:     {character.ClassName ?? "Classless"}");
-    Console.WriteLine($"  HP:        {character.HitPoints}/{character.MaxHitPoints}");
-    Console.WriteLine($"  Omens:     {character.Omens}");
-    Console.WriteLine($"  Silver:    {character.Silver}s");
-    Console.WriteLine();
-    Console.WriteLine($"  STR {character.Strength,2}  AGI {character.Agility,2}  PRE {character.Presence,2}  TOU {character.Toughness,2}");
-    Console.WriteLine();
-
-    if (!string.IsNullOrWhiteSpace(character.EquippedWeapon))
-        Console.WriteLine($"  Weapon:    {character.EquippedWeapon}");
-    if (!string.IsNullOrWhiteSpace(character.EquippedArmor))
-        Console.WriteLine($"  Armor:     {character.EquippedArmor}");
-
-    if (character.Items.Count > 0)
-        Console.WriteLine($"  Items:     {string.Join(", ", character.Items)}");
-
-    if (character.ScrollsKnown.Count > 0)
-        Console.WriteLine($"  Scrolls:   {string.Join(", ", character.ScrollsKnown)}");
-
-    foreach (var desc in character.Descriptions)
-        Console.WriteLine($"  {desc.Category,-10}  {desc.Text}");
-
-    if (!string.IsNullOrWhiteSpace(character.Vignette))
+    if (dataPath is not null)
     {
-        Console.WriteLine();
-        Console.WriteLine($"  {character.Vignette}");
+        // Explicit data path override — create the module registration manually.
+        var reg = new MorkBorgModuleRegistration(dataPath);
+        await reg.InitializeAsync();
+        return [reg];
     }
+
+    // Auto-discover from referenced assemblies
+    var registrationTypes = Assembly.GetEntryAssembly()!
+        .GetReferencedAssemblies()
+        .Select(Assembly.Load)
+        .Append(Assembly.GetEntryAssembly()!)
+        .SelectMany(a => a.GetExportedTypes())
+        .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
+                 && !t.IsAbstract
+                 && !t.IsInterface);
+
+    var modules = new List<IModuleRegistration>();
+    foreach (var type in registrationTypes)
+    {
+        var mod = (IModuleRegistration)Activator.CreateInstance(type)!;
+        await mod.InitializeAsync();
+        modules.Add(mod);
+    }
+
+    return modules;
 }
 
-static string SanitizeFileName(string name)
+static void PrintCard(CardOutput card)
 {
-    if (string.IsNullOrWhiteSpace(name)) return "character";
-    var sanitized = new string(name
-        .Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_')
-        .ToArray())
-        .Trim('_');
-    return string.IsNullOrEmpty(sanitized) ? "character" : sanitized;
+    if (card.Title is not null)
+        Console.WriteLine($"  {card.Title}");
+    if (card.Description is not null)
+        Console.WriteLine($"  {card.Description}");
+    Console.WriteLine();
+
+    if (card.Fields is not null)
+    {
+        foreach (var field in card.Fields)
+        {
+            var lines = field.Value.Split('\n');
+            Console.WriteLine($"  {field.Name,-12} {lines[0]}");
+            foreach (var line in lines.Skip(1))
+                Console.WriteLine($"               {line}");
+        }
+    }
 }
 
 static void PrintUsage()
 {
-    Console.WriteLine("Usage: scvmbot-cli generate <game> <subcommand> [options]");
+    Console.WriteLine("Usage: scvmbot-cli [--data <path>] generate <game> <subcommand> [options]");
     Console.WriteLine();
     Console.WriteLine("Games:");
     Console.WriteLine("  morkborg              MÖRK BORG");
     Console.WriteLine();
-    Console.WriteLine("Subcommands:");
-    Console.WriteLine("  character              Generate a character");
+    Console.WriteLine("Subcommands (morkborg):");
+    Console.WriteLine("  character              Generate a random MÖRK BORG character");
+    Console.WriteLine("  party                  Generate a full adventuring party");
     Console.WriteLine();
-    Console.WriteLine("Options:");
+    Console.WriteLine("Module options (passed through to the game module):");
     Console.WriteLine("  --name <name>          Character name override");
-    Console.WriteLine("  --class <class>        Class name, or 'none' for classless");
-    Console.WriteLine("  --roll <method>        3d6 (default) or 4d6-drop-lowest");
+    Console.WriteLine("  --class <class>        Class name, 'none' for classless, or omit for random");
+    Console.WriteLine("  --roll-method <method> 3d6 (default) or 4d6-drop-lowest");
+    Console.WriteLine("  --size <n>             Party size (1-4, default 4)");
+    Console.WriteLine();
+    Console.WriteLine("CLI options:");
     Console.WriteLine("  --count <n>            Number of characters to generate (1-20, default: 1)");
     Console.WriteLine("  --quiet                Benchmark mode: no output, prints timing only");
     Console.WriteLine("                         Removes the --count upper limit");
@@ -349,8 +413,10 @@ static void PrintUsage()
     Console.WriteLine("Examples:");
     Console.WriteLine("  scvmbot-cli generate morkborg character");
     Console.WriteLine("  scvmbot-cli generate morkborg character --class none --pdf");
-    Console.WriteLine("  scvmbot-cli generate morkborg character --name Karg --roll 4d6-drop-lowest --pdf karg.pdf");
+    Console.WriteLine("  scvmbot-cli generate morkborg character --name Karg --roll-method 4d6-drop-lowest --pdf karg.pdf");
     Console.WriteLine("  scvmbot-cli generate morkborg character --count 4 --pdf party.zip");
+    Console.WriteLine("  scvmbot-cli generate morkborg party --size 3");
+    Console.WriteLine("  scvmbot-cli generate morkborg party --size 3 --pdf");
     Console.WriteLine("  scvmbot-cli generate morkborg character --quiet --count 10000");
     Console.WriteLine("  scvmbot-cli generate morkborg character --quiet --detailed --count 10000");
 }

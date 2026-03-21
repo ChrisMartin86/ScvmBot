@@ -175,6 +175,33 @@ public class GameModuleArchitectureTests
         Assert.Equal(4, renderers.Count);
     }
 
+    [Fact]
+    public async Task MorkBorgModuleRegistration_ImplementsIModuleRegistration_AndRegistersServices()
+    {
+        var dir = TestInfrastructure.CreateTempDirectory();
+        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+
+        IModuleRegistration registration = new MorkBorgModuleRegistration(dir);
+        await registration.InitializeAsync();
+
+        var services = new ServiceCollection();
+        registration.Register(services);
+        services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+
+        using var provider = services.BuildServiceProvider();
+        var modules = provider.GetServices<IGameModule>().ToList();
+        var renderers = provider.GetServices<IResultRenderer>().ToList();
+
+        Assert.Single(modules);
+        Assert.IsType<MorkBorgModule>(modules[0]);
+        Assert.Equal(4, renderers.Count);
+    }
+
     // ── Test doubles ─────────────────────────────────────────────────────────
 
     private sealed class FakeModule : IGameModule

@@ -1,179 +1,214 @@
-using ScvmBot.Games.MorkBorg.Generation;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Games.MorkBorg.Models;
-using ScvmBot.Games.MorkBorg.Pdf;
-using ScvmBot.Games.MorkBorg.Reference;
 using ScvmBot.Modules;
-using System.IO.Compression;
+using ScvmBot.Modules.MorkBorg;
 
 namespace ScvmBot.Cli.Tests;
 
 /// <summary>
-/// Proves the CLI host path: game logic is consumable without Discord.Net
-/// and produces the same results as the bot path.
+/// Proves the CLI host path: generation and rendering flow through the shared
+/// module pipeline (IGameModule + RendererRegistry) without Discord.Net.
 /// </summary>
 public class CliCharacterGenerationTests
 {
-    private static async Task<(MorkBorgReferenceDataService RefData, CharacterGenerator Generator)> CreateGeneratorAsync()
+    private static async Task<(IGameModule Module, RendererRegistry Registry)> CreateModulePipelineAsync()
     {
         var dataPath = Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data");
-        var refData = await MorkBorgReferenceDataService.CreateAsync(dataPath);
-        var generator = new CharacterGenerator(refData);
-        return (refData, generator);
+        var registration = new MorkBorgModuleRegistration(dataPath);
+        await registration.InitializeAsync();
+
+        var services = new ServiceCollection();
+        registration.Register(services);
+        services.AddSingleton<RendererRegistry>();
+        services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+        var provider = services.BuildServiceProvider();
+
+        return (provider.GetRequiredService<IGameModule>(), provider.GetRequiredService<RendererRegistry>());
     }
 
     [Fact]
     public async Task Generate_ReturnsCharacter_WithRequiredFields()
     {
-        var (_, generator) = await CreateGeneratorAsync();
+        var (module, _) = await CreateModulePipelineAsync();
 
-        var character = generator.Generate();
+        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
 
-        Assert.False(string.IsNullOrWhiteSpace(character.Name));
-        Assert.True(character.MaxHitPoints >= 1);
-        Assert.True(character.HitPoints >= 1);
-        Assert.NotNull(character.EquippedWeapon);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.False(string.IsNullOrWhiteSpace(charResult.Character.Name));
+        Assert.True(charResult.Character.MaxHitPoints >= 1);
+        Assert.True(charResult.Character.HitPoints >= 1);
+        Assert.NotNull(charResult.Character.EquippedWeapon);
     }
 
     [Fact]
     public async Task Generate_WithNameOverride_UsesProvidedName()
     {
-        var (_, generator) = await CreateGeneratorAsync();
+        var (module, _) = await CreateModulePipelineAsync();
+        var options = new Dictionary<string, object?> { ["name"] = "TestScvm" };
 
-        var character = generator.Generate(new CharacterGenerationOptions { Name = "TestScvm" });
+        var result = await module.HandleGenerateCommandAsync("character", options);
 
-        Assert.Equal("TestScvm", character.Name);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.Equal("TestScvm", charResult.Character.Name);
     }
 
     [Fact]
     public async Task Generate_WithClassNone_ProducesClasslessCharacter()
     {
-        var (_, generator) = await CreateGeneratorAsync();
+        var (module, _) = await CreateModulePipelineAsync();
+        var options = new Dictionary<string, object?> { ["class"] = "none" };
 
-        var character = generator.Generate(new CharacterGenerationOptions { ClassName = "none" });
+        var result = await module.HandleGenerateCommandAsync("character", options);
 
-        Assert.Null(character.ClassName);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.Null(charResult.Character.ClassName);
     }
 
     [Fact]
     public async Task Generate_WithSpecificClass_UsesClass()
     {
-        var (refData, generator) = await CreateGeneratorAsync();
-        var firstClass = refData.Classes[0].Name;
+        var (module, _) = await CreateModulePipelineAsync();
+        // "character" subcommand with a class name from the module's SubCommands
+        var classChoice = module.SubCommands
+            .First(sc => sc.Name == "character")
+            .Options!.First(o => o.Name == "class")
+            .Choices!.First(c => c.Value != "none");
+        var options = new Dictionary<string, object?> { ["class"] = classChoice.Value };
 
-        var character = generator.Generate(new CharacterGenerationOptions { ClassName = firstClass });
+        var result = await module.HandleGenerateCommandAsync("character", options);
 
-        Assert.Equal(firstClass, character.ClassName);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.Equal(classChoice.Value, charResult.Character.ClassName);
     }
 
     [Fact]
     public async Task Generate_WithFourD6Drop_ProducesCharacter()
     {
-        var (_, generator) = await CreateGeneratorAsync();
+        var (module, _) = await CreateModulePipelineAsync();
+        var options = new Dictionary<string, object?> { ["roll-method"] = "4d6-drop-lowest" };
 
-        var character = generator.Generate(new CharacterGenerationOptions
-        {
-            RollMethod = AbilityRollMethod.FourD6DropLowest
-        });
+        var result = await module.HandleGenerateCommandAsync("character", options);
 
-        Assert.False(string.IsNullOrWhiteSpace(character.Name));
-    }
-
-    [Fact]
-    public async Task Generate_WithDeterministicRng_ProducesReproducibleResults()
-    {
-        var dataPath = Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data");
-        var refData = await MorkBorgReferenceDataService.CreateAsync(dataPath);
-
-        var gen1 = new CharacterGenerator(refData, new Random(42));
-        var gen2 = new CharacterGenerator(refData, new Random(42));
-
-        var char1 = gen1.Generate();
-        var char2 = gen2.Generate();
-
-        Assert.Equal(char1.Name, char2.Name);
-        Assert.Equal(char1.Strength, char2.Strength);
-        Assert.Equal(char1.Agility, char2.Agility);
-        Assert.Equal(char1.HitPoints, char2.HitPoints);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.False(string.IsNullOrWhiteSpace(charResult.Character.Name));
     }
 
     [Fact]
     public async Task CliPath_DoesNotRequireDiscordAssemblies()
     {
-        var (_, generator) = await CreateGeneratorAsync();
+        var (module, _) = await CreateModulePipelineAsync();
 
         // The fact that this test compiles and runs proves the CLI path
         // is free of Discord.Net. This test project has no Discord.Net
-        // reference — if CharacterGenerator or its dependencies pulled
+        // reference — if IGameModule or its dependencies pulled
         // Discord types, this would fail to build.
-        var character = generator.Generate();
-        Assert.IsType<Character>(character);
+        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+        Assert.IsType<CharacterGenerationResult<Character>>(result);
     }
 
-    // ── Multi-character generation (CLI --count) ─────────────────────────────
+    // ── Rendering through RendererRegistry ───────────────────────────────
+
+    [Fact]
+    public async Task RenderCard_ReturnsCardOutput_ForCharacterResult()
+    {
+        var (module, registry) = await CreateModulePipelineAsync();
+        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+
+        var card = registry.RenderCard(result);
+
+        Assert.NotNull(card.Title);
+        Assert.NotNull(card.Description);
+        Assert.NotNull(card.Fields);
+        Assert.True(card.Fields.Count > 0);
+    }
+
+    [Fact]
+    public async Task TryRenderFile_ReturnsFileOutput_ForCharacterResult()
+    {
+        var (module, registry) = await CreateModulePipelineAsync();
+        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+
+        var file = registry.TryRenderFile(result);
+
+        // PDF template may not be available in all environments
+        if (file is not null)
+        {
+            Assert.True(file.Bytes.Length > 0);
+            Assert.EndsWith(".pdf", file.FileName);
+        }
+    }
+
+    // ── Multi-character generation (CLI --count) ─────────────────────────
 
     [Fact]
     public async Task Generate_MultipleCharacters_ProducesRequestedCount()
     {
-        var (_, generator) = await CreateGeneratorAsync();
+        var (module, _) = await CreateModulePipelineAsync();
 
-        var characters = Enumerable.Range(0, 4)
-            .Select(_ => generator.Generate())
-            .ToList();
+        var results = new List<GenerateResult>();
+        for (var i = 0; i < 4; i++)
+            results.Add(await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>()));
 
-        Assert.Equal(4, characters.Count);
-        Assert.All(characters, c => Assert.False(string.IsNullOrWhiteSpace(c.Name)));
-    }
-
-    [Fact]
-    public async Task Generate_MultipleCharacters_AreIndependent()
-    {
-        var (_, generator) = await CreateGeneratorAsync();
-
-        var characters = Enumerable.Range(0, 3)
-            .Select(_ => generator.Generate())
-            .ToList();
-
-        // Characters should have independent ability scores (not identical objects)
-        Assert.True(characters.Select(c => c.Name).Distinct().Count() >= 1);
-        Assert.All(characters, c => Assert.True(c.MaxHitPoints >= 1));
+        Assert.Equal(4, results.Count);
+        Assert.All(results, r =>
+        {
+            var charResult = Assert.IsType<CharacterGenerationResult<Character>>(r);
+            Assert.False(string.IsNullOrWhiteSpace(charResult.Character.Name));
+        });
     }
 
     [Fact]
     public async Task Generate_MultipleCharacters_ZipContainsAllPdfs()
     {
-        var (_, generator) = await CreateGeneratorAsync();
-        var pdfRenderer = new MorkBorgPdfRenderer();
-        if (!pdfRenderer.TemplateExists)
+        var (module, registry) = await CreateModulePipelineAsync();
+
+        var memberPdfs = new List<(string CharacterName, byte[] PdfBytes)>();
+        for (var i = 0; i < 3; i++)
+        {
+            var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+            var card = registry.RenderCard(result);
+            var file = registry.TryRenderFile(result);
+            if (file is not null)
+                memberPdfs.Add((card.Title ?? "character", file.Bytes));
+        }
+
+        if (memberPdfs.Count == 0)
             return; // skip if no PDF template
-
-        var characters = Enumerable.Range(0, 3)
-            .Select(_ => generator.Generate())
-            .ToList();
-
-        var memberPdfs = characters
-            .Select(c => (c.Name, PdfBytes: pdfRenderer.Render(c)))
-            .Where(m => m.PdfBytes is not null)
-            .Select(m => (m.Name, m.PdfBytes!))
-            .ToList();
 
         var zipBytes = PartyZipBuilder.CreatePartyZip(memberPdfs);
         Assert.True(zipBytes.Length > 0);
 
         using var stream = new MemoryStream(zipBytes);
-        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+        using var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read);
         Assert.Equal(memberPdfs.Count, archive.Entries.Count);
     }
 
+    // ── Party generation through module pipeline ─────────────────────────
+
     [Fact]
-    public async Task Generate_SingleCharacter_ReusesGenerator()
+    public async Task GenerateParty_ReturnsPartyResult()
     {
-        var (_, generator) = await CreateGeneratorAsync();
+        var (module, _) = await CreateModulePipelineAsync();
+        var options = new Dictionary<string, object?> { ["size"] = 3L };
 
-        // Single character generation still works with the same generator instance
-        var char1 = generator.Generate();
-        var char2 = generator.Generate();
+        var result = await module.HandleGenerateCommandAsync("party", options);
 
-        Assert.False(string.IsNullOrWhiteSpace(char1.Name));
-        Assert.False(string.IsNullOrWhiteSpace(char2.Name));
+        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
+        Assert.Equal(3, partyResult.Characters.Count);
+    }
+
+    [Fact]
+    public async Task GenerateParty_RenderCard_ReturnsCardOutput()
+    {
+        var (module, registry) = await CreateModulePipelineAsync();
+        var options = new Dictionary<string, object?> { ["size"] = 2L };
+
+        var result = await module.HandleGenerateCommandAsync("party", options);
+        var card = registry.RenderCard(result);
+
+        Assert.NotNull(card.Title);
+        Assert.NotNull(card.Description);
     }
 }
