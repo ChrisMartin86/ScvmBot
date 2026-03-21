@@ -270,27 +270,46 @@ if (generatePdf)
     }
     else
     {
-        var memberPdfs = new List<(string CharacterName, byte[] PdfBytes)>();
+        var renderedFiles = new List<(string Name, byte[] Bytes, string FileName)>();
         foreach (var (result, card) in results)
         {
             var file = registry.TryRenderFile(result);
             if (file is not null)
-                memberPdfs.Add((card.Title ?? "character", file.Bytes));
+                renderedFiles.Add((card.Title ?? "character", file.Bytes, file.FileName));
             else
-                Console.Error.WriteLine($"PDF rendering failed for '{card.Title}'; skipping.");
+                Console.Error.WriteLine($"File rendering failed for '{card.Title}'; skipping.");
         }
 
-        if (memberPdfs.Count == 0)
+        if (renderedFiles.Count == 0)
         {
-            Console.Error.WriteLine("All PDF renders failed.");
+            Console.Error.WriteLine("All file renders failed.");
             return 1;
         }
 
-        pdfPath ??= "characters.zip";
-        var zipBytes = PartyZipBuilder.CreatePartyZip(memberPdfs);
-        File.WriteAllBytes(pdfPath, zipBytes);
-        Console.WriteLine();
-        Console.WriteLine($"  ZIP saved to {pdfPath} ({memberPdfs.Count} character sheets)");
+        // If every rendered file is already a complete archive (e.g. party ZIPs),
+        // write each one individually rather than wrapping ZIPs inside another ZIP.
+        var allArchives = renderedFiles.All(f => f.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+        if (allArchives)
+        {
+            for (var i = 0; i < renderedFiles.Count; i++)
+            {
+                var outputName = renderedFiles.Count == 1
+                    ? pdfPath ?? renderedFiles[i].FileName
+                    : $"{Path.GetFileNameWithoutExtension(renderedFiles[i].FileName)}_{i + 1}.zip";
+                File.WriteAllBytes(outputName, renderedFiles[i].Bytes);
+                Console.WriteLine();
+                Console.WriteLine($"  Saved to {outputName}");
+            }
+        }
+        else
+        {
+            var memberPdfs = renderedFiles.Select(f => (f.Name, f.Bytes)).ToList();
+            pdfPath ??= "characters.zip";
+            var zipBytes = PartyZipBuilder.CreatePartyZip(memberPdfs);
+            File.WriteAllBytes(pdfPath, zipBytes);
+            Console.WriteLine();
+            Console.WriteLine($"  ZIP saved to {pdfPath} ({memberPdfs.Count} character sheets)");
+        }
     }
 }
 
@@ -308,9 +327,8 @@ static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync(s
     var registrationTypes = Directory.GetFiles(baseDir, "ScvmBot.Modules.*.dll")
         .Select(Path.GetFileNameWithoutExtension)
         .Where(name => name is not null)
-        .Select(name => { try { return Assembly.Load(name!); } catch { return null; } })
-        .Where(a => a is not null)
-        .SelectMany(a => a!.GetExportedTypes())
+        .Select(name => Assembly.Load(name!))
+        .SelectMany(a => a.GetExportedTypes())
         .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
                  && !t.IsAbstract
                  && !t.IsInterface);
@@ -371,7 +389,7 @@ static void PrintUsage()
     Console.WriteLine("                         Removes the --count upper limit");
     Console.WriteLine("  --detailed             With --quiet: per-generation timing stats");
     Console.WriteLine("                         (min, max, avg, median, P95, P99)");
-    Console.WriteLine("  --pdf [path]           Output a filled PDF (or ZIP when count > 1)");
+    Console.WriteLine("  --pdf [path]           Output a filled PDF or ZIP (format depends on result type)");
     Console.WriteLine("  --data <path>          Path to game data directory");
     Console.WriteLine();
     Console.WriteLine("Examples:");

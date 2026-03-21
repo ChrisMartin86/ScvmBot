@@ -83,9 +83,8 @@ class Program
         var registrationTypes = Directory.GetFiles(baseDir, "ScvmBot.Modules.*.dll")
             .Select(Path.GetFileNameWithoutExtension)
             .Where(name => name is not null)
-            .Select(name => { try { return Assembly.Load(name!); } catch { return null; } })
-            .Where(a => a is not null)
-            .SelectMany(a => a!.GetExportedTypes())
+            .Select(name => Assembly.Load(name!))
+            .SelectMany(a => a.GetExportedTypes())
             .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
                      && !t.IsAbstract
                      && !t.IsInterface);
