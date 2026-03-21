@@ -23,8 +23,8 @@ A Discord bot for tabletop RPG character generation with built-in support for **
 
 ### Engineering
 - **.NET 10** with nullable reference types enabled throughout
-- **Five-project solution** — `ScvmBot.Bot` (Discord host), `ScvmBot.Modules` (shared module contracts and abstractions), `ScvmBot.Modules.MorkBorg` (MÖRK BORG module adapter — command definitions, option parsing, renderers), `ScvmBot.Games.MorkBorg` (game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering)
-- **Automatic module discovery** — game modules implement `IModuleRegistration` and are discovered at startup via assembly scanning; adding a new game requires only a project reference — no `Program.cs` edits
+- **Six-project solution** — `ScvmBot.Bot` (Discord host), `ScvmBot.Cli` (CLI host for local generation), `ScvmBot.Modules` (shared module contracts and abstractions), `ScvmBot.Modules.MorkBorg` (MÖRK BORG module adapter — command definitions, option parsing, renderers), `ScvmBot.Games.MorkBorg` (game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering)
+- **Automatic module discovery** — game modules implement `IModuleRegistration` and are discovered at startup by scanning assemblies in the application directory; adding a new game requires only a project reference — no `Program.cs` edits
 - **420 tests** across four test projects — character generation logic, equipment flow, PDF mapping, option parsing, command handling, and party building
 - **Fail-fast module initialization** — each `IModuleRegistration` loads required data during `InitializeAsync()`; missing files abort startup with a non-zero exit code
 - **Testable command layer** — `ISlashCommandContext` interface decouples command handlers from the sealed Discord.Net type, enabling full unit test coverage
@@ -115,7 +115,7 @@ ScvmBot/
 │   │   │   ├── GenerationDeliveryService.cs # DM delivery and in-channel confirmation
 │   │   │   ├── ResponseCardBuilder.cs     # Discord embed formatting
 │   │   │   └── Commands/
-│   │   │       ├── ISlashCommand.cs        # Slash command plugin interface
+│   │   │       ├── ISlashCommand.cs        # Slash command interface
 │   │   │       ├── ISlashCommandContext.cs # Testable abstraction over SocketSlashCommand
 │   │   │       ├── SocketSlashCommandContext.cs # Runtime adapter (excluded from coverage)
 │   │   │       └── HelloCommand.cs

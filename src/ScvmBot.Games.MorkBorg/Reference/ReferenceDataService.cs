@@ -97,7 +97,7 @@ public class MorkBorgReferenceDataService
     }
 
     /// <summary>
-    /// Missing file => null (optional). Malformed JSON => throws (corrupt data).
+    /// Missing file => null (optional). Malformed JSON => throws (corrupt data file).
     /// </summary>
     private async Task<T?> LoadJsonOptionalAsync<T>(string filePath) where T : class
     {
@@ -117,7 +117,7 @@ public class MorkBorgReferenceDataService
         catch (JsonException jsonEx)
         {
             throw new InvalidOperationException(
-                $"Malformed JSON in required data file '{filePath}': {jsonEx.Message}", jsonEx);
+                $"Malformed JSON in optional data file '{filePath}': {jsonEx.Message}", jsonEx);
         }
         catch (IOException ioEx) when (ioEx is FileNotFoundException)
         {
