@@ -37,7 +37,10 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
 
     public void Register(IServiceCollection services)
     {
-        services.AddSingleton(_refData!);
+        if (_refData is null)
+            throw new InvalidOperationException("InitializeAsync() must be called before Register().");
+
+        services.AddSingleton(_refData);
         services.AddSingleton<CharacterGenerator>();
         services.AddSingleton<MorkBorgPdfRenderer>();
         services.AddSingleton<IGameModule, MorkBorgModule>();

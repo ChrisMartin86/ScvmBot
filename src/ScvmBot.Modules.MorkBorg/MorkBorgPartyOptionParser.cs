@@ -21,8 +21,18 @@ public sealed class MorkBorgPartyOptionParser
         if (!options.TryGetValue("size", out var sizeValue) || sizeValue is null)
             return DefaultPartySize;
 
-        if (sizeValue is long longValue)
-            return Math.Clamp((int)longValue, MinPartySize, MaxPartySize);
+        if (sizeValue is IConvertible convertible)
+        {
+            try
+            {
+                var intValue = convertible.ToInt32(null);
+                return Math.Clamp(intValue, MinPartySize, MaxPartySize);
+            }
+            catch (Exception ex) when (ex is OverflowException or FormatException or InvalidCastException)
+            {
+                return DefaultPartySize;
+            }
+        }
 
         return DefaultPartySize;
     }

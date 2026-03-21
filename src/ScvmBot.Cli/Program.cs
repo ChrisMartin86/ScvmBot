@@ -266,7 +266,7 @@ if (generatePdf)
         pdfPath ??= file.FileName;
         File.WriteAllBytes(pdfPath, file.Bytes);
         Console.WriteLine();
-        Console.WriteLine($"  PDF saved to {pdfPath}");
+        Console.WriteLine($"  Saved to {pdfPath}");
     }
     else
     {

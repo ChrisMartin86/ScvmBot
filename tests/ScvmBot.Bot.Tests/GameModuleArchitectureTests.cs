@@ -204,6 +204,16 @@ public class GameModuleArchitectureTests
         Assert.Equal(4, renderers.Count);
     }
 
+    [Fact]
+    public void MorkBorgModuleRegistration_Register_ThrowsWhenCalledBeforeInitialize()
+    {
+        var registration = new MorkBorgModuleRegistration();
+        var services = new ServiceCollection();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => registration.Register(services));
+        Assert.Contains("InitializeAsync()", ex.Message);
+    }
+
     // ── Test doubles ─────────────────────────────────────────────────────────
 
     private sealed class FakeModule : IGameModule
