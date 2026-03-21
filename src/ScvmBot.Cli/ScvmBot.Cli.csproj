@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <AssemblyName>scvmbot-cli</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="../../games/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj" />
     <ProjectReference Include="../../rendering/ScvmBot.Games.MorkBorg.Pdf/ScvmBot.Games.MorkBorg.Pdf.csproj" />
+    <ProjectReference Include="../../modules/ScvmBot.Modules/ScvmBot.Modules.csproj" />
   </ItemGroup>
 
   <ItemGroup>
