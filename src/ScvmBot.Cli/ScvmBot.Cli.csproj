@@ -14,13 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj" />
     <ProjectReference Include="../ScvmBot.Modules/ScvmBot.Modules.csproj" />
     <ProjectReference Include="../ScvmBot.Modules.MorkBorg/ScvmBot.Modules.MorkBorg.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="../ScvmBot.Games.MorkBorg/Data/**" CopyToOutputDirectory="PreserveNewest" Link="Data/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

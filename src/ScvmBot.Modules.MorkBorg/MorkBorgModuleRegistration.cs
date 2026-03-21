@@ -12,7 +12,7 @@ namespace ScvmBot.Modules.MorkBorg;
 /// </summary>
 public sealed class MorkBorgModuleRegistration : IModuleRegistration
 {
-    private readonly string? _dataPath;
+    private string? _dataPath;
     private MorkBorgReferenceDataService? _refData;
 
     /// <summary>Parameterless constructor used by automatic discovery.</summary>
@@ -20,6 +20,13 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
 
     /// <summary>Constructor for tests that need a custom data directory.</summary>
     public MorkBorgModuleRegistration(string? dataPath) => _dataPath = dataPath;
+
+    /// <inheritdoc />
+    public void Configure(IReadOnlyDictionary<string, string> settings)
+    {
+        if (settings.TryGetValue("DataPath", out var path))
+            _dataPath = path;
+    }
 
     public async Task InitializeAsync()
     {

@@ -4,7 +4,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Bot.Services;
 using ScvmBot.Modules;
-using ScvmBot.Modules.MorkBorg;namespace ScvmBot.Bot.Tests;
+using ScvmBot.Modules.MorkBorg;
+
+namespace ScvmBot.Bot.Tests;
 
 /// <summary>
 /// Architecture tests that verify the module-based integration model:

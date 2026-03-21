@@ -1,9 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Modules;
-using ScvmBot.Modules.MorkBorg;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -177,9 +175,6 @@ if (quiet)
     if (detailed)
     {
         var ticksPerGeneration = new long[count];
-        var classCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        long totalHp = 0;
-        long totalSilver = 0;
         var sw = new Stopwatch();
         var startTime = DateTimeOffset.Now;
         var totalSw = Stopwatch.StartNew();
@@ -187,18 +182,9 @@ if (quiet)
         for (var n = 0; n < count; n++)
         {
             sw.Restart();
-            var result = await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict);
+            await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict);
             sw.Stop();
             ticksPerGeneration[n] = sw.ElapsedTicks;
-
-            if (result is CharacterGenerationResult<Character> { Character: var character })
-            {
-                totalHp += character.HitPoints;
-                totalSilver += character.Silver;
-                var key = character.ClassName ?? "Classless";
-                classCounts.TryGetValue(key, out var c);
-                classCounts[key] = c + 1;
-            }
         }
 
         totalSw.Stop();
@@ -225,31 +211,14 @@ if (quiet)
         Console.WriteLine($"    Median:  {medianMs:F4} ms");
         Console.WriteLine($"    P95:     {p95Ms:F4} ms");
         Console.WriteLine($"    P99:     {p99Ms:F4} ms");
-        Console.WriteLine();
-        Console.WriteLine($"  Total HP:  {totalHp:N0}");
-        Console.WriteLine($"  Avg HP:    {(double)totalHp / count:F2}");
-        Console.WriteLine($"  Total Silver: {totalSilver:N0}");
-        Console.WriteLine();
-        Console.WriteLine("  Class distribution:");
-        foreach (var (cls, cnt) in classCounts.OrderByDescending(kv => kv.Value))
-            Console.WriteLine($"    {cls,-25} {cnt,8:N0}  ({100.0 * cnt / count:F1}%)");
     }
     else
     {
-        long totalHp = 0;
-        long totalSilver = 0;
         var startTime = DateTimeOffset.Now;
         var sw = Stopwatch.StartNew();
 
         for (var n = 0; n < count; n++)
-        {
-            var result = await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict);
-            if (result is CharacterGenerationResult<Character> { Character: var character })
-            {
-                totalHp += character.HitPoints;
-                totalSilver += character.Silver;
-            }
-        }
+            await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict);
 
         sw.Stop();
         var endTime = DateTimeOffset.Now;
@@ -258,10 +227,6 @@ if (quiet)
         Console.WriteLine($"  Finished:  {endTime:yyyy-MM-dd HH:mm:ss.fff zzz}");
         Console.WriteLine($"  Count:     {count:N0}");
         Console.WriteLine($"  Elapsed:   {sw.Elapsed}");
-        Console.WriteLine();
-        Console.WriteLine($"  Total HP:  {totalHp:N0}");
-        Console.WriteLine($"  Avg HP:    {(double)totalHp / count:F2}");
-        Console.WriteLine($"  Total Silver: {totalSilver:N0}");
     }
     return 0;
 }
@@ -335,15 +300,10 @@ return 0;
 
 static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync(string? dataPath)
 {
+    var settings = new Dictionary<string, string>();
     if (dataPath is not null)
-    {
-        // Explicit data path override — create the module registration manually.
-        var reg = new MorkBorgModuleRegistration(dataPath);
-        await reg.InitializeAsync();
-        return [reg];
-    }
+        settings["DataPath"] = dataPath;
 
-    // Auto-discover from referenced assemblies
     var registrationTypes = Assembly.GetEntryAssembly()!
         .GetReferencedAssemblies()
         .Select(Assembly.Load)
@@ -357,6 +317,8 @@ static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync(s
     foreach (var type in registrationTypes)
     {
         var mod = (IModuleRegistration)Activator.CreateInstance(type)!;
+        if (settings.Count > 0)
+            mod.Configure(settings);
         await mod.InitializeAsync();
         modules.Add(mod);
     }
