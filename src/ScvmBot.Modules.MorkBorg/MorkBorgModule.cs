@@ -1,4 +1,3 @@
-using Discord;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Reference;
@@ -14,51 +13,43 @@ namespace ScvmBot.Modules.MorkBorg;
 public sealed class MorkBorgModule : IGameModule
 {
     private readonly CharacterGenerator _generator;
-    private readonly MorkBorgReferenceDataService _refData;
 
     public MorkBorgModule(CharacterGenerator generator, MorkBorgReferenceDataService refData)
     {
         _generator = generator;
-        _refData = refData;
+        SubCommands = MorkBorgCommandDefinition.BuildSubCommands(
+            refData.Classes.Select(c => c.Name).ToList());
     }
 
     public string Name => "MÖRK BORG";
 
     public string CommandKey => "morkborg";
 
-    public SlashCommandOptionBuilder BuildCommandGroupOptions() =>
-        MorkBorgCommandDefinition.BuildCommandGroupOptions(
-            _refData.Classes.Select(c => c.Name).ToList());
+    public IReadOnlyList<SubCommandDefinition> SubCommands { get; }
 
     public Task<GenerateResult> HandleGenerateCommandAsync(
-        IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
+        string subCommand,
+        IReadOnlyDictionary<string, object?> options,
         CancellationToken ct = default)
     {
-        var subcommand = subCommandOptions
-            ?.FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommand);
+        if (string.Equals(subCommand, "party", StringComparison.OrdinalIgnoreCase))
+            return Task.FromResult<GenerateResult>(BuildPartyResult(options));
 
-        if (subcommand == null)
-            throw new InvalidOperationException(
-                "No subcommand provided. Expected: /generate morkborg character|party [options]");
-
-        if (string.Equals(subcommand.Name, "party", StringComparison.OrdinalIgnoreCase))
-            return Task.FromResult<GenerateResult>(BuildPartyResult(subCommandOptions));
-
-        if (string.Equals(subcommand.Name, "character", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(subCommand, "character", StringComparison.OrdinalIgnoreCase))
         {
-            var options = MorkBorgGenerateOptionParser.Parse(subCommandOptions);
-            var character = _generator.Generate(options);
+            var genOptions = MorkBorgGenerateOptionParser.Parse(options);
+            var character = _generator.Generate(genOptions);
             return Task.FromResult<GenerateResult>(new CharacterGenerationResult<Character>(character));
         }
 
         throw new InvalidOperationException(
-            $"Unknown subcommand '{subcommand.Name}'. Expected 'character' or 'party'.");
+            $"Unknown subcommand '{subCommand}'. Expected 'character' or 'party'.");
     }
 
     private PartyGenerationResult<Character> BuildPartyResult(
-        IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions)
+        IReadOnlyDictionary<string, object?> options)
     {
-        var partySize = MorkBorgPartyOptionParser.ParsePartySize(subCommandOptions);
+        var partySize = MorkBorgPartyOptionParser.ParsePartySize(options);
 
         var characters = Enumerable.Range(0, partySize)
             .Select(_ => _generator.Generate(new CharacterGenerationOptions()))

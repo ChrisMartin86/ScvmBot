@@ -9,6 +9,9 @@ namespace ScvmBot.Modules;
 /// </summary>
 public interface IResultRenderer
 {
+    /// <summary>The concrete <see cref="GenerateResult"/> subtype this renderer handles.</summary>
+    Type ResultType { get; }
+
     /// <summary>The output format this renderer produces.</summary>
     OutputFormat Format { get; }
 

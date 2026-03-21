@@ -131,8 +131,9 @@ ScvmBot/
 │   │   ├── GenerateResult.cs              # CharacterGenerationResult / PartyGenerationResult
 │   │   ├── IResultRenderer.cs             # Renderer interface
 │   │   ├── RendererRegistry.cs            # Selects renderer by result type + format
-│   │   ├── RenderOutput.cs                # EmbedOutput / FileOutput discriminated union
-│   │   ├── OutputFormat.cs                # DiscordEmbed, Pdf
+│   │   ├── CommandDefinition.cs            # SubCommandDefinition, CommandOptionDefinition, CommandChoice
+│   │   ├── RenderOutput.cs                # CardOutput / FileOutput discriminated union
+│   │   ├── OutputFormat.cs                # Card, File
 │   │   └── PartyZipBuilder.cs             # ZIP archive creation for party PDFs
 │   │
 │   ├── ScvmBot.Modules.MorkBorg/          # MÖRK BORG module adapter layer
@@ -220,9 +221,10 @@ dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
        public string Name => "Your Game";
        public string CommandKey => "yourgame";  // becomes /generate yourgame
 
-       public SlashCommandOptionBuilder BuildCommandGroupOptions() { ... }
+       public IReadOnlyList<SubCommandDefinition> SubCommands { get; } = ...;
        public Task<GenerateResult> HandleGenerateCommandAsync(
-           IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
+           string subCommand,
+           IReadOnlyDictionary<string, object?> options,
            CancellationToken ct = default) { ... }
    }
    ```

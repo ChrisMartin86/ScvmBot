@@ -1,18 +1,19 @@
-using Discord;
 using ScvmBot.Games.MorkBorg.Models;
 using System.Text;
 
 namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
-/// Renders a MÖRK BORG <see cref="CharacterGenerationResult"/> as a Discord embed
+/// Renders a MÖRK BORG <see cref="CharacterGenerationResult"/> as a structured card
 /// showing abilities, equipment, descriptions, vignette, and scrolls.
 /// </summary>
 public sealed class MorkBorgCharacterEmbedRenderer : IResultRenderer
 {
-    private static readonly Color CardColor = new(200, 170, 50);
+    private static readonly CardColor CardColor = new(200, 170, 50);
 
-    public OutputFormat Format => OutputFormat.DiscordEmbed;
+    public Type ResultType => typeof(CharacterGenerationResult<Character>);
+
+    public OutputFormat Format => OutputFormat.Card;
 
     public bool CanRender(GenerateResult result) =>
         result is CharacterGenerationResult<Character>;
@@ -21,37 +22,38 @@ public sealed class MorkBorgCharacterEmbedRenderer : IResultRenderer
     {
         if (result is not CharacterGenerationResult<Character> { Character: var character })
             throw new InvalidOperationException(
-                $"Cannot render {result.GetType().Name} as a MÖRK BORG character embed.");
+                $"Cannot render {result.GetType().Name} as a MÖRK BORG character card.");
 
-        return new EmbedOutput(BuildEmbed(character));
+        return BuildCard(character);
     }
 
-    internal static Embed BuildEmbed(Character character)
+    internal static CardOutput BuildCard(Character character)
     {
         var className = string.IsNullOrWhiteSpace(character.ClassName) ? "No Class" : character.ClassName;
         var summary = $"{className} — HP {character.HitPoints} | Omens {character.Omens} | {character.Silver}s";
 
-        var embed = new EmbedBuilder()
-            .WithTitle(character.Name)
-            .WithDescription(summary)
-            .WithColor(CardColor);
-
-        embed.AddField("Abilities", FormatAbilities(character), inline: false);
-        embed.AddField("Equipment", FormatEquipment(character), inline: false);
+        var fields = new List<CardField>
+        {
+            new("Abilities", FormatAbilities(character)),
+            new("Equipment", FormatEquipment(character))
+        };
 
         var descriptionText = FormatDescriptions(character);
         if (!string.IsNullOrEmpty(descriptionText))
-            embed.AddField("Description", descriptionText, inline: false);
+            fields.Add(new CardField("Description", descriptionText));
 
         if (!string.IsNullOrWhiteSpace(character.Vignette))
-            embed.AddField("Vignette", character.Vignette, inline: false);
+            fields.Add(new CardField("Vignette", character.Vignette));
 
         if (character.ScrollsKnown.Count > 0)
-            embed.AddField("Scrolls", string.Join("\n", character.ScrollsKnown), inline: false);
+            fields.Add(new CardField("Scrolls", string.Join("\n", character.ScrollsKnown)));
 
-        embed.WithFooter("MÖRK BORG is © Ockult Örtmästare Games & Stockholm Kartell. Used under the MÖRK BORG Third Party License.");
-
-        return embed.Build();
+        return new CardOutput(
+            Title: character.Name,
+            Description: summary,
+            Footer: "MÖRK BORG is © Ockult Örtmästare Games & Stockholm Kartell. Used under the MÖRK BORG Third Party License.",
+            Color: CardColor,
+            Fields: fields);
     }
 
     private static string FormatAbilities(Character character) =>

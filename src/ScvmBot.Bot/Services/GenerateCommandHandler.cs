@@ -51,7 +51,7 @@ public class GenerateCommandHandler : ISlashCommand
             .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
 
         foreach (var m in _gameModules.Values)
-            builder.AddOption(m.BuildCommandGroupOptions());
+            builder.AddOption(DiscordCommandAdapter.ToSlashCommandOption(m));
 
         return builder;
     }
@@ -75,13 +75,24 @@ public class GenerateCommandHandler : ISlashCommand
         return gameModule;
     }
 
-    private IReadOnlyCollection<IApplicationCommandInteractionDataOption>? GetSubcommandGroupOptions(
+    private static (string SubCommand, IReadOnlyDictionary<string, object?> Options) ExtractCommandInput(
         ISlashCommandContext context)
     {
         var subcommandGroup = context.Options
             .FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommandGroup);
 
-        return subcommandGroup?.Options;
+        var subCommand = subcommandGroup?.Options
+            ?.FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommand)
+            ?? throw new InvalidOperationException("No subcommand found in options.");
+
+        var options = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        if (subCommand.Options is not null)
+        {
+            foreach (var opt in subCommand.Options)
+                options[opt.Name] = opt.Value;
+        }
+
+        return (subCommand.Name, options);
     }
 
     public async Task HandleAsync(ISlashCommandContext context)
@@ -106,8 +117,8 @@ public class GenerateCommandHandler : ISlashCommand
             GenerateResult result;
             try
             {
-                var subcommandGroupOptions = GetSubcommandGroupOptions(context);
-                result = await gameModule.HandleGenerateCommandAsync(subcommandGroupOptions);
+                var (subCommand, options) = ExtractCommandInput(context);
+                result = await gameModule.HandleGenerateCommandAsync(subCommand, options);
             }
             catch (InvalidOperationException genEx)
             {
@@ -125,8 +136,9 @@ public class GenerateCommandHandler : ISlashCommand
                 return;
             }
 
-            // Render embed (required)
-            var embedOutput = _rendererRegistry.RenderEmbed(result);
+            // Render card (required)
+            var cardOutput = _rendererRegistry.RenderCard(result);
+            var embed = DiscordCardAdapter.ToEmbed(cardOutput);
 
             // Render file attachment (optional, best-effort)
             FileOutput? fileOutput = null;
@@ -156,7 +168,7 @@ public class GenerateCommandHandler : ISlashCommand
                 var followupText = isDm
                     ? (result is PartyGenerationResult ? "Here's your party!" : "Here's your character!")
                     : "Check your DMs.";
-                await _delivery.DeliverAsync(context, embedOutput.Embed, attachment, followupText);
+                await _delivery.DeliverAsync(context, embed, attachment, followupText);
             }
             catch (Exception sendEx)
             {

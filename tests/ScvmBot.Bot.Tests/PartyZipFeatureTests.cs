@@ -75,18 +75,18 @@ public class PartyEmbedBuilderTests
     public void Build_IncludesPartyName_AsTitle()
     {
         var members = CreateMembers(2);
-        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("The Doomed", members);
+        var card = MorkBorgPartyEmbedRenderer.BuildCard("The Doomed", members);
 
-        Assert.Equal("The Doomed", embed.Title);
+        Assert.Equal("The Doomed", card.Title);
     }
 
     [Fact]
     public void Build_IncludesPartySize_InDescription()
     {
         var members = CreateMembers(3);
-        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("Squad", members);
+        var card = MorkBorgPartyEmbedRenderer.BuildCard("Squad", members);
 
-        Assert.Contains("Party of 3", embed.Description);
+        Assert.Contains("Party of 3", card.Description);
     }
 
     [Fact]
@@ -99,21 +99,21 @@ public class PartyEmbedBuilderTests
             new Character { Name = "Gamma" }
         };
 
-        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("Party", members);
+        var card = MorkBorgPartyEmbedRenderer.BuildCard("Party", members);
 
-        Assert.Contains("Alpha", embed.Description);
-        Assert.Contains("Beta", embed.Description);
-        Assert.Contains("Gamma", embed.Description);
+        Assert.Contains("Alpha", card.Description);
+        Assert.Contains("Beta", card.Description);
+        Assert.Contains("Gamma", card.Description);
     }
 
     [Fact]
     public void Build_FormatsCorrectly_WithMultipleMembers()
     {
         var members = CreateMembers(5);
-        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("Big Party", members);
+        var card = MorkBorgPartyEmbedRenderer.BuildCard("Big Party", members);
 
         // Description contains "Party of 5" plus one bullet line per member
-        var lines = embed.Description!.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var lines = card.Description!.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         // First line is "Party of 5", remaining 5 are bullet items
         Assert.Equal(6, lines.Length);
         foreach (var line in lines.Skip(1))
@@ -124,9 +124,9 @@ public class PartyEmbedBuilderTests
     public void Build_HasNoFields()
     {
         var members = CreateMembers(3);
-        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("Party", members);
+        var card = MorkBorgPartyEmbedRenderer.BuildCard("Party", members);
 
-        Assert.Empty(embed.Fields);
+        Assert.Null(card.Fields);
     }
 
     private static List<Character> CreateMembers(int count)

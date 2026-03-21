@@ -15,7 +15,7 @@ public sealed class RendererRegistry
     }
 
     /// <summary>
-    /// Validates that no two renderers claim the same concrete result type and format combination.
+    /// Validates that no two renderers claim the same (ResultType, Format) combination.
     /// This is checked eagerly at startup to surface configuration mistakes early.
     /// </summary>
     private void ValidateNoAmbiguousRenderers()
@@ -23,12 +23,14 @@ public sealed class RendererRegistry
         var seen = new Dictionary<(Type, OutputFormat), IResultRenderer>();
         foreach (var renderer in _renderers)
         {
-            var key = (renderer.GetType(), renderer.Format);
+            var key = (renderer.ResultType, renderer.Format);
             if (!seen.TryAdd(key, renderer))
             {
+                var existing = seen[key];
                 throw new InvalidOperationException(
-                    $"Ambiguous renderer registration: '{renderer.GetType().Name}' is registered " +
-                    $"more than once for format {renderer.Format}. Each renderer type may only be registered once.");
+                    $"Ambiguous renderer registration: both '{existing.GetType().Name}' and '{renderer.GetType().Name}' " +
+                    $"claim result type {renderer.ResultType.Name} with format {renderer.Format}. " +
+                    $"Each (ResultType, Format) pair must have exactly one renderer.");
             }
         }
     }
@@ -50,30 +52,30 @@ public sealed class RendererRegistry
                 $"No renderer registered for {result.GetType().Name} with format {format}.");
 
     /// <summary>
-    /// Renders the result as a Discord embed. Throws if no embed renderer matches.
+    /// Renders the result as a structured card. Throws if no card renderer matches.
     /// </summary>
-    public EmbedOutput RenderEmbed(GenerateResult result)
+    public CardOutput RenderCard(GenerateResult result)
     {
-        var renderer = GetRequiredRenderer(result, OutputFormat.DiscordEmbed);
+        var renderer = GetRequiredRenderer(result, OutputFormat.Card);
         var output = renderer.Render(result);
-        return output as EmbedOutput
+        return output as CardOutput
             ?? throw new InvalidOperationException(
-                $"Renderer {renderer.GetType().Name} declared OutputFormat.DiscordEmbed but returned {output.GetType().Name}.");
+                $"Renderer {renderer.GetType().Name} declared OutputFormat.Card but returned {output.GetType().Name}.");
     }
 
     /// <summary>
-    /// Attempts to render the result as a file (PDF, ZIP, etc.).
+    /// Attempts to render the result as a downloadable file (PDF, ZIP, etc.).
     /// Returns null if no file renderer matches.
     /// </summary>
     public FileOutput? TryRenderFile(GenerateResult result)
     {
-        var renderer = FindRenderer(result, OutputFormat.Pdf);
+        var renderer = FindRenderer(result, OutputFormat.File);
         if (renderer is null)
             return null;
 
         var output = renderer.Render(result);
         return output as FileOutput
             ?? throw new InvalidOperationException(
-                $"Renderer {renderer.GetType().Name} declared OutputFormat.Pdf but returned {output.GetType().Name}.");
+                $"Renderer {renderer.GetType().Name} declared OutputFormat.File but returned {output.GetType().Name}.");
     }
 }

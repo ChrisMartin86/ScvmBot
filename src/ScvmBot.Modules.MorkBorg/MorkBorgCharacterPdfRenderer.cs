@@ -13,7 +13,9 @@ public sealed class MorkBorgCharacterPdfRenderer : IResultRenderer
     public MorkBorgCharacterPdfRenderer(MorkBorgPdfRenderer pdfRenderer) =>
         _pdfRenderer = pdfRenderer;
 
-    public OutputFormat Format => OutputFormat.Pdf;
+    public Type ResultType => typeof(CharacterGenerationResult<Character>);
+
+    public OutputFormat Format => OutputFormat.File;
 
     public bool CanRender(GenerateResult result) =>
         result is CharacterGenerationResult<Character> && _pdfRenderer.TemplateExists;

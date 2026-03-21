@@ -1,60 +1,26 @@
-using Discord;
 using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
-/// Parses Discord slash command options into <see cref="CharacterGenerationOptions"/>.
+/// Parses command options into <see cref="CharacterGenerationOptions"/>.
 /// Separates parsing from command definition and execution for testability.
 /// </summary>
 public sealed class MorkBorgGenerateOptionParser
 {
     /// <summary>
-    /// Parses subcommand options from the Discord interaction.
-    /// Throws InvalidOperationException if the expected "character" subcommand is not present.
+    /// Parses a transport-agnostic options dictionary into character generation options.
     /// </summary>
-    /// <exception cref="InvalidOperationException">Thrown if the command structure is malformed.</exception>
-    public static CharacterGenerationOptions Parse(
-        IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandGroupOptions)
+    public static CharacterGenerationOptions Parse(IReadOnlyDictionary<string, object?> options)
     {
-        if (subCommandGroupOptions == null || subCommandGroupOptions.Count == 0)
-        {
-            throw new InvalidOperationException(
-                "No subcommand provided. Expected: /generate morkborg character [options]");
-        }
-
-        // Find the "character" SubCommand by type AND name, not by position.
-        var subcommand = subCommandGroupOptions
-            .FirstOrDefault(o =>
-                o.Type == ApplicationCommandOptionType.SubCommand &&
-                string.Equals(o.Name, "character", StringComparison.OrdinalIgnoreCase));
-
-        if (subcommand == null)
-        {
-            throw new InvalidOperationException(
-                "Expected 'character' subcommand was not provided.");
-        }
-
-        if (subcommand.Options == null)
-            return ParseRawOptions(null, null, null);
-
-        var opts = subcommand.Options;
         return ParseRawOptions(
-            rollMethod: FindOptionValueByName(opts, "roll-method"),
-            className: FindOptionValueByName(opts, "class"),
-            nameOverride: FindOptionValueByName(opts, "name"));
-    }
-
-    private static string? FindOptionValueByName(
-        IReadOnlyCollection<IApplicationCommandInteractionDataOption> options,
-        string optionName)
-    {
-        var option = options.FirstOrDefault(o => o.Name == optionName);
-        return option?.Value?.ToString();
+            rollMethod: options.TryGetValue("roll-method", out var rm) ? rm?.ToString() : null,
+            className: options.TryGetValue("class", out var cls) ? cls?.ToString() : null,
+            nameOverride: options.TryGetValue("name", out var name) ? name?.ToString() : null);
     }
 
     /// <summary>
-    /// Pure parser testable without Discord types.
+    /// Pure parser testable without any transport types.
     /// 
     /// ClassName interpretation:
     /// - "none" => explicitly classless

@@ -1,4 +1,3 @@
-using Discord;
 using Microsoft.Extensions.Logging;
 using ScvmBot.Bot.Services;
 using ScvmBot.Modules;
@@ -119,11 +118,12 @@ internal class FakeGameSystem : IGameModule
     public string CommandKey => "test";
     public string Name => "Test System";
 
-    public SlashCommandOptionBuilder BuildCommandGroupOptions() =>
+    public IReadOnlyList<SubCommandDefinition> SubCommands =>
         throw new NotImplementedException();
 
     public Task<GenerateResult> HandleGenerateCommandAsync(
-        IReadOnlyCollection<IApplicationCommandInteractionDataOption>? options,
+        string subCommand,
+        IReadOnlyDictionary<string, object?> options,
         CancellationToken ct = default) =>
         throw new NotImplementedException();
 }

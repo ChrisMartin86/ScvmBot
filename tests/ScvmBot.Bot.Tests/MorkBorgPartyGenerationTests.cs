@@ -1,4 +1,3 @@
-using Discord;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Reference;
@@ -11,48 +10,43 @@ namespace ScvmBot.Bot.Tests;
 public class MorkBorgPartyGenerationTests
 {
     [Fact]
-    public async Task BuildCommandGroupOptions_HasPartySubcommand()
+    public async Task SubCommands_HasPartySubcommand()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var builder = gs.BuildCommandGroupOptions();
-        var partySubcommand = builder.Options?.FirstOrDefault(o => o.Name == "party");
+        var partySubcommand = gs.SubCommands.FirstOrDefault(s => s.Name == "party");
         Assert.NotNull(partySubcommand);
-        Assert.Equal(ApplicationCommandOptionType.SubCommand, partySubcommand!.Type);
     }
 
     [Fact]
-    public async Task BuildCommandGroupOptions_PartySubcommandHasSizeOption()
+    public async Task SubCommands_PartySubcommandHasSizeOption()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var builder = gs.BuildCommandGroupOptions();
-        var partySubcommand = builder.Options!.First(o => o.Name == "party");
+        var partySubcommand = gs.SubCommands.First(s => s.Name == "party");
         var sizeOpt = partySubcommand.Options?.FirstOrDefault(o => o.Name == "size");
         Assert.NotNull(sizeOpt);
-        Assert.False(sizeOpt!.IsRequired ?? false);
-        Assert.Equal(ApplicationCommandOptionType.Integer, sizeOpt.Type);
+        Assert.False(sizeOpt!.Required);
+        Assert.Equal(CommandOptionType.Integer, sizeOpt.Type);
     }
 
     [Fact]
-    public async Task BuildCommandGroupOptions_PartySubcommandHasNoNameOption()
+    public async Task SubCommands_PartySubcommandHasNoNameOption()
     {
         // Party names are always randomly generated; there is no user-supplied name option.
         // This test guards against accidentally re-introducing a ghost option that the parser
         // no longer supports.
         var gs = await CreateMinimalGameSystemAsync();
-        var builder = gs.BuildCommandGroupOptions();
-        var partySubcommand = builder.Options!.First(o => o.Name == "party");
+        var partySubcommand = gs.SubCommands.First(s => s.Name == "party");
         var nameOpt = partySubcommand.Options?.FirstOrDefault(o => o.Name == "name");
         Assert.Null(nameOpt);
     }
 
     [Fact]
-    public async Task BuildCommandGroupOptions_PartySubcommandExposesOnlySizeOption()
+    public async Task SubCommands_PartySubcommandExposesOnlySizeOption()
     {
         // The command surface and the parser must agree. If this count changes, the parser
         // and command definition need to be updated together.
         var gs = await CreateMinimalGameSystemAsync();
-        var builder = gs.BuildCommandGroupOptions();
-        var partySubcommand = builder.Options!.First(o => o.Name == "party");
+        var partySubcommand = gs.SubCommands.First(s => s.Name == "party");
         var optionNames = partySubcommand.Options?.Select(o => o.Name).ToList() ?? [];
         Assert.Equal(["size"], optionNames);
     }
@@ -61,16 +55,9 @@ public class MorkBorgPartyGenerationTests
     public async Task HandlePartyGenerationAsync_GeneratesMultipleCharacters()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var partySubcommandOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
-                new List<IApplicationCommandInteractionDataOption>
-                {
-                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 3L)
-                })
-        };
 
-        var result = await gs.HandleGenerateCommandAsync(partySubcommandOptions);
+        var result = await gs.HandleGenerateCommandAsync("party",
+            new Dictionary<string, object?> { ["size"] = 3L });
 
         var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.Equal(3, partyResult.Characters.Count);
@@ -80,16 +67,9 @@ public class MorkBorgPartyGenerationTests
     public async Task HandlePartyGenerationAsync_FirstCharacterMatchesSingleProperty()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var partySubcommandOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
-                new List<IApplicationCommandInteractionDataOption>
-                {
-                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 2L)
-                })
-        };
 
-        var result = await gs.HandleGenerateCommandAsync(partySubcommandOptions);
+        var result = await gs.HandleGenerateCommandAsync("party",
+            new Dictionary<string, object?> { ["size"] = 2L });
 
         var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
@@ -99,16 +79,9 @@ public class MorkBorgPartyGenerationTests
     public async Task HandlePartyGenerationAsync_AllCharactersAreIndependent()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var partySubcommandOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
-                new List<IApplicationCommandInteractionDataOption>
-                {
-                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 3L)
-                })
-        };
 
-        var result = await gs.HandleGenerateCommandAsync(partySubcommandOptions);
+        var result = await gs.HandleGenerateCommandAsync("party",
+            new Dictionary<string, object?> { ["size"] = 3L });
 
         var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         var characters = partyResult.Characters;
@@ -121,12 +94,9 @@ public class MorkBorgPartyGenerationTests
     public async Task HandlePartyGenerationAsync_DefaultPartySize_IsFour()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var partySubcommandOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand)
-        };
 
-        var result = await gs.HandleGenerateCommandAsync(partySubcommandOptions);
+        var result = await gs.HandleGenerateCommandAsync("party",
+            new Dictionary<string, object?>());
 
         var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.Equal(4, partyResult.Characters.Count);
@@ -136,12 +106,9 @@ public class MorkBorgPartyGenerationTests
     public async Task HandleSingleCharacterAsync_StillWorks()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var charSubcommandOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("character", ApplicationCommandOptionType.SubCommand)
-        };
 
-        var result = await gs.HandleGenerateCommandAsync(charSubcommandOptions);
+        var result = await gs.HandleGenerateCommandAsync("character",
+            new Dictionary<string, object?>());
 
         var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
         Assert.NotNull(charResult.Character);
@@ -151,16 +118,10 @@ public class MorkBorgPartyGenerationTests
     public async Task HandleGenerateCommandAsync_Party_GeneratesZipFile()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var partyOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
-                new List<IApplicationCommandInteractionDataOption>
-                {
-                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 2L)
-                })
-        };
 
-        var result = await gs.HandleGenerateCommandAsync(partyOptions);
+        var result = await gs.HandleGenerateCommandAsync("party",
+            new Dictionary<string, object?> { ["size"] = 2L });
+
         var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
 
         // Verify ZIP can be created from character data
@@ -176,40 +137,26 @@ public class MorkBorgPartyGenerationTests
     }
 
     [Fact]
-    public async Task HandleGenerateCommandAsync_Party_GeneratesPartyEmbed()
+    public async Task HandleGenerateCommandAsync_Party_GeneratesPartyCard()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var partyOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
-                new List<IApplicationCommandInteractionDataOption>
-                {
-                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 3L)
-                })
-        };
 
-        var result = await gs.HandleGenerateCommandAsync(partyOptions);
+        var result = await gs.HandleGenerateCommandAsync("party",
+            new Dictionary<string, object?> { ["size"] = 3L });
 
         var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
-        var embed = MorkBorgPartyEmbedRenderer.BuildEmbed(partyResult.PartyName, partyResult.Characters);
-        Assert.Contains("Party of 3", embed.Description);
+        var card = MorkBorgPartyEmbedRenderer.BuildCard(partyResult.PartyName, partyResult.Characters);
+        Assert.Contains("Party of 3", card.Description);
     }
 
     [Fact]
     public async Task HandleGenerateCommandAsync_Party_GeneratesRandomName()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var partyOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("party", ApplicationCommandOptionType.SubCommand,
-                new List<IApplicationCommandInteractionDataOption>
-                {
-                    CreateMockOption("size", ApplicationCommandOptionType.Integer, 2L)
-                })
-        };
 
-        var result = await gs.HandleGenerateCommandAsync(partyOptions);
+        var result = await gs.HandleGenerateCommandAsync("party",
+            new Dictionary<string, object?> { ["size"] = 2L });
 
         var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
@@ -219,17 +166,14 @@ public class MorkBorgPartyGenerationTests
     public async Task CharacterCardBuilder_StillWorks_ForIndividualCharacters()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var charOptions = new List<IApplicationCommandInteractionDataOption>
-        {
-            CreateMockSubcommand("character", ApplicationCommandOptionType.SubCommand)
-        };
 
-        var result = await gs.HandleGenerateCommandAsync(charOptions);
+        var result = await gs.HandleGenerateCommandAsync("character",
+            new Dictionary<string, object?>());
 
         var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
-        var embed = MorkBorgCharacterEmbedRenderer.BuildEmbed(charResult.Character);
-        Assert.NotNull(embed.Title);
-        Assert.False(string.IsNullOrWhiteSpace(embed.Title));
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(charResult.Character);
+        Assert.NotNull(card.Title);
+        Assert.False(string.IsNullOrWhiteSpace(card.Title));
     }
 
     // Helpers
@@ -246,41 +190,5 @@ public class MorkBorgPartyGenerationTests
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
         return new MorkBorgModule(generator, refData);
-    }
-
-    private static IApplicationCommandInteractionDataOption CreateMockOption(
-        string name,
-        ApplicationCommandOptionType type,
-        object? value)
-    {
-        return new SimpleApplicationCommandInteractionDataOption
-        {
-            Name = name,
-            Type = type,
-            Value = value,
-            Options = null
-        };
-    }
-
-    private static IApplicationCommandInteractionDataOption CreateMockSubcommand(
-        string name,
-        ApplicationCommandOptionType type,
-        List<IApplicationCommandInteractionDataOption>? subOptions = null)
-    {
-        return new SimpleApplicationCommandInteractionDataOption
-        {
-            Name = name,
-            Type = type,
-            Value = null,
-            Options = subOptions?.AsReadOnly()
-        };
-    }
-
-    private class SimpleApplicationCommandInteractionDataOption : IApplicationCommandInteractionDataOption
-    {
-        public string Name { get; set; } = "";
-        public ApplicationCommandOptionType Type { get; set; }
-        public object? Value { get; set; }
-        public IReadOnlyCollection<IApplicationCommandInteractionDataOption>? Options { get; set; }
     }
 }

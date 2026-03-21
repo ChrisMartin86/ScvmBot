@@ -2,6 +2,7 @@ using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Models;
 using ScvmBot.Games.MorkBorg.Pdf;
 using ScvmBot.Games.MorkBorg.Reference;
+using ScvmBot.Modules;
 using ScvmBot.Modules.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
@@ -28,14 +29,14 @@ public class BotIntegrationAuditTests
         var jsonClassNames = refData.Classes.Select(c => c.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var classNames = refData.Classes.Select(c => c.Name).ToList();
-        var optionBuilder = MorkBorgCommandDefinition.BuildCommandGroupOptions(classNames);
-        var charSubcommand = optionBuilder.Options!
-            .First(o => o.Name == "character");
+        var subCommands = MorkBorgCommandDefinition.BuildSubCommands(classNames);
+        var charSubcommand = subCommands
+            .First(s => s.Name == "character");
         var classOption = charSubcommand.Options!
             .First(o => o.Name == "class");
 
         var commandChoices = classOption.Choices!
-            .Select(c => c.Value.ToString()!)
+            .Select(c => c.Value)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         Assert.Contains(MorkBorgCommandDefinition.ChoiceClassNone, commandChoices);

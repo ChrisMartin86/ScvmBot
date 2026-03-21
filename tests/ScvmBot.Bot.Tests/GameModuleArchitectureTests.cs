@@ -4,9 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Bot.Services;
 using ScvmBot.Modules;
-using ScvmBot.Modules.MorkBorg;
-
-namespace ScvmBot.Bot.Tests;
+using ScvmBot.Modules.MorkBorg;namespace ScvmBot.Bot.Tests;
 
 /// <summary>
 /// Architecture tests that verify the module-based integration model:
@@ -53,7 +51,7 @@ public class GameModuleArchitectureTests
         var registry = provider.GetRequiredService<RendererRegistry>();
         var renderer = registry.FindRenderer(
             new CharacterGenerationResult<FakeCharacter>(new FakeCharacter { Name = "X" }),
-            OutputFormat.DiscordEmbed);
+            OutputFormat.Card);
 
         Assert.Single(modules);
         Assert.Equal("Test", modules[0].Name);
@@ -61,6 +59,20 @@ public class GameModuleArchitectureTests
     }
 
     // ── Startup fails clearly when a module is invalid ───────────────────────
+
+    [Fact]
+    public void RendererRegistry_Throws_WhenTwoDifferentRenderers_ClaimSameResultTypeAndFormat()
+    {
+        var renderer1 = new FakeEmbedRenderer();
+        var renderer2 = new AlternateFakeEmbedRenderer();
+
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => new RendererRegistry(new IResultRenderer[] { renderer1, renderer2 }));
+
+        Assert.Contains("Ambiguous renderer registration", ex.Message);
+        Assert.Contains(nameof(FakeEmbedRenderer), ex.Message);
+        Assert.Contains(nameof(AlternateFakeEmbedRenderer), ex.Message);
+    }
 
     [Fact]
     public async Task MorkBorgModuleRegistration_FailsFast_WhenDataDirectoryMissing()
@@ -177,18 +189,14 @@ public class GameModuleArchitectureTests
         public string CommandKey { get; }
         public int InvocationCount { get; private set; }
 
-        public SlashCommandOptionBuilder BuildCommandGroupOptions() =>
-            new SlashCommandOptionBuilder()
-                .WithName(CommandKey)
-                .WithDescription($"{Name} game system")
-                .WithType(ApplicationCommandOptionType.SubCommandGroup)
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("character")
-                    .WithDescription("Generate a character")
-                    .WithType(ApplicationCommandOptionType.SubCommand));
+        public IReadOnlyList<SubCommandDefinition> SubCommands { get; } = new[]
+        {
+            new SubCommandDefinition("character", "Generate a character")
+        };
 
         public Task<GenerateResult> HandleGenerateCommandAsync(
-            IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
+            string subCommand,
+            IReadOnlyDictionary<string, object?> options,
             CancellationToken ct = default)
         {
             InvocationCount++;
@@ -200,18 +208,32 @@ public class GameModuleArchitectureTests
 
     private sealed class FakeEmbedRenderer : IResultRenderer
     {
-        public OutputFormat Format => OutputFormat.DiscordEmbed;
+        public Type ResultType => typeof(CharacterGenerationResult<FakeCharacter>);
+
+        public OutputFormat Format => OutputFormat.Card;
 
         public bool CanRender(GenerateResult result) => result is CharacterGenerationResult<FakeCharacter>;
 
         public RenderOutput Render(GenerateResult result)
         {
-            var embed = new EmbedBuilder()
-                .WithTitle("Fake")
-                .WithDescription("Fake character")
-                .Build();
-            return new EmbedOutput(embed);
+            return new CardOutput(Title: "Fake", Description: "Fake character");
         }
+    }
+
+    /// <summary>
+    /// A second renderer that claims the same (ResultType, Format) slot as FakeEmbedRenderer.
+    /// Used to prove the registry rejects ambiguous registrations.
+    /// </summary>
+    private sealed class AlternateFakeEmbedRenderer : IResultRenderer
+    {
+        public Type ResultType => typeof(CharacterGenerationResult<FakeCharacter>);
+
+        public OutputFormat Format => OutputFormat.Card;
+
+        public bool CanRender(GenerateResult result) => result is CharacterGenerationResult<FakeCharacter>;
+
+        public RenderOutput Render(GenerateResult result) =>
+            new CardOutput(Title: "Alternate");
     }
 
     private class FakeOption : IApplicationCommandInteractionDataOption

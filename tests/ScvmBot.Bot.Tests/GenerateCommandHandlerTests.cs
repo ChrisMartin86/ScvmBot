@@ -218,10 +218,14 @@ public class GenerateCommandHandlerTests
         public string Name => "Throwing PDF";
         public string CommandKey => "throwing-pdf";
 
-        public SlashCommandOptionBuilder BuildCommandGroupOptions() => throw new NotImplementedException();
+        public IReadOnlyList<SubCommandDefinition> SubCommands { get; } = new[]
+        {
+            new SubCommandDefinition("party", "Generate a party")
+        };
 
         public Task<GenerateResult> HandleGenerateCommandAsync(
-            IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
+            string subCommand,
+            IReadOnlyDictionary<string, object?> options,
             CancellationToken ct = default)
         {
             var characters = new List<ScvmBot.Games.MorkBorg.Models.Character>

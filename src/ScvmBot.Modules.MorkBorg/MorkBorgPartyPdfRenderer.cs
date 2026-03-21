@@ -21,7 +21,9 @@ public sealed class MorkBorgPartyPdfRenderer : IResultRenderer
         _logger = logger;
     }
 
-    public OutputFormat Format => OutputFormat.Pdf;
+    public Type ResultType => typeof(PartyGenerationResult<Character>);
+
+    public OutputFormat Format => OutputFormat.File;
 
     public bool CanRender(GenerateResult result) =>
         result is PartyGenerationResult<Character>

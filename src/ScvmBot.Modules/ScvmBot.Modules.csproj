@@ -11,8 +11,4 @@
     <InternalsVisibleTo Include="ScvmBot.Modules.MorkBorg" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="3.19.1" />
-  </ItemGroup>
-
 </Project>

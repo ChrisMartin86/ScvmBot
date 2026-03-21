@@ -1,5 +1,3 @@
-using Discord;
-
 namespace ScvmBot.Modules;
 
 /// <summary>
@@ -11,8 +9,9 @@ public interface IGameModule
 {
     string Name { get; }
     string CommandKey { get; }
-    SlashCommandOptionBuilder BuildCommandGroupOptions();
+    IReadOnlyList<SubCommandDefinition> SubCommands { get; }
     Task<GenerateResult> HandleGenerateCommandAsync(
-        IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
+        string subCommand,
+        IReadOnlyDictionary<string, object?> options,
         CancellationToken ct = default);
 }
