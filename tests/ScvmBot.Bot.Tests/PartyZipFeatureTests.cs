@@ -92,11 +92,11 @@ public class PartyEmbedBuilderTests
     [Fact]
     public void Build_ListsAllMembers_InDescription()
     {
-        var members = new List<ICharacter>
+        var members = new List<object>
         {
-            new FakeCharacter { Name = "Alpha" },
-            new FakeCharacter { Name = "Beta" },
-            new FakeCharacter { Name = "Gamma" }
+            new Character { Name = "Alpha" },
+            new Character { Name = "Beta" },
+            new Character { Name = "Gamma" }
         };
 
         var embed = MorkBorgPartyEmbedRenderer.BuildEmbed("Party", members);
@@ -129,10 +129,10 @@ public class PartyEmbedBuilderTests
         Assert.Empty(embed.Fields);
     }
 
-    private static List<ICharacter> CreateMembers(int count)
+    private static List<object> CreateMembers(int count)
     {
         return Enumerable.Range(1, count)
-            .Select(i => (ICharacter)new FakeCharacter { Name = $"Char{i}" })
+            .Select(i => (object)new Character { Name = $"Char{i}" })
             .ToList();
     }
 }

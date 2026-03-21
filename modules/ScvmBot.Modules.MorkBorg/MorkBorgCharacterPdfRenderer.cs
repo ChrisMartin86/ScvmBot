@@ -30,7 +30,7 @@ public sealed class MorkBorgCharacterPdfRenderer : IResultRenderer
         return new FileOutput(pdfBytes, BuildFileName(character));
     }
 
-    internal static string BuildFileName(ICharacter character)
+    internal static string BuildFileName(Character character)
     {
         var safeName = PartyZipBuilder.SanitizeFileName(character.Name ?? "", fallback: "character");
         return $"{safeName}.pdf";

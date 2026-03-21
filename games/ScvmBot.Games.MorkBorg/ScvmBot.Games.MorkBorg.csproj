@@ -10,9 +10,7 @@
     <InternalsVisibleTo Include="ScvmBot.Games.MorkBorg.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../../modules/ScvmBot.Modules/ScvmBot.Modules.csproj" />
-  </ItemGroup>
+
 
   <ItemGroup>
     <!--

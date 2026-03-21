@@ -15,10 +15,10 @@ public class PartyZipBuilderTests
     public void CreatePartyZip_IncludesAllCharacterPdfs()
     {
         var pdfBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 };
-        var members = new List<(ICharacter, byte[])>
+        var members = new List<(string, byte[])>
         {
-            (new FakeCharacter { Name = "Alpha" }, pdfBytes),
-            (new FakeCharacter { Name = "Beta" }, pdfBytes)
+            ("Alpha", pdfBytes),
+            ("Beta", pdfBytes)
         };
 
         var zipBytes = PartyZipBuilder.CreatePartyZip(members);
@@ -33,9 +33,9 @@ public class PartyZipBuilderTests
     public void CreatePartyZip_NamesEntriesCorrectly_Format()
     {
         var pdfBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 };
-        var members = new List<(ICharacter, byte[])>
+        var members = new List<(string, byte[])>
         {
-            (new FakeCharacter { Name = "Svein" }, pdfBytes)
+            ("Svein", pdfBytes)
         };
 
         var zipBytes = PartyZipBuilder.CreatePartyZip(members);
@@ -52,9 +52,9 @@ public class PartyZipBuilderTests
     {
         var pdfBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 };
         // Only include one character (simulating caller filtering out null PDFs)
-        var members = new List<(ICharacter, byte[])>
+        var members = new List<(string, byte[])>
         {
-            (new FakeCharacter { Name = "Has PDF" }, pdfBytes)
+            ("Has PDF", pdfBytes)
         };
 
         var zipBytes = PartyZipBuilder.CreatePartyZip(members);
@@ -109,7 +109,7 @@ public class PartyZipBuilderTests
 // Shared Fakes
 // =====================================================================
 
-internal class FakeCharacter : ICharacter
+internal class FakeCharacter
 {
     public string Name { get; set; } = "";
 }

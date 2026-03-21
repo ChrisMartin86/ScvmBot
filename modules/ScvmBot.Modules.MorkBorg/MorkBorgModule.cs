@@ -67,7 +67,7 @@ public sealed class MorkBorgModule : IGameModule
         var partyName = PartyNameGenerator.Generate(characters);
 
         return new PartyGenerationResult(
-            Characters: characters.AsReadOnly(),
+            Characters: characters.Cast<object>().ToList().AsReadOnly(),
             PartyName: partyName);
     }
 }

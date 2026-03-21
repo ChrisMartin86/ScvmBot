@@ -114,7 +114,7 @@ public class MorkBorgPartyGenerationTests
         var characters = partyResult.Characters;
 
         // All should have names (non-empty)
-        Assert.All(characters, c => Assert.False(string.IsNullOrWhiteSpace(c.Name)));
+        Assert.All(characters, c => Assert.False(string.IsNullOrWhiteSpace(((Character)c).Name)));
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public class MorkBorgPartyGenerationTests
 
         // Verify ZIP can be created from character data
         var members = partyResult.Characters
-            .Select(c => (c, new byte[] { 0x25, 0x50, 0x44, 0x46 }))
+            .Select(c => (((ScvmBot.Games.MorkBorg.Models.Character)c).Name, new byte[] { 0x25, 0x50, 0x44, 0x46 }))
             .ToList();
         var zipBytes = PartyZipBuilder.CreatePartyZip(members);
         Assert.True(zipBytes.Length > 0);

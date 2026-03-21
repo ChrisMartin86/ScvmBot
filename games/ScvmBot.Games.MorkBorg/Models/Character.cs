@@ -1,9 +1,8 @@
-using ScvmBot.Modules;
 using System.ComponentModel.DataAnnotations;
 
 namespace ScvmBot.Games.MorkBorg.Models;
 
-public class Character : ICharacter
+public class Character
 {
     [Required, MaxLength(100)]
     public string Name { get; set; } = string.Empty;

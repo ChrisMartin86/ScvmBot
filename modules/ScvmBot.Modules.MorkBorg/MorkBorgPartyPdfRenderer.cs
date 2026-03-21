@@ -34,7 +34,7 @@ public sealed class MorkBorgPartyPdfRenderer : IResultRenderer
             throw new InvalidOperationException(
                 $"Cannot render {result.GetType().Name} as a MÖRK BORG party PDF archive.");
 
-        var memberPdfs = new List<(ICharacter Character, byte[] PdfBytes)>();
+        var memberPdfs = new List<(string CharacterName, byte[] PdfBytes)>();
         foreach (var character in partyResult.Characters)
         {
             // CanRender guarantees all members are Character; fail hard if violated.
@@ -44,11 +44,11 @@ public sealed class MorkBorgPartyPdfRenderer : IResultRenderer
             {
                 var pdf = _pdfRenderer.Render(mbChar);
                 if (pdf is not null)
-                    memberPdfs.Add((character, pdf));
+                    memberPdfs.Add((mbChar.Name, pdf));
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "PDF rendering failed for character '{Name}'; skipping.", character.Name);
+                _logger.LogWarning(ex, "PDF rendering failed for character '{Name}'; skipping.", mbChar.Name);
             }
         }
 

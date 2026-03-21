@@ -1,4 +1,5 @@
 using Discord;
+using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Modules.MorkBorg;
 
@@ -24,9 +25,9 @@ public sealed class MorkBorgPartyEmbedRenderer : IResultRenderer
         return new EmbedOutput(BuildEmbed(partyResult.PartyName, partyResult.Characters));
     }
 
-    internal static Embed BuildEmbed(string partyName, IReadOnlyList<ICharacter> members)
+    internal static Embed BuildEmbed(string partyName, IReadOnlyList<object> members)
     {
-        var memberList = string.Join("\n", members.Select(m => $"• {m.Name}"));
+        var memberList = string.Join("\n", members.Cast<Character>().Select(m => $"• {m.Name}"));
         var description = $"Party of {members.Count}\n\n{memberList}";
 
         var embed = new EmbedBuilder()

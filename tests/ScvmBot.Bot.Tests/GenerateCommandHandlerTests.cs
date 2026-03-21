@@ -224,7 +224,7 @@ public class GenerateCommandHandlerTests
             IReadOnlyCollection<IApplicationCommandInteractionDataOption>? subCommandOptions,
             CancellationToken ct = default)
         {
-            var characters = new List<ICharacter> { new FakeCharacter { Name = "Skag" } };
+            var characters = new List<object> { new ScvmBot.Games.MorkBorg.Models.Character { Name = "Skag" } };
             return Task.FromResult<GenerateResult>(
                 new PartyGenerationResult(
                     Characters: characters.AsReadOnly(),

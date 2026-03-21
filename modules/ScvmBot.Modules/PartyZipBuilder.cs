@@ -11,7 +11,7 @@ public static class PartyZipBuilder
     /// Creates a ZIP file from pre-generated character PDFs.
     /// Duplicate character names are disambiguated with a numeric suffix.
     /// </summary>
-    public static byte[] CreatePartyZip(IReadOnlyList<(ICharacter Character, byte[] PdfBytes)> members)
+    public static byte[] CreatePartyZip(IReadOnlyList<(string CharacterName, byte[] PdfBytes)> members)
     {
         var entryNames = BuildUniqueEntryNames(members);
 
@@ -30,9 +30,9 @@ public static class PartyZipBuilder
         return memoryStream.ToArray();
     }
 
-    internal static string[] BuildUniqueEntryNames(IReadOnlyList<(ICharacter Character, byte[] PdfBytes)> members)
+    internal static string[] BuildUniqueEntryNames(IReadOnlyList<(string CharacterName, byte[] PdfBytes)> members)
     {
-        var safeNames = members.Select(m => SanitizeFileName(m.Character.Name)).ToArray();
+        var safeNames = members.Select(m => SanitizeFileName(m.CharacterName)).ToArray();
 
         // Count occurrences of each name to detect duplicates.
         var totalCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
