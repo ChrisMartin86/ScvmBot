@@ -9,13 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../games/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj" />
-    <ProjectReference Include="../../rendering/ScvmBot.Games.MorkBorg.Pdf/ScvmBot.Games.MorkBorg.Pdf.csproj" />
-    <ProjectReference Include="../../modules/ScvmBot.Modules/ScvmBot.Modules.csproj" />
+    <ProjectReference Include="../ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj" />
+    <ProjectReference Include="../ScvmBot.Games.MorkBorg.Pdf/ScvmBot.Games.MorkBorg.Pdf.csproj" />
+    <ProjectReference Include="../ScvmBot.Modules/ScvmBot.Modules.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="../../games/ScvmBot.Games.MorkBorg/Data/**" CopyToOutputDirectory="PreserveNewest" Link="Data/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="../ScvmBot.Games.MorkBorg/Data/**" CopyToOutputDirectory="PreserveNewest" Link="Data/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

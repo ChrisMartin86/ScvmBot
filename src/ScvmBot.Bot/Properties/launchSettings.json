@@ -9,7 +9,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       },
-      "workingDirectory": "${workspaceFolder}/bot"
+      "workingDirectory": "${workspaceFolder}/src/ScvmBot.Bot"
     },
     "ScvmBot.Bot (Production)": {
       "commandName": "Project",
@@ -19,7 +19,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Production"
       },
-      "workingDirectory": "${workspaceFolder}/bot"
+      "workingDirectory": "${workspaceFolder}/src/ScvmBot.Bot"
     }
   }
 }

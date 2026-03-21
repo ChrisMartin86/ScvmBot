@@ -15,7 +15,7 @@ public class BotIntegrationAuditTests
     private static async Task<MorkBorgReferenceDataService> LoadGameReferenceDataAsync()
     {
         var repoRoot = TestInfrastructure.GetRepositoryRoot();
-        var dataPath = Path.Combine(repoRoot, "games", "ScvmBot.Games.MorkBorg", "Data");
+        var dataPath = Path.Combine(repoRoot, "src", "ScvmBot.Games.MorkBorg", "Data");
         return await MorkBorgReferenceDataService.CreateAsync(dataPath);
     }
 

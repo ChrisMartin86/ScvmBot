@@ -7,7 +7,7 @@
 tests/
 
 # Local config with secrets
-bot/appsettings.json
+src/ScvmBot.Bot/appsettings.json
 
 # Documentation and CI config
 docs/

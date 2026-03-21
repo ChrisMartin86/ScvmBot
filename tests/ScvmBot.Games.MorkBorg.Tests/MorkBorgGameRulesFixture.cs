@@ -13,6 +13,6 @@ public class MorkBorgGameRulesFixture
     protected static string GetDataRootPath()
     {
         var repoRoot = SharedTestInfrastructure.GetRepositoryRoot();
-        return Path.Combine(repoRoot, "games", "ScvmBot.Games.MorkBorg", "Data");
+        return Path.Combine(repoRoot, "src", "ScvmBot.Games.MorkBorg", "Data");
     }
 }

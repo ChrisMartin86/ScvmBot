@@ -15,7 +15,7 @@ public class CliCharacterGenerationTests
 {
     private static async Task<(MorkBorgReferenceDataService RefData, CharacterGenerator Generator)> CreateGeneratorAsync()
     {
-        var dataPath = Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "games", "ScvmBot.Games.MorkBorg", "Data");
+        var dataPath = Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data");
         var refData = await MorkBorgReferenceDataService.CreateAsync(dataPath);
         var generator = new CharacterGenerator(refData);
         return (refData, generator);
@@ -81,7 +81,7 @@ public class CliCharacterGenerationTests
     [Fact]
     public async Task Generate_WithDeterministicRng_ProducesReproducibleResults()
     {
-        var dataPath = Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "games", "ScvmBot.Games.MorkBorg", "Data");
+        var dataPath = Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data");
         var refData = await MorkBorgReferenceDataService.CreateAsync(dataPath);
 
         var gen1 = new CharacterGenerator(refData, new Random(42));

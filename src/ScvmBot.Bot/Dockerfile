@@ -4,20 +4,17 @@ WORKDIR /src
 
 # Copy project files first so restore is cached as a separate layer
 COPY ScvmBot.sln ./
-COPY bot/ScvmBot.Bot.csproj bot/
-COPY games/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj games/ScvmBot.Games.MorkBorg/
-COPY modules/ScvmBot.Modules/ScvmBot.Modules.csproj modules/ScvmBot.Modules/
-COPY modules/ScvmBot.Modules.MorkBorg/ScvmBot.Modules.MorkBorg.csproj modules/ScvmBot.Modules.MorkBorg/
-COPY rendering/ScvmBot.Games.MorkBorg.Pdf/ScvmBot.Games.MorkBorg.Pdf.csproj rendering/ScvmBot.Games.MorkBorg.Pdf/
+COPY src/ScvmBot.Bot/ScvmBot.Bot.csproj src/ScvmBot.Bot/
+COPY src/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj src/ScvmBot.Games.MorkBorg/
+COPY src/ScvmBot.Modules/ScvmBot.Modules.csproj src/ScvmBot.Modules/
+COPY src/ScvmBot.Modules.MorkBorg/ScvmBot.Modules.MorkBorg.csproj src/ScvmBot.Modules.MorkBorg/
+COPY src/ScvmBot.Games.MorkBorg.Pdf/ScvmBot.Games.MorkBorg.Pdf.csproj src/ScvmBot.Games.MorkBorg.Pdf/
 
-RUN dotnet restore bot/ScvmBot.Bot.csproj
+RUN dotnet restore src/ScvmBot.Bot/ScvmBot.Bot.csproj
 
 # Copy source and publish
-COPY bot/ bot/
-COPY games/ games/
-COPY modules/ modules/
-COPY rendering/ rendering/
-RUN dotnet publish bot/ScvmBot.Bot.csproj -c Release -o /app/publish --no-restore
+COPY src/ src/
+RUN dotnet publish src/ScvmBot.Bot/ScvmBot.Bot.csproj -c Release -o /app/publish --no-restore
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/runtime:10.0-noble

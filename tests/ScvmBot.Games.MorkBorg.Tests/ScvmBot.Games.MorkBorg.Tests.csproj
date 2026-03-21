@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../games/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj" />
+    <ProjectReference Include="../../src/ScvmBot.Games.MorkBorg/ScvmBot.Games.MorkBorg.csproj" />
     <ProjectReference Include="../ScvmBot.Tests.Shared/ScvmBot.Tests.Shared.csproj" />
   </ItemGroup>
 

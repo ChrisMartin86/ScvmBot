@@ -21,7 +21,7 @@ public static class SharedTestInfrastructure
     }
 
     public static string GetBotProjectPath() =>
-        Path.Combine(GetRepositoryRoot(), "bot");
+        Path.Combine(GetRepositoryRoot(), "src", "ScvmBot.Bot");
 
     public static string CreateTempDirectory()
     {

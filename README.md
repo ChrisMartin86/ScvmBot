@@ -47,9 +47,9 @@ A Discord bot for tabletop RPG character generation with built-in support for **
 
 2. **Configure the bot**
    ```bash
-   cp bot/appsettings.example.json bot/appsettings.json
+   cp src/ScvmBot.Bot/appsettings.example.json src/ScvmBot.Bot/appsettings.json
    ```
-   Edit `bot/appsettings.json`:
+   Edit `src/ScvmBot.Bot/appsettings.json`:
    ```json
    {
      "Discord": {
@@ -70,7 +70,7 @@ A Discord bot for tabletop RPG character generation with built-in support for **
 
 3. **Run the bot**
    ```bash
-   dotnet run --project bot
+   dotnet run --project src/ScvmBot.Bot
    ```
 
 ### Docker
@@ -106,26 +106,28 @@ The build context is the repository root so the multi-project solution resolves 
 
 ```
 ScvmBot/
-├── bot/                                   # Discord host — composition root
-│   ├── Services/
-│   │   ├── BotService.cs                  # Discord lifecycle management
-│   │   ├── CommandRegistrar.cs            # Slash command registration with Discord API
-│   │   ├── GenerateCommandHandler.cs      # /generate command routing
-│   │   ├── GenerationDeliveryService.cs   # DM delivery and in-channel confirmation
-│   │   ├── ResponseCardBuilder.cs         # Discord embed formatting
-│   │   └── Commands/
-│   │       ├── ISlashCommand.cs           # Slash command plugin interface
-│   │       ├── ISlashCommandContext.cs    # Testable abstraction over SocketSlashCommand
-│   │       ├── SocketSlashCommandContext.cs # Runtime adapter (excluded from coverage)
-│   │       └── HelloCommand.cs
-│   ├── Program.cs                         # Explicit module registration & entry point
-│   ├── Dockerfile
-│   └── appsettings.example.json
-│
-├── modules/
+├── src/
+│   ├── ScvmBot.Bot/                      # Discord host — composition root
+│   │   ├── Services/
+│   │   │   ├── BotService.cs              # Discord lifecycle management
+│   │   │   ├── CommandRegistrar.cs        # Slash command registration with Discord API
+│   │   │   ├── GenerateCommandHandler.cs  # /generate command routing
+│   │   │   ├── GenerationDeliveryService.cs # DM delivery and in-channel confirmation
+│   │   │   ├── ResponseCardBuilder.cs     # Discord embed formatting
+│   │   │   └── Commands/
+│   │   │       ├── ISlashCommand.cs        # Slash command plugin interface
+│   │   │       ├── ISlashCommandContext.cs # Testable abstraction over SocketSlashCommand
+│   │   │       ├── SocketSlashCommandContext.cs # Runtime adapter (excluded from coverage)
+│   │   │       └── HelloCommand.cs
+│   │   ├── Program.cs                     # Explicit module registration & entry point
+│   │   ├── Dockerfile
+│   │   └── appsettings.example.json
+│   │
+│   ├── ScvmBot.Cli/                       # CLI host for local generation
+│   │   └── Program.cs
+│   │
 │   ├── ScvmBot.Modules/                   # Shared module contracts and abstractions
 │   │   ├── IGameModule.cs                 # Module contract — commands, generation, rendering
-│   │   ├── ICharacter.cs                  # Minimal character interface (Name)
 │   │   ├── GenerateResult.cs              # CharacterGenerationResult / PartyGenerationResult
 │   │   ├── IResultRenderer.cs             # Renderer interface
 │   │   ├── RendererRegistry.cs            # Selects renderer by result type + format
@@ -133,50 +135,49 @@ ScvmBot/
 │   │   ├── OutputFormat.cs                # DiscordEmbed, Pdf
 │   │   └── PartyZipBuilder.cs             # ZIP archive creation for party PDFs
 │   │
-│   └── ScvmBot.Modules.MorkBorg/          # MÖRK BORG module adapter layer
-│       ├── MorkBorgModule.cs              # Implements IGameModule
-│       ├── MorkBorgModuleRegistration.cs  # Async factory — loads data, registers services
-│       ├── MorkBorgCommandDefinition.cs   # Slash command option tree
-│       ├── MorkBorgGenerateOptionParser.cs
-│       ├── MorkBorgPartyOptionParser.cs
-│       ├── MorkBorgCharacterEmbedRenderer.cs
-│       ├── MorkBorgCharacterPdfRenderer.cs
-│       ├── MorkBorgPartyEmbedRenderer.cs
-│       └── MorkBorgPartyPdfRenderer.cs
-│
-├── rendering/
+│   ├── ScvmBot.Modules.MorkBorg/          # MÖRK BORG module adapter layer
+│   │   ├── MorkBorgModule.cs              # Implements IGameModule
+│   │   ├── MorkBorgModuleRegistration.cs  # Async factory — loads data, registers services
+│   │   ├── MorkBorgCommandDefinition.cs   # Slash command option tree
+│   │   ├── MorkBorgGenerateOptionParser.cs
+│   │   ├── MorkBorgPartyOptionParser.cs
+│   │   ├── MorkBorgCharacterEmbedRenderer.cs
+│   │   ├── MorkBorgCharacterPdfRenderer.cs
+│   │   ├── MorkBorgPartyEmbedRenderer.cs
+│   │   └── MorkBorgPartyPdfRenderer.cs
+│   │
+│   ├── ScvmBot.Games.MorkBorg/            # MÖRK BORG game logic
+│   │   ├── Data/
+│   │   │   ├── armor.json
+│   │   │   ├── classes.json
+│   │   │   ├── descriptions.json
+│   │   │   ├── items.json
+│   │   │   ├── names.json
+│   │   │   ├── spells.json
+│   │   │   ├── vignettes.json
+│   │   │   ├── weapons.json
+│   │   │   └── DATA_REFERENCE.md          # Full data schema documentation
+│   │   ├── Generation/
+│   │   │   ├── CharacterGenerator.cs
+│   │   │   ├── MorkBorgConstants.cs       # Shared string constants (tokens, modes, types)
+│   │   │   ├── ScrollResolver.cs
+│   │   │   ├── StartingGearTable.cs
+│   │   │   ├── WeaponResolver.cs
+│   │   │   └── ...
+│   │   ├── Models/
+│   │   └── Reference/
+│   │       ├── ReferenceDataService.cs    # Static factory; loads all data at startup
+│   │       └── ReferenceDataModels.cs
+│   │
 │   └── ScvmBot.Games.MorkBorg.Pdf/        # PDF rendering (iText7)
 │       ├── MorkBorgPdfRenderer.cs
 │       ├── PdfCharacterSheetExtensions.cs
 │       ├── CharacterSheetMapper.cs
 │       └── CharacterSheetData.cs
 │
-├── games/
-│   └── ScvmBot.Games.MorkBorg/            # MÖRK BORG game logic
-│       ├── Data/
-│       │   ├── armor.json
-│       │   ├── classes.json
-│       │   ├── descriptions.json
-│       │   ├── items.json
-│       │   ├── names.json
-│       │   ├── spells.json
-│       │   ├── vignettes.json
-│       │   ├── weapons.json
-│       │   └── DATA_REFERENCE.md          # Full data schema documentation
-│       ├── Generation/
-│       │   ├── CharacterGenerator.cs
-│       │   ├── MorkBorgConstants.cs       # Shared string constants (tokens, modes, types)
-│       │   ├── ScrollResolver.cs
-│       │   ├── StartingGearTable.cs
-│       │   ├── WeaponResolver.cs
-│       │   └── ...
-│       ├── Models/
-│       └── Reference/
-│           ├── ReferenceDataService.cs          # Static factory; loads all data at startup
-│           └── ReferenceDataModels.cs
-│
 └── tests/
     ├── ScvmBot.Bot.Tests/                 # Command handling, party building, response cards, architecture
+    ├── ScvmBot.Cli.Tests/                 # CLI integration tests
     ├── ScvmBot.Games.MorkBorg.Tests/      # Character generation, equipment flow, data integrity
     ├── ScvmBot.Games.MorkBorg.Pdf.Tests/  # PDF field mapping
     └── ScvmBot.Tests.Shared/              # Shared test helpers (DeterministicRandom, temp dirs)
@@ -211,7 +212,7 @@ dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
 
 ## Adding a New Game System
 
-1. Create a game logic project under `games/` and a module adapter project under `modules/`
+1. Create a game logic project under `src/` (e.g., `src/ScvmBot.Games.YourSystem/`) and a module adapter project (e.g., `src/ScvmBot.Modules.YourSystem/`)
 2. Implement `IGameModule` in the module adapter:
    ```csharp
    public class YourGameModule : IGameModule

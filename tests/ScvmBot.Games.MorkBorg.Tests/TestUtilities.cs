@@ -9,7 +9,7 @@ internal static class TestUtilities
     public static string CreateTempDirectory() => SharedTestInfrastructure.CreateTempDirectory();
 
     public static string GetMorkBorgDataPath() =>
-        Path.Combine(GetRepositoryRoot(), "games", "ScvmBot.Games.MorkBorg", "Data");
+        Path.Combine(GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data");
 
     public static T InvokePrivate<T>(object instance, string methodName, params object[] args)
     {
