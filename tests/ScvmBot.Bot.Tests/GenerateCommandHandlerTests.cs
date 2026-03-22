@@ -260,9 +260,6 @@ public class GenerateCommandHandlerTests
             CreateDeliveryService(),
             NullLogger<GenerateCommandHandler>.Instance);
 
-        // The first followup call is the acknowledgement text ("Here's your character!").
-        // We make it throw to simulate a Discord gateway timeout.
-        // The delivery to channel should already have succeeded before this.
         var context = new FakeCommandContext
         {
             GuildId = null,
@@ -270,17 +267,22 @@ public class GenerateCommandHandlerTests
             Options = new[]
             {
                 MakeSubCommandGroup("morkborg", MakeSubCommand("character"))
-            }
+            },
+            // Inject a failure on the followup acknowledgement ("Here's your character!").
+            // The delivery to channel should already have succeeded before this call,
+            // so the handler should swallow the exception rather than re-throwing.
+            FollowupException = new Discord.Net.HttpException(
+                System.Net.HttpStatusCode.ServiceUnavailable, request: null!, null)
         };
 
-        // Delivery should succeed (channel.SendMessageAsync works)
-        // then followup throws — but handler should not re-throw
-        // We verify delivery happened by checking channel calls
+        // Should not throw — acknowledgement failure is best-effort
         await handler.HandleAsync(context);
 
-        // The result was delivered to the channel
+        // The result was delivered to the channel despite followup failure
         Assert.True(channel.SendMessageCallCount + channel.SendFileCallCount > 0,
-            "Result should be delivered to channel before followup");
+            "Result should be delivered to channel even when followup acknowledgement fails");
+        // No followup text was recorded because the exception was thrown
+        Assert.Empty(context.FollowupTexts);
     }
 
     // ── File-rendering exception isolation ──────────────────────────────────

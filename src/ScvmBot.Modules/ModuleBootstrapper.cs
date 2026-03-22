@@ -38,6 +38,18 @@ public static class ModuleBootstrapper
                      && !t.IsAbstract
                      && !t.IsInterface);
 
+        return await InitializeFromTypesAsync(registrationTypes, configuration);
+    }
+
+    /// <summary>
+    /// Instantiates, configures, and initialises <see cref="IModuleRegistration"/>
+    /// implementations from the provided types. Throws if any type lacks a public
+    /// parameterless constructor or if no modules are discovered.
+    /// </summary>
+    internal static async Task<List<IModuleRegistration>> InitializeFromTypesAsync(
+        IEnumerable<Type> registrationTypes,
+        IConfiguration configuration)
+    {
         var modules = new List<IModuleRegistration>();
         foreach (var type in registrationTypes)
         {

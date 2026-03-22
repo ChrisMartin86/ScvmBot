@@ -14,11 +14,8 @@ public class BotService : IHostedService
     private readonly DiscordSocketClient _client;
     private readonly IConfiguration _configuration;
     private readonly IReadOnlyDictionary<string, ISlashCommand> _slashCommands;
+    private readonly CommandRegistrationOrchestrator _registrationOrchestrator;
     private readonly ILogger<BotService> _logger;
-
-    // Tracks whether command registration has been completed for this process lifetime.
-    // ReadyAsync fires on every reconnect; registration must only run once.
-    private bool _commandsRegistered;
 
     public BotService(
         DiscordSocketClient client,
@@ -42,6 +39,7 @@ public class BotService : IHostedService
         }
         _slashCommands = commands;
 
+        _registrationOrchestrator = new CommandRegistrationOrchestrator(configuration, commands, logger);
         _logger = logger;
     }
 
@@ -94,82 +92,22 @@ public class BotService : IHostedService
     {
         _logger.LogInformation("Connected as {BotUser}.", _client.CurrentUser);
 
-        // Command registration is a startup/deployment concern. ReadyAsync fires on every
-        // reconnect, so gate registration behind a flag that is set exactly once per
-        // process lifetime to prevent duplicate registration on reconnect.
-        if (!_commandsRegistered)
-        {
-            await RegisterCommandsAsync();
-            _commandsRegistered = true;
-        }
-        else
-        {
-            _logger.LogInformation("Reconnected. Skipping command registration (already completed this session).");
-        }
+        await _registrationOrchestrator.OnReadyAsync(
+            registerGlobalAsync: props => _client.BulkOverwriteGlobalApplicationCommandsAsync(props),
+            tryRegisterGuildAsync: async (guildId, props) =>
+            {
+                var guild = _client.GetGuild(guildId);
+                if (guild is null)
+                    return false;
+
+                await guild.BulkOverwriteApplicationCommandAsync(props);
+                _logger.LogInformation("Registered {CommandCount} slash command(s) to guild {GuildName} ({GuildId}).",
+                    _slashCommands.Count, guild.Name, guild.Id);
+                return true;
+            });
 
         await _client.SetStatusAsync(UserStatus.Online);
         _logger.LogInformation("Bot is ready.");
-    }
-
-    private async Task RegisterCommandsAsync()
-    {
-        var syncCommands = _configuration.GetValue<bool>("Bot:SyncCommands");
-        if (!syncCommands)
-        {
-            _logger.LogInformation("Skipping command registration (Bot:SyncCommands is not enabled).");
-            return;
-        }
-
-        _logger.LogInformation("Bot:SyncCommands is enabled. Registering {CommandCount} slash command(s)...",
-            _slashCommands.Count);
-
-        try
-        {
-            var commandProperties = _slashCommands.Values
-                .Select(cmd => cmd.BuildCommand().Build())
-                .ToArray();
-
-            var strategy = CommandRegistrar.ResolveStrategy(_configuration);
-            if (strategy.Mode == RegistrationMode.Guild)
-            {
-                var successCount = 0;
-                foreach (var guildId in strategy.GuildIds)
-                {
-                    var guild = _client.GetGuild(guildId);
-                    if (guild is null)
-                    {
-                        _logger.LogWarning("Discord:GuildIds contains {GuildId} but the guild was not found. Skipping.", guildId);
-                        continue;
-                    }
-
-                    await guild.BulkOverwriteApplicationCommandAsync(commandProperties);
-                    _logger.LogInformation("Registered {CommandCount} slash command(s) to guild {GuildName} ({GuildId}).",
-                        _slashCommands.Count, guild.Name, guild.Id);
-                    successCount++;
-                }
-
-                if (successCount == 0)
-                {
-                    throw new InvalidOperationException(
-                        $"Guild-mode command registration failed: none of the {strategy.GuildIds.Count} " +
-                        $"configured guild ID(s) could be resolved. " +
-                        $"Verify Discord:GuildIds contains IDs of guilds this bot has joined.");
-                }
-            }
-            else
-            {
-                await _client.BulkOverwriteGlobalApplicationCommandsAsync(commandProperties);
-                _logger.LogInformation("Registered {CommandCount} slash command(s) globally.", _slashCommands.Count);
-            }
-
-            foreach (var cmd in _slashCommands.Values)
-                _logger.LogDebug("  Registered /{CommandName}", cmd.Name);
-        }
-        catch (HttpException ex)
-        {
-            _logger.LogCritical(ex, "Failed to register slash commands. Bot will not be functional.");
-            throw;
-        }
     }
 
     private Task SlashCommandHandler(SocketSlashCommand command)

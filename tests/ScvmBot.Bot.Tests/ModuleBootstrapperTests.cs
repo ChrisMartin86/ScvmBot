@@ -84,10 +84,12 @@ public class ModuleBootstrapperTests
     // ── Configure is called before InitializeAsync ──────────────────────
 
     [Fact]
-    public async Task DiscoverAndInitialize_PassesConfigurationToModule()
+    public async Task DiscoverAndInitialize_AppliesConfiguredDataPath()
     {
-        // If Configure is not called, the module would use default paths.
-        // By providing a custom data path via config, we prove Configure is invoked.
+        // Place data files in a unique temp directory that the module cannot
+        // find without Configure being called first. If Configure were skipped,
+        // InitializeAsync would fall back to a default path that doesn't
+        // contain these files and would fail with FileNotFoundException.
         var dir = SharedTestInfrastructure.CreateTempDirectory();
         await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
         await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
@@ -101,11 +103,57 @@ public class ModuleBootstrapperTests
             ["Modules:MorkBorg:DataPath"] = dir
         });
 
-        // If Configure weren't called, InitializeAsync would try the default
-        // data path which may or may not exist — using a temp dir proves
-        // the config path was applied.
         var modules = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
 
         Assert.Single(modules);
+        // Verify the module was configured with our custom path by exercising
+        // its Register method. If the wrong path were used, InitializeAsync
+        // would have thrown before reaching here.
+        var registration = Assert.IsType<MorkBorgModuleRegistration>(modules[0]);
+        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        registration.Register(services);
+        Assert.True(services.Count > 0);
+    }
+
+    // ── Zero discovered modules throws ──────────────────────────────────
+
+    [Fact]
+    public async Task InitializeFromTypes_Throws_WhenNoModulesDiscovered()
+    {
+        var config = BuildConfig(new Dictionary<string, string?>());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => ModuleBootstrapper.InitializeFromTypesAsync(
+                Array.Empty<Type>(), config));
+
+        Assert.Contains("No game modules were discovered", ex.Message);
+    }
+
+    // ── Missing parameterless constructor throws ────────────────────────
+
+    [Fact]
+    public async Task InitializeFromTypes_Throws_WhenModuleLacksParameterlessConstructor()
+    {
+        var config = BuildConfig(new Dictionary<string, string?>());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => ModuleBootstrapper.InitializeFromTypesAsync(
+                new[] { typeof(NoParameterlessCtorRegistration) }, config));
+
+        Assert.Contains("does not have a public parameterless constructor", ex.Message);
+        Assert.Contains(nameof(NoParameterlessCtorRegistration), ex.Message);
+    }
+
+    // ── Test doubles ────────────────────────────────────────────────────
+
+    private class NoParameterlessCtorRegistration : IModuleRegistration
+    {
+        private readonly string _required;
+
+        // No parameterless constructor — this should be rejected
+        public NoParameterlessCtorRegistration(string required) => _required = required;
+
+        public Task InitializeAsync() => Task.CompletedTask;
+        public void Register(Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
     }
 }

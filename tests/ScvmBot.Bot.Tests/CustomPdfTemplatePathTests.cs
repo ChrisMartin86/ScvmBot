@@ -48,35 +48,6 @@ public class CustomPdfTemplatePathTests
     }
 
     [Fact]
-    public async Task Registration_ReportsMissingTemplate_WhenNotInDataPath()
-    {
-        var dir = TestInfrastructure.CreateTempDirectory();
-
-        // Create minimal data files but NO character_sheet.pdf
-        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
-
-        var registration = new MorkBorgModuleRegistration(dir);
-        await registration.InitializeAsync();
-
-        var services = new ServiceCollection();
-        registration.Register(services);
-        services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
-
-        using var provider = services.BuildServiceProvider();
-        var pdfRenderer = provider.GetRequiredService<MorkBorgPdfRenderer>();
-
-        // When no template exists in custom DataPath AND the default path doesn't
-        // have one either, the renderer should report template not available.
-        // This verifies the path resolution falls through correctly.
-        // (TemplateExists depends on whether default path has one in CI/test env)
-    }
-
-    [Fact]
     public async Task RenderFile_UsesCustomTemplate_EndToEnd()
     {
         var dir = TestInfrastructure.CreateTempDirectory();
