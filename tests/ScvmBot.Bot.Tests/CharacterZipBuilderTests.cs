@@ -6,12 +6,12 @@ using System.IO.Compression;
 namespace ScvmBot.Bot.Tests;
 
 // =====================================================================
-// PartyZipBuilderTests
+// CharacterZipBuilderTests
 // =====================================================================
-public class PartyZipBuilderTests
+public class CharacterZipBuilderTests
 {
     [Fact]
-    public void CreatePartyZip_IncludesAllCharacterPdfs()
+    public void CreateZip_IncludesAllCharacterPdfs()
     {
         var pdfBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 };
         var members = new List<(string, byte[])>
@@ -20,7 +20,7 @@ public class PartyZipBuilderTests
             ("Beta", pdfBytes)
         };
 
-        var zipBytes = PartyZipBuilder.CreatePartyZip(members);
+        var zipBytes = CharacterZipBuilder.CreateZip(members);
 
         using var stream = new MemoryStream(zipBytes);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
@@ -29,7 +29,7 @@ public class PartyZipBuilderTests
     }
 
     [Fact]
-    public void CreatePartyZip_NamesEntriesCorrectly_Format()
+    public void CreateZip_NamesEntriesCorrectly_Format()
     {
         var pdfBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 };
         var members = new List<(string, byte[])>
@@ -37,7 +37,7 @@ public class PartyZipBuilderTests
             ("Svein", pdfBytes)
         };
 
-        var zipBytes = PartyZipBuilder.CreatePartyZip(members);
+        var zipBytes = CharacterZipBuilder.CreateZip(members);
 
         using var stream = new MemoryStream(zipBytes);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
@@ -47,7 +47,7 @@ public class PartyZipBuilderTests
     }
 
     [Fact]
-    public void CreatePartyZip_OnlyIncludesProvidedMembers()
+    public void CreateZip_OnlyIncludesProvidedMembers()
     {
         var pdfBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 };
         // Only include one character (simulating caller filtering out null PDFs)
@@ -56,7 +56,7 @@ public class PartyZipBuilderTests
             ("Has PDF", pdfBytes)
         };
 
-        var zipBytes = PartyZipBuilder.CreatePartyZip(members);
+        var zipBytes = CharacterZipBuilder.CreateZip(members);
 
         using var stream = new MemoryStream(zipBytes);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
@@ -66,9 +66,9 @@ public class PartyZipBuilderTests
     }
 
     [Fact]
-    public void GeneratePartyZipFileName_FormatsSafely_RemovesSpecialChars()
+    public void GenerateZipFileName_FormatsSafely_RemovesSpecialChars()
     {
-        var result = PartyZipBuilder.GeneratePartyZipFileName("Kärg's Crew!");
+        var result = CharacterZipBuilder.GenerateZipFileName("Kärg's Crew!");
 
         Assert.DoesNotContain("'", result);
         Assert.DoesNotContain("!", result);
@@ -76,21 +76,21 @@ public class PartyZipBuilderTests
     }
 
     [Fact]
-    public void GeneratePartyZipFileName_FollowsNamingConvention()
+    public void GenerateZipFileName_FollowsNamingConvention()
     {
-        var result = PartyZipBuilder.GeneratePartyZipFileName("TestParty");
+        var result = CharacterZipBuilder.GenerateZipFileName("TestGroup");
 
-        Assert.Equal("TestParty.zip", result);
+        Assert.Equal("TestGroup.zip", result);
     }
 
     [Theory]
-    [InlineData("@#$", "party")]
-    [InlineData("!!!", "party")]
+    [InlineData("@#$", "characters")]
+    [InlineData("!!!", "characters")]
     [InlineData("---", "---")]
     [InlineData("_name_", "name")]
     public void SanitizeFileName_ReturnsNonEmpty_WhenInputReducesToAllUnderscores(string name, string expected)
     {
-        var result = PartyZipBuilder.SanitizeFileName(name);
+        var result = CharacterZipBuilder.SanitizeFileName(name);
 
         Assert.Equal(expected, result);
     }
@@ -98,7 +98,7 @@ public class PartyZipBuilderTests
     [Fact]
     public void SanitizeFileName_UsesCustomFallback_WhenResultIsEmpty()
     {
-        var result = PartyZipBuilder.SanitizeFileName("@#$", fallback: "character");
+        var result = CharacterZipBuilder.SanitizeFileName("@#$", fallback: "character");
 
         Assert.Equal("character", result);
     }

@@ -1,6 +1,6 @@
 # ScvmBot
 
-A Discord bot for tabletop RPG character generation with built-in support for **MÖRK BORG** and a modular architecture for adding game systems. Handles character creation, party generation, and PDF export.
+A Discord bot for tabletop RPG character generation with built-in support for **MÖRK BORG** and a modular architecture for adding game systems. Handles character creation, multi-character generation, and PDF export.
 
 ## Features
 
@@ -18,14 +18,14 @@ A Discord bot for tabletop RPG character generation with built-in support for **
   - Vignette (backstory) generation
   - Omens, scrolls, and HP determination
 - **PDF export** — Generates a filled PDF character sheet using an official-layout template
-- **Party generation** — 1–4 characters in a single command, delivered as a downloadable ZIP file
-- **100+ reference data entries** — Armour, weapons, spells, items, names, descriptions, and vignettes in versioned JSON files
+- **Multi-character generation** — generate up to 4 characters in a single command, delivered as a downloadable ZIP file
+- **200+ reference data entries** — Armour, weapons, spells, items, names, descriptions, and vignettes in versioned JSON files
 
 ### Engineering
 - **.NET 10** with nullable reference types enabled throughout
 - **Six-project solution** — `ScvmBot.Bot` (Discord host), `ScvmBot.Cli` (CLI host for local generation), `ScvmBot.Modules` (shared module contracts and abstractions), `ScvmBot.Modules.MorkBorg` (MÖRK BORG module adapter — command definitions, option parsing, renderers), `ScvmBot.Games.MorkBorg` (game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering)
 - **Modular game system architecture** — game modules implement `IModuleRegistration` in an assembly named `ScvmBot.Modules.*` and are wired into the host via project references; only assemblies matching this prefix are discovered — adding a new game means adding projects to the solution and referencing them from the host — designed for in-project expansion, not external plugins
-- **420 tests** across four test projects — character generation logic, equipment flow, PDF mapping, option parsing, command handling, and party building
+- **450 tests** across four test projects — character generation logic, equipment flow, PDF mapping, option parsing, command handling, and multi-character generation
 - **Fail-fast module initialization** — each `IModuleRegistration` loads required data during `InitializeAsync()`; missing files abort startup with a non-zero exit code
 - **Testable command layer** — `ISlashCommandContext` interface decouples command handlers from the sealed Discord.Net type, enabling full unit test coverage
 - **Structured logging** — `Microsoft.Extensions.Logging` integration throughout
@@ -129,24 +129,21 @@ ScvmBot/
 │   ├── ScvmBot.Modules/                   # Shared module contracts and abstractions
 │   │   ├── IModuleRegistration.cs          # Discovery contract — async init + DI registration
 │   │   ├── IGameModule.cs                 # Module contract — commands, generation, rendering
-│   │   ├── GenerateResult.cs              # CharacterGenerationResult / PartyGenerationResult
+│   │   ├── GenerateResult.cs              # GenerateResult / GenerationBatch<T>
 │   │   ├── IResultRenderer.cs             # Renderer interface
 │   │   ├── RendererRegistry.cs            # Selects renderer by result type + format
 │   │   ├── CommandDefinition.cs            # SubCommandDefinition, CommandOptionDefinition, CommandChoice
 │   │   ├── RenderOutput.cs                # CardOutput / FileOutput discriminated union
 │   │   ├── OutputFormat.cs                # Card, File
-│   │   └── PartyZipBuilder.cs             # ZIP archive creation for party PDFs
+│   │   └── CharacterZipBuilder.cs         # ZIP archive creation for multi-character PDFs
 │   │
 │   ├── ScvmBot.Modules.MorkBorg/          # MÖRK BORG module adapter layer
 │   │   ├── MorkBorgModule.cs              # Implements IGameModule
 │   │   ├── MorkBorgModuleRegistration.cs  # IModuleRegistration — loads data, registers services
 │   │   ├── MorkBorgCommandDefinition.cs   # Slash command option tree
 │   │   ├── MorkBorgGenerateOptionParser.cs
-│   │   ├── MorkBorgPartyOptionParser.cs
 │   │   ├── MorkBorgCharacterEmbedRenderer.cs
-│   │   ├── MorkBorgCharacterPdfRenderer.cs
-│   │   ├── MorkBorgPartyEmbedRenderer.cs
-│   │   └── MorkBorgPartyPdfRenderer.cs
+│   │   └── MorkBorgCharacterPdfRenderer.cs
 │   │
 │   ├── ScvmBot.Games.MorkBorg/            # MÖRK BORG game logic
 │   │   ├── Data/
@@ -178,7 +175,7 @@ ScvmBot/
 │       └── CharacterSheetData.cs
 │
 └── tests/
-    ├── ScvmBot.Bot.Tests/                 # Command handling, party building, response cards, architecture
+    ├── ScvmBot.Bot.Tests/                 # Command handling, multi-character generation, response cards, architecture
     ├── ScvmBot.Cli.Tests/                 # CLI integration tests
     ├── ScvmBot.Games.MorkBorg.Tests/      # Character generation, equipment flow, data integrity
     ├── ScvmBot.Games.MorkBorg.Pdf.Tests/  # PDF field mapping
@@ -192,11 +189,10 @@ ScvmBot/
 | `/generate morkborg character` | Generate a single MÖRK BORG character |
 | `/generate morkborg character class:<name>` | Generate with a specific class (or `None` for classless) |
 | `/generate morkborg character roll-method:4d6-drop-lowest` | Use heroic ability rolling (classless only) |
-| `/generate morkborg party` | Generate a party of 4 characters |
-| `/generate morkborg party size:<1-4>` | Generate a party of a specific size |
+| `/generate morkborg character count:<1-4>` | Generate multiple characters in one command |
 | `/hello` | Verify bot is online |
 
-Characters and parties are delivered via DM. In-channel replies confirm delivery. Guild-channel invocations prompt the user to check their DMs; DM invocations deliver inline.
+Characters are delivered via DM. In-channel replies confirm delivery. Guild-channel invocations prompt the user to check their DMs; DM invocations deliver inline.
 
 ## Running Tests
 
@@ -233,16 +229,16 @@ dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
    ```csharp
    public sealed class YourGameModuleRegistration : IModuleRegistration
    {
-       public async Task InitializeAsync()
+       public async Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration)
        {
-           // Load reference data, fail fast if missing
-       }
+           // Load reference data; throw if missing — the host treats exceptions as fatal.
+           var data = await LoadYourDataAsync(configuration);
 
-       public void Register(IServiceCollection services)
-       {
-           services.AddSingleton<IGameModule, YourGameModule>();
-           services.AddSingleton<IResultRenderer, YourEmbedRenderer>();
-           // ... additional renderers
+           return services =>
+           {
+               services.AddSingleton<IGameModule>(new YourGameModule(data));
+               services.AddSingleton<IResultRenderer, YourEmbedRenderer>();
+           };
        }
    }
    ```

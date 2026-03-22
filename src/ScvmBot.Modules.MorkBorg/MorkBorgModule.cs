@@ -53,9 +53,9 @@ public sealed class MorkBorgModule : IGameModule
             characters.Add(_generator.Generate(iterOptions));
         }
 
-        var groupName = count > 1 ? PartyNameGenerator.Generate(characters) : null;
+        var groupName = count > 1 ? GroupNameGenerator.Generate(characters) : null;
 
         return Task.FromResult<GenerateResult>(
-            new CharacterGenerationResult<Character>(characters.AsReadOnly(), groupName));
+            new GenerationBatch<Character>(characters.AsReadOnly(), groupName));
     }
 }

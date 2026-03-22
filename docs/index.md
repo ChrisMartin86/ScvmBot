@@ -35,8 +35,8 @@ It is built to be straightforward: no accounts, no web dashboards, no subscripti
 **Character generation**
 Full rules-based character creation. Ability scores, equipment, class assignment, backstory — the bot handles the mechanics so you do not have to flip through books mid-session.
 
-**Party generation**
-Need a whole group? Generate multiple characters in one command and get them bundled in a downloadable ZIP with individual PDFs.
+**Multi-character generation**
+Need more than one? Generate multiple characters in one command and get them bundled in a downloadable ZIP with individual PDFs.
 
 **Discord-native interaction**
 Everything runs through Discord slash commands. Characters are delivered via DM with a clean in-channel confirmation. Responses are ephemeral where it makes sense, keeping your server tidy.
@@ -69,7 +69,7 @@ The MÖRK BORG implementation includes:
 - Vignette (backstory) generation
 - Omens and scroll mechanics
 - HP and alignment determination
-- 100+ reference data entries (armor, weapons, spells, items, names, and more)
+- 200+ reference data entries (armor, weapons, spells, items, names, and more)
 - PDF character sheet export
 
 ScvmBot is an independent production and is not affiliated with Ockult Örtmästare Games or Stockholm Kartell. It is published under the [MÖRK BORG Third Party License](https://morkborg.com/license/).

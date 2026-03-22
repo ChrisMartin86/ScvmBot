@@ -4,7 +4,7 @@ using System.Text;
 namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
-/// Renders a MÖRK BORG <see cref="CharacterGenerationResult"/> as a structured card.
+/// Renders a MÖRK BORG <see cref="GenerationBatch"/> as a structured card.
 /// Single character: detailed card with abilities, equipment, descriptions, vignette, and scrolls.
 /// Multiple characters: roster card showing group name and member list.
 /// </summary>
@@ -13,22 +13,22 @@ public sealed class MorkBorgCharacterEmbedRenderer : IResultRenderer
     private static readonly CardColor SingleColor = new(200, 170, 50);
     private static readonly CardColor GroupColor = new(150, 20, 20);
 
-    public Type ResultType => typeof(CharacterGenerationResult<Character>);
+    public Type ResultType => typeof(GenerationBatch<Character>);
 
     public OutputFormat Format => OutputFormat.Card;
 
     public bool CanRender(GenerateResult result) =>
-        result is CharacterGenerationResult<Character>;
+        result is GenerationBatch<Character>;
 
     public RenderOutput Render(GenerateResult result)
     {
-        if (result is not CharacterGenerationResult<Character> charResult)
+        if (result is not GenerationBatch<Character> charResult)
             throw new InvalidOperationException(
                 $"Cannot render {result.GetType().Name} as a MÖRK BORG character card.");
 
         return charResult.Characters.Count == 1
             ? BuildCard(charResult.Characters[0])
-            : BuildRosterCard(charResult.GroupName ?? "Adventuring Party", charResult.Characters);
+            : BuildRosterCard(charResult.GroupName ?? "Adventuring Company", charResult.Characters);
     }
 
     internal static CardOutput BuildCard(Character character)
@@ -63,7 +63,7 @@ public sealed class MorkBorgCharacterEmbedRenderer : IResultRenderer
     internal static CardOutput BuildRosterCard(string groupName, IReadOnlyList<Character> members)
     {
         var memberList = string.Join("\n", members.Select(m => $"• {m.Name}"));
-        var description = $"Party of {members.Count}\n\n{memberList}";
+        var description = $"{members.Count} Characters\n\n{memberList}";
 
         return new CardOutput(
             Title: groupName,

@@ -6,9 +6,9 @@ using ScvmBot.Modules.MorkBorg;
 namespace ScvmBot.Bot.Tests;
 
 // =====================================================================
-// PartyNameGeneratorTests
+// GroupNameGeneratorTests
 // =====================================================================
-public class PartyNameGeneratorTests
+public class GroupNameGeneratorTests
 {
     [Fact]
     public void Generate_ReturnsSuppliedName_WhenProvided()
@@ -18,7 +18,7 @@ public class PartyNameGeneratorTests
             new() { Name = "Svein" }
         };
 
-        var result = PartyNameGenerator.Generate(characters, "The Doom Squad");
+        var result = GroupNameGenerator.Generate(characters, "The Doom Squad");
 
         Assert.Equal("The Doom Squad", result);
     }
@@ -32,7 +32,7 @@ public class PartyNameGeneratorTests
             new() { Name = "Bleth" }
         };
 
-        var result = PartyNameGenerator.Generate(characters, null, new Random(42));
+        var result = GroupNameGenerator.Generate(characters, null, new Random(42));
 
         Assert.False(string.IsNullOrWhiteSpace(result));
         // Should use one of the character names in a template pattern
@@ -49,7 +49,7 @@ public class PartyNameGeneratorTests
 
         // rng.Next(1) always returns 0, selecting "Solo"
         var rng = new DeterministicRandom(new[] { 0, 0 });
-        var result = PartyNameGenerator.Generate(characters, null, rng);
+        var result = GroupNameGenerator.Generate(characters, null, rng);
 
         Assert.Contains("Solo", result);
     }
@@ -59,7 +59,7 @@ public class PartyNameGeneratorTests
     {
         var characters = new List<Character>();
 
-        var result = PartyNameGenerator.Generate(characters, null, new Random(42));
+        var result = GroupNameGenerator.Generate(characters, null, new Random(42));
 
         Assert.False(string.IsNullOrWhiteSpace(result));
         Assert.StartsWith("The ", result);
@@ -81,12 +81,12 @@ public class RosterEmbedBuilderTests
     }
 
     [Fact]
-    public void Build_IncludesPartySize_InDescription()
+    public void Build_IncludesCharacterCount_InDescription()
     {
         var members = CreateMembers(3);
         var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Squad", members);
 
-        Assert.Contains("Party of 3", card.Description);
+        Assert.Contains("3 Characters", card.Description);
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class RosterEmbedBuilderTests
             new Character { Name = "Gamma" }
         };
 
-        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Party", members);
+        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Karg's Crew", members);
 
         Assert.Contains("Alpha", card.Description);
         Assert.Contains("Beta", card.Description);
@@ -110,11 +110,11 @@ public class RosterEmbedBuilderTests
     public void Build_FormatsCorrectly_WithMultipleMembers()
     {
         var members = CreateMembers(5);
-        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Big Party", members);
+        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Big Group", members);
 
-        // Description contains "Party of 5" plus one bullet line per member
+        // Description contains "5 Characters" plus one bullet line per member
         var lines = card.Description!.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        // First line is "Party of 5", remaining 5 are bullet items
+        // First line is "5 Characters", remaining 5 are bullet items
         Assert.Equal(6, lines.Length);
         foreach (var line in lines.Skip(1))
             Assert.StartsWith("•", line.Trim());
@@ -124,7 +124,7 @@ public class RosterEmbedBuilderTests
     public void Build_HasNoFields()
     {
         var members = CreateMembers(3);
-        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Party", members);
+        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Test Group", members);
 
         Assert.Null(card.Fields);
     }

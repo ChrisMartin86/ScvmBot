@@ -2,10 +2,10 @@ using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Games.MorkBorg.Generation;
 
-/// <summary>Generates random party names for groups of adventurers.</summary>
-public static class PartyNameGenerator
+/// <summary>Generates random group names for groups of adventurers.</summary>
+public static class GroupNameGenerator
 {
-    // Party name template patterns that accept a name or adjective
+    // Group name template patterns that accept a name or adjective
     private static readonly string[] NamePatterns = new[]
     {
         "{0}'s Crew",
@@ -20,7 +20,7 @@ public static class PartyNameGenerator
         "{0}'s Circle",
     };
 
-    /// <summary>Generates a random party name using character data or a supplied name.</summary>
+    /// <summary>Generates a random group name using character data or a supplied name.</summary>
     public static string Generate(IReadOnlyList<Character> characters, string? suppliedName = null, Random? rng = null)
     {
         if (!string.IsNullOrWhiteSpace(suppliedName))

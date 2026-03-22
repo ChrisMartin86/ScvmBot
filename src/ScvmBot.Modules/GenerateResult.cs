@@ -8,13 +8,13 @@ public abstract record GenerateResult
 }
 
 /// <summary>Non-generic base for character generation results.</summary>
-public abstract record CharacterGenerationResult : GenerateResult;
+public abstract record GenerationBatch : GenerateResult;
 
 /// <summary>Result containing one or more generated characters.</summary>
 /// <typeparam name="TCharacter">The game-specific character type.</typeparam>
-public sealed record CharacterGenerationResult<TCharacter>(
+public sealed record GenerationBatch<TCharacter>(
     IReadOnlyList<TCharacter> Characters,
-    string? GroupName = null) : CharacterGenerationResult
+    string? GroupName = null) : GenerationBatch
 {
     /// <inheritdoc />
     public override int CharacterCount => Characters.Count;

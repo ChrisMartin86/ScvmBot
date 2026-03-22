@@ -3,15 +3,15 @@ using System.IO.Compression;
 namespace ScvmBot.Modules;
 
 /// <summary>
-/// Creates ZIP files containing character PDFs for party downloads.
+/// Creates ZIP files containing character PDFs.
 /// </summary>
-public static class PartyZipBuilder
+public static class CharacterZipBuilder
 {
     /// <summary>
     /// Creates a ZIP file from pre-generated character PDFs.
     /// Duplicate character names are disambiguated with a numeric suffix.
     /// </summary>
-    public static byte[] CreatePartyZip(IReadOnlyList<(string CharacterName, byte[] PdfBytes)> members)
+    public static byte[] CreateZip(IReadOnlyList<(string CharacterName, byte[] PdfBytes)> members)
     {
         var entryNames = BuildUniqueEntryNames(members);
 
@@ -61,15 +61,15 @@ public static class PartyZipBuilder
     }
 
     /// <summary>
-    /// Generates a file name for a party ZIP attachment.
+    /// Generates a file name for a ZIP attachment.
     /// </summary>
-    public static string GeneratePartyZipFileName(string partyName)
+    public static string GenerateZipFileName(string groupName)
     {
-        var safeName = SanitizeFileName(partyName);
+        var safeName = SanitizeFileName(groupName);
         return $"{safeName}.zip";
     }
 
-    internal static string SanitizeFileName(string name, string fallback = "party")
+    internal static string SanitizeFileName(string name, string fallback = "characters")
     {
         if (string.IsNullOrWhiteSpace(name))
             return fallback;

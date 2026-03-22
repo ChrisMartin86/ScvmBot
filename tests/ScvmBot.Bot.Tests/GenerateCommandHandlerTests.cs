@@ -59,6 +59,27 @@ public class GenerateCommandHandlerTests
         Assert.Contains("unknown-game", embed.Description);
     }
 
+    // ── Command shape ─────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task BuildCommand_CountOption_HasMaxValue()
+    {
+        var module = await CreateMinimalGameSystemAsync();
+        var handler = new GenerateCommandHandler(
+            new IGameModule[] { module },
+            CreateEmptyRegistry(),
+            CreateDeliveryService(),
+            NullLogger<GenerateCommandHandler>.Instance);
+        var command = handler.BuildCommand();
+
+        var morkborg = command.Options.First(o => o.Name == "morkborg");
+        var character = morkborg.Options.First(o => o.Name == "character");
+        var countOpt = character.Options.First(o => o.Name == "count");
+
+        Assert.Equal(GenerateCommandHandler.MaxDiscordCharacterCount, countOpt.MaxValue);
+        Assert.Equal(1, countOpt.MinValue);
+    }
+
     // ── Success paths (DM context so handler uses context.Channel directly) ──
 
     [Fact]
@@ -134,12 +155,8 @@ public class GenerateCommandHandlerTests
         Assert.False(string.IsNullOrWhiteSpace(embed!.Title),
             "Roster card must have a non-empty title (group name).");
         Assert.NotNull(embed.Description);
-        Assert.Contains("Party of", embed.Description);
-        // Each member should appear as a bullet in the roster
-        Assert.Contains("\u2022", embed.Description); // bullet character
+        Assert.Contains("Characters", embed.Description);
     }
-
-    // ── Party PDF failure isolation ───────────────────────────────────────────
 
     [Fact]
     public async Task HandleAsync_DeliversRosterCard_EvenWhenAllPdfRendersFail()
@@ -179,7 +196,7 @@ public class GenerateCommandHandlerTests
         Assert.False(string.IsNullOrWhiteSpace(embed!.Title),
             "Roster card must have a non-empty title.");
         Assert.NotNull(embed.Description);
-        Assert.Contains("Party of", embed.Description);
+        Assert.Contains("Characters", embed.Description);
     }
 
     // ── Constructor validation ─────────────────────────────────────────────
@@ -201,7 +218,7 @@ public class GenerateCommandHandlerTests
         Assert.Contains("samegame", ex.Message);
     }
 
-    // ── Zero-character party error ──────────────────────────────────────────
+    // ── Zero-character error ────────────────────────────────────────────────
 
     [Fact]
     public async Task HandleAsync_SendsError_WhenGenerationProducesZeroCharacters()
@@ -479,9 +496,9 @@ public class GenerateCommandHandlerTests
                 new ScvmBot.Games.MorkBorg.Models.Character { Name = "Bleth" }
             };
             return Task.FromResult<GenerateResult>(
-                new CharacterGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>(
+                new GenerationBatch<ScvmBot.Games.MorkBorg.Models.Character>(
                     Characters: characters.AsReadOnly(),
-                    GroupName: "Test Party"));
+                    GroupName: "Test Group"));
         }
     }
 
@@ -497,7 +514,7 @@ public class GenerateCommandHandlerTests
         public Task<GenerateResult> HandleGenerateCommandAsync(
             string subCommand, IReadOnlyDictionary<string, object?> options, CancellationToken ct = default)
             => Task.FromResult<GenerateResult>(
-                new CharacterGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>(
+                new GenerationBatch<ScvmBot.Games.MorkBorg.Models.Character>(
                     new[] { new ScvmBot.Games.MorkBorg.Models.Character { Name = "Stub" } }));
     }
 
@@ -512,15 +529,15 @@ public class GenerateCommandHandlerTests
         public Task<GenerateResult> HandleGenerateCommandAsync(
             string subCommand, IReadOnlyDictionary<string, object?> options, CancellationToken ct = default)
             => Task.FromResult<GenerateResult>(
-                new CharacterGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>(
+                new GenerationBatch<ScvmBot.Games.MorkBorg.Models.Character>(
                     new List<ScvmBot.Games.MorkBorg.Models.Character>().AsReadOnly()));
     }
 
     private class ThrowingFileRenderer : IResultRenderer
     {
-        public Type ResultType => typeof(CharacterGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>);
+        public Type ResultType => typeof(GenerationBatch<ScvmBot.Games.MorkBorg.Models.Character>);
         public OutputFormat Format => OutputFormat.File;
-        public bool CanRender(GenerateResult result) => result is CharacterGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>;
+        public bool CanRender(GenerateResult result) => result is GenerationBatch<ScvmBot.Games.MorkBorg.Models.Character>;
         public RenderOutput Render(GenerateResult result) =>
             throw new InvalidOperationException("PDF rendering deliberately failed");
     }

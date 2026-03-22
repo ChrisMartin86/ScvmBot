@@ -21,11 +21,11 @@ public class MorkBorgMultiCharacterGenerationTests
     }
 
     [Fact]
-    public async Task SubCommands_NoPartySubcommand()
+    public async Task SubCommands_HasNoPartySubcommand()
     {
         var gs = await CreateMinimalGameSystemAsync();
-        var partySubcommand = gs.SubCommands.FirstOrDefault(s => s.Name == "party");
-        Assert.Null(partySubcommand);
+        var match = gs.SubCommands.FirstOrDefault(s => s.Name == "party");
+        Assert.Null(match);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var result = await gs.HandleGenerateCommandAsync("character",
             new Dictionary<string, object?> { ["count"] = 3L });
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal(3, charResult.Characters.Count);
     }
 
@@ -48,7 +48,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var result = await gs.HandleGenerateCommandAsync("character",
             new Dictionary<string, object?> { ["count"] = 2L });
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(charResult.GroupName));
     }
 
@@ -60,7 +60,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var result = await gs.HandleGenerateCommandAsync("character",
             new Dictionary<string, object?> { ["count"] = 3L });
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.All(charResult.Characters, c => Assert.False(string.IsNullOrWhiteSpace(c.Name)));
     }
 
@@ -72,7 +72,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var result = await gs.HandleGenerateCommandAsync("character",
             new Dictionary<string, object?>());
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Single(charResult.Characters);
         Assert.Null(charResult.GroupName);
     }
@@ -85,7 +85,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var result = await gs.HandleGenerateCommandAsync("character",
             new Dictionary<string, object?>());
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Single(charResult.Characters);
         Assert.False(string.IsNullOrWhiteSpace(charResult.Characters[0].Name));
     }
@@ -98,12 +98,12 @@ public class MorkBorgMultiCharacterGenerationTests
         var result = await gs.HandleGenerateCommandAsync("character",
             new Dictionary<string, object?> { ["count"] = 2L });
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
 
         var members = charResult.Characters
             .Select(c => (c.Name, new byte[] { 0x25, 0x50, 0x44, 0x46 }))
             .ToList();
-        var zipBytes = PartyZipBuilder.CreatePartyZip(members);
+        var zipBytes = CharacterZipBuilder.CreateZip(members);
         Assert.True(zipBytes.Length > 0);
 
         using var stream = new MemoryStream(zipBytes);
@@ -119,10 +119,10 @@ public class MorkBorgMultiCharacterGenerationTests
         var result = await gs.HandleGenerateCommandAsync("character",
             new Dictionary<string, object?> { ["count"] = 3L });
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard(
             charResult.GroupName!, charResult.Characters);
-        Assert.Contains("Party of 3", card.Description);
+        Assert.Contains("3 Characters", card.Description);
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var result = await gs.HandleGenerateCommandAsync("character",
             new Dictionary<string, object?>());
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         var card = MorkBorgCharacterEmbedRenderer.BuildCard(charResult.Characters[0]);
         Assert.NotNull(card.Title);
         Assert.False(string.IsNullOrWhiteSpace(card.Title));
@@ -147,7 +147,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var result = await gs.HandleGenerateCommandAsync("character",
             new Dictionary<string, object?> { ["count"] = 2L, ["name"] = "CustomName" });
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal("CustomName", charResult.Characters[0].Name);
         Assert.NotEqual("CustomName", charResult.Characters[1].Name);
     }

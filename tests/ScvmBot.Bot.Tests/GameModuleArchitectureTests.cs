@@ -53,7 +53,7 @@ public class GameModuleArchitectureTests
         var modules = provider.GetServices<IGameModule>().ToList();
         var registry = provider.GetRequiredService<RendererRegistry>();
         var renderer = registry.FindRenderer(
-            new CharacterGenerationResult<FakeCharacter>(new[] { new FakeCharacter { Name = "X" } }),
+            new GenerationBatch<FakeCharacter>(new[] { new FakeCharacter { Name = "X" } }),
             OutputFormat.Card);
 
         Assert.Single(modules);
@@ -243,18 +243,18 @@ public class GameModuleArchitectureTests
         {
             InvocationCount++;
             return Task.FromResult<GenerateResult>(
-                new CharacterGenerationResult<FakeCharacter>(
+                new GenerationBatch<FakeCharacter>(
                     new[] { new FakeCharacter { Name = $"FakeChar-{CommandKey}" } }));
         }
     }
 
     private sealed class FakeEmbedRenderer : IResultRenderer
     {
-        public Type ResultType => typeof(CharacterGenerationResult<FakeCharacter>);
+        public Type ResultType => typeof(GenerationBatch<FakeCharacter>);
 
         public OutputFormat Format => OutputFormat.Card;
 
-        public bool CanRender(GenerateResult result) => result is CharacterGenerationResult<FakeCharacter>;
+        public bool CanRender(GenerateResult result) => result is GenerationBatch<FakeCharacter>;
 
         public RenderOutput Render(GenerateResult result)
         {
@@ -268,11 +268,11 @@ public class GameModuleArchitectureTests
     /// </summary>
     private sealed class AlternateFakeEmbedRenderer : IResultRenderer
     {
-        public Type ResultType => typeof(CharacterGenerationResult<FakeCharacter>);
+        public Type ResultType => typeof(GenerationBatch<FakeCharacter>);
 
         public OutputFormat Format => OutputFormat.Card;
 
-        public bool CanRender(GenerateResult result) => result is CharacterGenerationResult<FakeCharacter>;
+        public bool CanRender(GenerateResult result) => result is GenerationBatch<FakeCharacter>;
 
         public RenderOutput Render(GenerateResult result) =>
             new CardOutput(Title: "Alternate");

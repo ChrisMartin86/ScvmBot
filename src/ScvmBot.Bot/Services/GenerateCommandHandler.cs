@@ -57,7 +57,7 @@ public class GenerateCommandHandler : ISlashCommand
             .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
 
         foreach (var m in _gameModules.Values)
-            builder.AddOption(DiscordCommandAdapter.ToSlashCommandOption(m));
+            builder.AddOption(DiscordCommandAdapter.ToSlashCommandOption(m, countMax: MaxDiscordCharacterCount));
 
         return builder;
     }

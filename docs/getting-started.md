@@ -115,8 +115,7 @@ Once the bot is running and added to your Discord server:
 | `/generate morkborg character` | Generate a single MÖRK BORG character |
 | `/generate morkborg character class:<name>` | Generate with a specific class (or `None` for classless) |
 | `/generate morkborg character roll-method:4d6-drop-lowest` | Heroic ability rolling (classless only) |
-| `/generate morkborg party` | Generate a party of 4 characters |
-| `/generate morkborg party size:<1-4>` | Generate a party of a specific size |
+| `/generate morkborg character count:<1-4>` | Generate multiple characters in one command |
 | `/hello` | Test bot connectivity |
 
 Characters are sent to your DMs. In-channel responses confirm delivery and provide download links for generated files.

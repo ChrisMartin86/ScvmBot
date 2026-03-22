@@ -39,7 +39,7 @@ public class CliCharacterGenerationTests
 
         var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(charResult.Characters[0].Name));
         Assert.True(charResult.Characters[0].MaxHitPoints >= 1);
         Assert.True(charResult.Characters[0].HitPoints >= 1);
@@ -54,7 +54,7 @@ public class CliCharacterGenerationTests
 
         var result = await module.HandleGenerateCommandAsync("character", options);
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal("TestScvm", charResult.Characters[0].Name);
     }
 
@@ -66,7 +66,7 @@ public class CliCharacterGenerationTests
 
         var result = await module.HandleGenerateCommandAsync("character", options);
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Null(charResult.Characters[0].ClassName);
     }
 
@@ -83,7 +83,7 @@ public class CliCharacterGenerationTests
 
         var result = await module.HandleGenerateCommandAsync("character", options);
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal(classChoice.Value, charResult.Characters[0].ClassName);
     }
 
@@ -179,7 +179,7 @@ public class CliCharacterGenerationTests
         if (memberPdfs.Count == 0)
             return; // skip if no PDF template
 
-        var zipBytes = PartyZipBuilder.CreatePartyZip(memberPdfs);
+        var zipBytes = CharacterZipBuilder.CreateZip(memberPdfs);
         Assert.True(zipBytes.Length > 0);
 
         using var stream = new MemoryStream(zipBytes);
@@ -187,7 +187,7 @@ public class CliCharacterGenerationTests
         Assert.Equal(memberPdfs.Count, archive.Entries.Count);
     }
 
-    // ── Party generation through module pipeline ─────────────────────────
+    // ── Multi-character generation through module pipeline ─────────────────────────
 
     [Fact]
     public async Task GenerateMulti_ReturnsMultiCharacterResult()
@@ -197,7 +197,7 @@ public class CliCharacterGenerationTests
 
         var result = await module.HandleGenerateCommandAsync("character", options);
 
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal(3, charResult.Characters.Count);
     }
 

@@ -5,7 +5,7 @@ using ScvmBot.Games.MorkBorg.Pdf;
 namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
-/// Renders a MÖRK BORG <see cref="CharacterGenerationResult"/> as a file.
+/// Renders a MÖRK BORG <see cref="GenerationBatch"/> as a file.
 /// Single character: PDF character sheet.
 /// Multiple characters: ZIP archive containing a PDF for each character.
 /// Individual member PDF failures are logged and skipped; the ZIP contains
@@ -22,16 +22,16 @@ public sealed class MorkBorgCharacterPdfRenderer : IResultRenderer
         _logger = logger;
     }
 
-    public Type ResultType => typeof(CharacterGenerationResult<Character>);
+    public Type ResultType => typeof(GenerationBatch<Character>);
 
     public OutputFormat Format => OutputFormat.File;
 
     public bool CanRender(GenerateResult result) =>
-        result is CharacterGenerationResult<Character> && _pdfRenderer.TemplateExists;
+        result is GenerationBatch<Character> && _pdfRenderer.TemplateExists;
 
     public RenderOutput Render(GenerateResult result)
     {
-        if (result is not CharacterGenerationResult<Character> charResult)
+        if (result is not GenerationBatch<Character> charResult)
             throw new InvalidOperationException(
                 $"Cannot render {result.GetType().Name} as a MÖRK BORG character PDF.");
 
@@ -47,7 +47,7 @@ public sealed class MorkBorgCharacterPdfRenderer : IResultRenderer
         return new FileOutput(pdfBytes, BuildFileName(character));
     }
 
-    private FileOutput RenderZip(CharacterGenerationResult<Character> charResult)
+    private FileOutput RenderZip(GenerationBatch<Character> charResult)
     {
         var memberPdfs = new List<(string CharacterName, byte[] PdfBytes)>();
         foreach (var character in charResult.Characters)
@@ -67,14 +67,14 @@ public sealed class MorkBorgCharacterPdfRenderer : IResultRenderer
         if (memberPdfs.Count == 0)
             throw new InvalidOperationException("All character PDFs failed to render.");
 
-        var zipBytes = PartyZipBuilder.CreatePartyZip(memberPdfs);
-        var zipFileName = PartyZipBuilder.GeneratePartyZipFileName(charResult.GroupName ?? "characters");
+        var zipBytes = CharacterZipBuilder.CreateZip(memberPdfs);
+        var zipFileName = CharacterZipBuilder.GenerateZipFileName(charResult.GroupName ?? "characters");
         return new FileOutput(zipBytes, zipFileName);
     }
 
     internal static string BuildFileName(Character character)
     {
-        var safeName = PartyZipBuilder.SanitizeFileName(character.Name ?? "", fallback: "character");
+        var safeName = CharacterZipBuilder.SanitizeFileName(character.Name ?? "", fallback: "character");
         return $"{safeName}.pdf";
     }
 }
