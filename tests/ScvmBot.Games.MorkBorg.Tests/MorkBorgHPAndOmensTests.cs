@@ -1,5 +1,5 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -19,10 +19,10 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
         // Ability overrides bypass all 3d6 rolls, and GetRandomName uses
         // Random.Next(int) which does not route through Next(int,int) in
         // .NET 8, so the HP die is the first Next(int,int) call consumed.
-        var rng = new DeterministicRandom(new[] { hitDieRoll });
+        var rng = new DeterministicRandom(new[] { hitDieRoll }.Concat(Enumerable.Repeat(1, 20)));
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "",  // Classless uses d8
             Strength = 0,
@@ -40,11 +40,11 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
     public async Task HPMinimum_IsAlways1()
     {
         var referenceData = await LoadGameReferenceDataAsync();
-        // Roll minimum Toughness (-3) and minimum die (1)
-        var rng = new DeterministicRandom(new[] { 1, 0, 0, 0, 1 });
+        // All dice at minimum (1) gives worst-case toughness (-3) and minimum HP die roll.
+        var rng = new DeterministicRandom(Enumerable.Repeat(1, 30));
         var generator = new CharacterGenerator(referenceData, rng);
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
             ClassName = "",
         });
@@ -68,7 +68,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
 
         for (int i = 0; i < 20; i++)
         {
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
             });
@@ -86,7 +86,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
 
         for (int i = 0; i < 20; i++)
         {
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = "",  // Classless
             });
@@ -115,7 +115,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
         // Generate many characters to ensure die range is covered
         for (int i = 0; i < 30; i++)
         {
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
             });
@@ -136,7 +136,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
 
         for (int i = 0; i < 20; i++)
         {
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
             });
 
@@ -153,7 +153,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
 
         for (int i = 0; i < 50; i++)
         {
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
             });
 

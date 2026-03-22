@@ -35,8 +35,8 @@ It is built to be straightforward: no accounts, no web dashboards, no subscripti
 **Character generation**
 Full rules-based character creation. Ability scores, equipment, class assignment, backstory — the bot handles the mechanics so you do not have to flip through books mid-session.
 
-**Party generation**
-Need a whole group? Generate multiple characters in one command and get them bundled in a downloadable ZIP with individual PDFs.
+**Multi-character generation**
+Need more than one? Generate multiple characters in one command and get them bundled in a downloadable ZIP with individual PDFs.
 
 **Discord-native interaction**
 Everything runs through Discord slash commands. Characters are delivered via DM with a clean in-channel confirmation. Responses are ephemeral where it makes sense, keeping your server tidy.
@@ -50,8 +50,8 @@ Configure the bot to run in guild-specific mode for a single Discord server, or 
 **Open source**
 MIT licensed. The code is public, the development is in the open, and contributions are welcome.
 
-**Expandable architecture**
-New game systems can be added by implementing a plugin interface (`IGameSystem`). The bot automatically routes commands to the right system — no rewiring needed.
+**Modular architecture**
+The project is designed to be expanded from within the solution itself. New game systems are added as projects in the solution, implementing the `IGameModule` and `IModuleRegistration` interfaces and wiring in via project references. Each game module owns its command definitions, generation logic, and output behavior.
 
 ---
 
@@ -69,14 +69,14 @@ The MÖRK BORG implementation includes:
 - Vignette (backstory) generation
 - Omens and scroll mechanics
 - HP and alignment determination
-- 100+ reference data entries (armor, weapons, spells, items, names, and more)
+- 200+ reference data entries (armor, weapons, spells, items, names, and more)
 - PDF character sheet export
 
 ScvmBot is an independent production and is not affiliated with Ockult Örtmästare Games or Stockholm Kartell. It is published under the [MÖRK BORG Third Party License](https://morkborg.com/license/).
 
 ### Other Systems
 
-The architecture supports adding new game systems through a plugin interface. No additional systems are currently implemented, but the project is designed with expansion in mind. If there is a system you would like to see supported, [open an issue on GitHub](https://github.com/ChrisMartin86/ScvmBot/issues).
+The architecture supports adding new game systems by creating projects within the solution that implement the `IGameModule` and `IModuleRegistration` interfaces. No additional systems are currently implemented, but the project is designed with expansion in mind. If there is a system you would like to see supported, [open an issue on GitHub](https://github.com/ChrisMartin86/ScvmBot/issues).
 
 ---
 

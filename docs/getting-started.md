@@ -29,10 +29,10 @@ cd ScvmBot
 ### 2. Configure your Discord bot settings
 
 ```bash
-cp bot/appsettings.example.json bot/appsettings.json
+cp src/ScvmBot.Bot/appsettings.example.json src/ScvmBot.Bot/appsettings.json
 ```
 
-Edit `bot/appsettings.json` with your Discord bot token:
+Edit `src/ScvmBot.Bot/appsettings.json` with your Discord bot token:
 
 ```json
 {
@@ -61,7 +61,7 @@ Edit `bot/appsettings.json` with your Discord bot token:
 ### 3. Run the bot
 
 ```bash
-dotnet run --project bot
+dotnet run --project src/ScvmBot.Bot
 ```
 
 ---
@@ -76,26 +76,33 @@ docker-compose up --build
 
 The included `docker-compose.yml` and `Dockerfile` handle the build and runtime environment.
 
-**Environment variables** you can configure:
+**Required:** `DISCORD_TOKEN` must be set before running. The simplest way is a `.env` file in the repository root:
 
-| Variable | Required | Notes |
-|----------|----------|-------|
-| `DISCORD_TOKEN` | Yes | Your bot's Discord token |
-| `DISCORD_GUILD_IDS` | No | Comma-separated list of Discord server IDs. Leave empty for global registration |
-| `BOT_SYNC_COMMANDS` | No | Set to `true` to auto-sync commands (default: `true`) |
-| `LOG_LEVEL_DEFAULT` | No | Logging level (default: `Information`) |
-
-Example with environment variables:
-```bash
-DISCORD_TOKEN=your_token_here DISCORD_GUILD_IDS=123456789,987654321 docker-compose up --build
 ```
-
-Or create a `.env` file:
-```bash
 DISCORD_TOKEN=your_token_here
-DISCORD_GUILD_IDS=123456789,987654321
-BOT_SYNC_COMMANDS=true
 ```
+
+All other settings are optional:
+
+| `.env` key | Notes |
+|---|---|
+| `DISCORD_TOKEN` | **Required.** Your bot's Discord token |
+| `BOT_SYNC_COMMANDS` | Set to `true` to register commands on startup (default: `true`) |
+| `Discord__GuildIds__0` | Guild ID for guild-scoped registration (optional; repeat with `__1`, `__2`, … for multiple guilds) |
+| `LOG_LEVEL_DEFAULT` | Logging level (default: `Information`) |
+
+**How guild-scoped registration works:** variables in `.env` are injected directly into the container via `env_file:` in `docker-compose.yml`. `Discord__GuildIds__0=<id>` maps to `Discord:GuildIds[0]` in .NET's configuration system.
+
+Example `.env` for guild-scoped registration:
+
+```
+DISCORD_TOKEN=your_token_here
+BOT_SYNC_COMMANDS=true
+Discord__GuildIds__0=123456789012345678
+Discord__GuildIds__1=987654321098765432
+```
+
+Leave all `Discord__GuildIds__*` entries out to use global registration.
 
 ---
 
@@ -106,7 +113,9 @@ Once the bot is running and added to your Discord server:
 | Command | Description |
 | ------- | ----------- |
 | `/generate morkborg character` | Generate a single MÖRK BORG character |
-| `/generate morkborg party [count]` | Generate a party of characters (1–10) |
+| `/generate morkborg character class:<name>` | Generate with a specific class (or `None` for classless) |
+| `/generate morkborg character roll-method:4d6-drop-lowest` | Heroic ability rolling (classless only) |
+| `/generate morkborg character count:<1-4>` | Generate multiple characters in one command |
 | `/hello` | Test bot connectivity |
 
 Characters are sent to your DMs. In-channel responses confirm delivery and provide download links for generated files.
@@ -128,10 +137,13 @@ ScvmBot is open source under the MIT license. The project welcomes contributions
 
 ### Adding a new game system
 
-The bot uses a plugin architecture. To add a new TTRPG system:
+The project is designed to be expanded from within the solution itself — not as a drop-in plugin system. To add a new TTRPG system:
 
-1. Create a directory under `bot/Games/YourSystem/`
-2. Implement the `IGameSystem` interface
-3. Register it in `Program.cs`
+1. Create a game logic project under `src/` (e.g., `src/ScvmBot.Games.YourSystem/`)
+2. Create a module adapter project under `src/` named **`ScvmBot.Modules.YourSystem`** — this exact prefix is required; only assemblies named `ScvmBot.Modules.*` are discovered at startup
+3. Implement the `IGameModule` and `IModuleRegistration` interfaces
+4. Add a project reference from `ScvmBot.Bot` (and/or `ScvmBot.Cli`) to the module adapter project
 
-The new system will automatically appear under `/generate yoursystem`. See the MÖRK BORG implementation in `bot/Games/MorkBorg/` as a reference.
+> **Important:** The assembly name must start with `ScvmBot.Modules.`. Assemblies with any other naming pattern will be silently ignored by the module discovery system, even if they implement `IModuleRegistration`.
+
+The host discovers `IModuleRegistration` implementations from referenced assemblies at startup. The new system will appear under `/generate yoursystem`. See the MÖRK BORG implementation across `src/ScvmBot.Games.MorkBorg/` and `src/ScvmBot.Modules.MorkBorg/` as a reference.

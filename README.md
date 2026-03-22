@@ -1,41 +1,43 @@
 # ScvmBot
 
-A Discord bot for tabletop RPG character generation with built-in support for **MÖRK BORG** and an extensible plugin architecture for other game systems. Handles complex character creation workflows, party generation, PDF export, and guild-specific settings.
+A Discord bot for tabletop RPG character generation with built-in support for **MÖRK BORG** and a modular architecture for adding game systems. Handles character creation, multi-character generation, and PDF export.
 
 ## Features
 
-### Core Discord Integration
-- **Slash command framework** — `/generate` command with automatic game system routing
-- **DM delivery** — Generated characters sent via DM with in-channel confirmation
-- **Guild settings** — Per-guild configuration and customization
-- **Ephemeral responses** — Clean Discord UI with private confirmations
+### Discord Integration
+- **Slash command framework** — `/generate` command with game-module routing; each game module owns its command definitions, option parsing, and output behavior
+- **DM delivery** — Characters sent via DM; in-channel confirmation keeps channels clean
+- **Guild-scoped commands** — Command registration can be targeted to specific guilds for near-instant propagation (~15 seconds); omit guild IDs for global registration (~1 hour)
+- **Ephemeral responses** — Private follow-ups visible only to the requesting user
 
-### Character Generation
-- **MÖRK BORG system** — Full implementation of the MÖRK BORG character generation rules
-  - Ability score rolling and character class assignment
-  - Equipment and inventory generation
+### MÖRK BORG Character Generation
+- Full implementation of the MÖRK BORG ruleset:
+  - Ability score rolling (3d6 standard; 4d6 drop-lowest heroic mode for classless characters)
+  - Character class assignment (6 official classes + classless)
+  - Equipment, inventory, and starting container generation
   - Vignette (backstory) generation
-  - Omens and scroll mechanics
-  - HP and alignment determination
-- **Comprehensive game rules** — 100+ reference data entries (armor, weapons, spells, items, names, etc.)
-- **PDF support** — Export characters to fillable PDF character sheets
-- **Party generation** — Create multiple characters in one command, bundled in a downloadable ZIP file
-- **Pluggable architecture** — Implement `IGameSystem` to add new TTRPG systems
+  - Omens, scrolls, and HP determination
+- **PDF export** — Generates a filled PDF character sheet using an official-layout template
+- **Multi-character generation** — Generate up to 4 characters in a single command, delivered as a downloadable ZIP file
+- **200+ reference data entries** — Armour, weapons, spells, items, names, descriptions, and vignettes in versioned JSON files
 
-### Development & Testing
-- **.NET 10.0** — Modern C# with nullable reference types
-- **Comprehensive test suite** — 30+ test classes covering character generation logic, party building, PDF generation, and option parsing
-- **Structured logging** — Microsoft.Extensions.Logging integration
-- **Docker ready** — Dockerfile and docker-compose.yml for containerized deployment
+### Engineering
+- **.NET 10** with nullable reference types enabled throughout
+- **Six-project solution** — `ScvmBot.Bot` (Discord host), `ScvmBot.Cli` (CLI host), `ScvmBot.Modules` (shared contracts), `ScvmBot.Modules.MorkBorg` (module adapter), `ScvmBot.Games.MorkBorg` (game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering)
+- **Modular game system architecture** — Game modules implement `IModuleRegistration` in an assembly named `ScvmBot.Modules.*` and are discovered automatically at startup via the dependency graph. Adding a game means adding projects and a project reference from the host — no configuration files or plugin manifests
+- **459 tests** across four test projects covering generation logic, equipment flow, PDF mapping, option parsing, command handling, multi-character generation, and architectural constraints
+- **Fail-fast module initialization** — Each `IModuleRegistration` loads required data during `InitializeAsync()`; missing files abort startup with a non-zero exit code
+- **Testable command layer** — `ISlashCommandContext` interface decouples command handlers from sealed Discord.Net types, enabling full unit test coverage without Discord infrastructure
+- **CLI host** — `scvmbot-cli` provides local character generation, file rendering, and benchmarking through the same module pipeline, with no Discord dependency
+- **Docker ready** — `Dockerfile` and `docker-compose.yml` included
 
 ## Getting Started
 
 ### Prerequisites
-- .NET 10.0 SDK
-- Discord bot token (see [Discord Developer Portal](https://discord.com/developers/applications))
-- (Optional) Configured PDF template for character sheets
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- A Discord bot token — create one at the [Discord Developer Portal](https://discord.com/developers/applications)
 
-### Installation
+### Quick Start
 
 1. **Clone the repository**
    ```bash
@@ -43,15 +45,15 @@ A Discord bot for tabletop RPG character generation with built-in support for **
    cd ScvmBot
    ```
 
-2. **Configure Discord bot settings**
+2. **Configure the bot**
    ```bash
-   cp bot/appsettings.example.json bot/appsettings.json
+   cp src/ScvmBot.Bot/appsettings.example.json src/ScvmBot.Bot/appsettings.json
    ```
-   Edit `bot/appsettings.json` with your Discord bot token:
+   Edit `src/ScvmBot.Bot/appsettings.json`:
    ```json
    {
      "Discord": {
-       "Token": "<YOUR_DISCORD_BOT_TOKEN>",
+       "Token": "<YOUR_DISCORD_BOT_TOKEN_HERE>",
        "GuildIds": []
      },
      "Bot": {
@@ -60,132 +62,370 @@ A Discord bot for tabletop RPG character generation with built-in support for **
    }
    ```
 
-   **Configuration guide:**
-   - `Token`: Your bot's Discord token (required)
-   - `GuildIds`: Optional array of Discord server IDs. Omit or leave empty for global command registration, or provide one or more server IDs for guild-specific registration
-     - **Empty `[]`**: Commands register globally across Discord (takes ~1 hour to propagate)
-     - **One or more IDs**: Commands register only in those guilds (takes ~15 seconds)
+   | Setting | Description |
+   |---|---|
+   | `Token` | Your bot's Discord token (required) |
+   | `GuildIds` | Leave empty `[]` for global registration (~1 hour to propagate), or list specific server IDs for instant guild-scoped registration (~15 seconds) |
+   | `SyncCommands` | Set `true` on first run or after adding/changing commands to register them with Discord |
 
 3. **Run the bot**
    ```bash
-   dotnet run --project bot
+   dotnet run --project src/ScvmBot.Bot
    ```
 
-### Docker Deployment
+### Docker
+
+Set the required environment variable and start the container from the **repository root**:
 
 ```bash
-docker-compose up --build
+export DISCORD_TOKEN=your_token_here
+docker compose up --build
 ```
 
-## Project Structure
+Or with optional settings:
+
+```bash
+export DISCORD_TOKEN=your_token_here
+export BOT_SYNC_COMMANDS=true          # register commands on this startup
+docker compose up --build
+```
+
+For guild-scoped command registration, add the target guild IDs to a `.env` file in the repository root alongside `DISCORD_TOKEN`:
 
 ```
-ScvmBot/
-├── bot/
-│   ├── Data/
-│   │   └── MorkBorg/
-│   │       ├── armor.json         # Armor reference data
-│   │       ├── classes.json       # Character classes
-│   │       ├── weapons.json       # Weapons and gear
-│   │       ├── spells.json        # Scroll/spell mechanics
-│   │       ├── items.json         # Miscellaneous items
-│   │       ├── names.json         # Character name generation
-│   │       ├── descriptions.json  # Vignette descriptions
-│   │       ├── vignettes.json     # Backstory templates
-│   │       ├── character_sheet.pdf # PDF template
-│   │       └── DATA_REFERENCE.md  # Data documentation
-│   ├── Games/
-│   │   ├── IGameSystem.cs         # Game system plugin interface
-│   │   ├── CharacterGenerationResult.cs
-│   │   └── MorkBorg/              # MÖRK BORG implementation
-│   │       ├── CharacterGenerator.cs
-│   │       ├── CharacterCardBuilder.cs
-│   │       ├── ReferenceDataService.cs
-│   │       ├── VignetteGenerator.cs
-│   │       ├── MorkBorgCommandDefinition.cs
-│   │       └── ...
-│   ├── Models/
-│   │   ├── ICharacter.cs          # Character interface
-│   │   ├── GuildSettings.cs
-│   │   └── MorkBorg/
-│   │       └── MorkBorgCharacter.cs
-│   ├── Services/
-│   │   ├── BotService.cs          # Discord lifecycle management
-│   │   ├── GenerateCommandHandler.cs  # Command routing
-│   │   ├── ResponseCardBuilder.cs     # Discord embed formatting
-│   │   ├── PartyZipBuilder.cs         # ZIP archive creation
-│   │   └── Commands/
-│   │       ├── ISlashCommand.cs       # Command plugin interface
-│   │       └── HelloCommand.cs        # Example command
-│   ├── Program.cs                 # DI configuration & entry point
-│   ├── Dockerfile
-│   └── appsettings.example.json
-├── tests/
-│   ├── ScvmBot.Bot.Tests/         # Framework and integration tests
-│   └── ScvmBot.Games.MorkBorg.Tests/  # Game logic unit tests
-├── docker-compose.yml
-├── ScvmBot.sln
-└── LICENSE
+DISCORD_TOKEN=your_token_here
+Discord__GuildIds__0=123456789012345678
+Discord__GuildIds__1=987654321098765432
 ```
+
+`docker-compose.yml` uses `env_file:` to inject all `.env` entries directly into the container. `Discord__GuildIds__N` maps to the `Discord:GuildIds` array. Leave all `Discord__GuildIds__*` entries out for global registration.
 
 ## Commands
 
-- `/generate morkborg character` — Generate a single MÖRK BORG character
-- `/generate morkborg party [count]` — Generate a party of characters (1-10)
-- `/hello` — Test bot connectivity
+| Command | Description |
+|---|---|
+| `/generate morkborg character` | Generate a single MÖRK BORG character |
+| `/generate morkborg character class:<name>` | Generate with a specific class (or `None` for classless) |
+| `/generate morkborg character roll-method:4d6-drop-lowest` | Use heroic ability rolling (classless only) |
+| `/generate morkborg character count:<1-4>` | Generate multiple characters in one command |
+| `/hello` | Verify bot is online |
 
-Characters are sent via DM. In-channel responses confirm delivery and provide download links for generated files.
+Characters are delivered via DM. In-channel replies confirm delivery.
 
-## Adding a New Game System
+## Implementing a New Game System
 
-1. Create a new directory under `bot/Games/YourSystem/`
-2. Implement `IGameSystem` interface:
-   ```csharp
-   public class YourGameSystem : IGameSystem
-   {
-       public string Name => "Your Game";
-       public string CommandKey => "yourgame";
-       public bool SupportsPdf => true;
-       
-       public SlashCommandOptionBuilder BuildCommandGroupOptions() { ... }
-       public Task<GenerateResult> HandleGenerateCommandAsync(...) { ... }
-   }
-   ```
-3. Register in `Program.cs`:
-   ```csharp
-   services.AddSingleton<IGameSystem, YourGameSystem>();
-   ```
-4. The system will automatically appear under `/generate yourgame`
+Adding a game system requires two projects, one required interface, and two optional ones. The MÖRK BORG module is the reference implementation — every pattern below has a working example in the codebase.
 
-## Development
+### Overview
 
-### Running Tests
+| Concern | Required | Interface / Type | Example |
+|---|---|---|---|
+| Module registration | Yes | `IModuleRegistration` | `MorkBorgModuleRegistration` |
+| Command handling | Yes | `IGameModule` | `MorkBorgModule` |
+| Card rendering | Yes | `IResultRenderer` (Card) | `MorkBorgCharacterEmbedRenderer` |
+| File rendering | No | `IResultRenderer` (File) | `MorkBorgCharacterPdfRenderer` |
+
+### Step 1: Create the Projects
+
+Create two projects under `src/`:
+
+- **`ScvmBot.Games.YourGame/`** — Game logic, models, data loading. No dependency on `ScvmBot.Modules`. This project is pure game code.
+- **`ScvmBot.Modules.YourGame/`** — Module adapter that bridges your game logic to the bot framework. References both `ScvmBot.Modules` and `ScvmBot.Games.YourGame`.
+
+The `ScvmBot.Modules.` prefix is required — `ModuleBootstrapper` scans the dependency graph for assemblies matching this prefix and ignores everything else.
+
+Add a project reference from `ScvmBot.Bot` (and `ScvmBot.Cli` if desired) to `ScvmBot.Modules.YourGame`. This is the only wiring step — no registration files, no manifest.
+
+### Step 2: Implement `IModuleRegistration`
+
+This is the entry point the host calls at startup. It must have a **public parameterless constructor**.
+
+```csharp
+public sealed class YourGameModuleRegistration : IModuleRegistration
+{
+    public async Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration)
+    {
+        // Navigate to your config section. Convention: Modules:{ModuleName}
+        var dataPath = configuration["Modules:YourGame:DataPath"]
+                    ?? configuration["Modules:DataPath"];
+
+        // Load reference data. Throw on failure — the host treats exceptions as
+        // fatal startup errors and exits with a non-zero code.
+        var data = await YourDataService.LoadAsync(dataPath);
+
+        // Return a registration callback. The host calls this once to populate DI.
+        return services =>
+        {
+            services.AddSingleton(data);
+            services.AddSingleton<IGameModule, YourGameModule>();
+            services.AddSingleton<IResultRenderer, YourCardRenderer>();
+            // Optional: file renderer for PDF/image export
+            // services.AddSingleton<IResultRenderer, YourPdfRenderer>();
+        };
+    }
+}
+```
+
+Key rules:
+- The async portion (`InitializeAsync`) runs before DI is built. Load data, validate files, and fail fast here.
+- The returned `Action<IServiceCollection>` registers everything the module needs.
+- Register exactly one `IGameModule` implementation. Register one or more `IResultRenderer` implementations.
+
+### Step 3: Implement `IGameModule`
+
+This is the runtime contract the bot uses to build commands and dispatch generation requests.
+
+```csharp
+public sealed class YourGameModule : IGameModule
+{
+    private readonly YourCharacterGenerator _generator;
+
+    public YourGameModule(YourCharacterGenerator generator, YourDataService data)
+    {
+        _generator = generator;
+        // Build subcommand definitions. These become /generate yourgame <subcommand>.
+        SubCommands = YourCommandDefinition.BuildSubCommands(data);
+    }
+
+    public string Name => "Your Game";       // Display name shown in the command description
+    public string CommandKey => "yourgame";  // Becomes /generate yourgame — must be unique
+
+    public IReadOnlyList<SubCommandDefinition> SubCommands { get; }
+
+    public Task<GenerateResult> HandleGenerateCommandAsync(
+        string subCommand,
+        IReadOnlyDictionary<string, object?> options,
+        CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        if (!string.Equals(subCommand, "character", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Unknown subcommand '{subCommand}'.");
+
+        var character = _generator.Generate(options);
+
+        return Task.FromResult<GenerateResult>(
+            new GenerationBatch<YourCharacter>(new[] { character }));
+    }
+}
+```
+
+#### Command Definitions
+
+Define your command structure using the transport-agnostic record types. These are mapped to Discord slash command options by `DiscordCommandAdapter` and to CLI arguments by the CLI host — your module never touches Discord types.
+
+```csharp
+public static class YourCommandDefinition
+{
+    public static IReadOnlyList<SubCommandDefinition> BuildSubCommands(YourDataService data)
+    {
+        return new[]
+        {
+            new SubCommandDefinition("character", "Generate a random character", new CommandOptionDefinition[]
+            {
+                new("difficulty",
+                    "Starting difficulty level",
+                    CommandOptionType.String, Required: false,
+                    Choices: new[] { new CommandChoice("Easy", "easy"), new CommandChoice("Hard", "hard") }),
+
+                new("count",
+                    "Number of characters to generate",
+                    CommandOptionType.Integer, Required: false, MinValue: 1,
+                    Role: CommandOptionRole.GenerationCount)
+            })
+        };
+    }
+}
+```
+
+`CommandOptionRole.GenerationCount` tells transport hosts this option controls batch size. The Discord host uses it to cap the value at its transport-specific maximum (currently 4) so the Discord UI enforces the limit before the command reaches the handler.
+
+#### Returning Results
+
+All generation methods must return a `GenerationBatch<TCharacter>` where `TCharacter` is your game-specific model type. The batch must contain at least one character — the constructor throws `ArgumentException` on empty lists.
+
+For multi-character support, parse the `count` option and generate multiple characters:
+
+```csharp
+var count = ParseCount(options); // your parser; default to 1 if missing
+var characters = Enumerable.Range(0, count).Select(_ => _generator.Generate()).ToList();
+var groupName = count > 1 ? GenerateGroupName(characters) : null;
+
+return new GenerationBatch<YourCharacter>(characters.AsReadOnly(), groupName);
+```
+
+### Step 4: Implement Renderers
+
+Renderers convert a `GenerateResult` into output the host can deliver. Each renderer declares what result type and output format it handles.
+
+#### Card Renderer (Required)
+
+Every module must register at least one card renderer. The card output is what appears as a Discord embed or CLI text output.
+
+```csharp
+public sealed class YourCardRenderer : IResultRenderer
+{
+    public Type ResultType => typeof(GenerationBatch<YourCharacter>);
+    public OutputFormat Format => OutputFormat.Card;
+
+    public bool CanRender(GenerateResult result) =>
+        result is GenerationBatch<YourCharacter>;
+
+    public RenderOutput Render(GenerateResult result)
+    {
+        if (result is not GenerationBatch<YourCharacter> batch)
+            throw new InvalidOperationException($"Cannot render {result.GetType().Name}.");
+
+        var character = batch.Characters[0];
+        return new CardOutput(
+            Title: character.Name,
+            Description: $"Level {character.Level} — HP {character.HitPoints}",
+            Color: new CardColor(100, 150, 200),
+            Fields: new[]
+            {
+                new CardField("Abilities", FormatAbilities(character)),
+                new CardField("Equipment", FormatEquipment(character))
+            });
+    }
+}
+```
+
+For multi-character results, check `batch.Characters.Count` and return either a detailed single-character card or a roster summary — see `MorkBorgCharacterEmbedRenderer.BuildRosterCard` for the pattern.
+
+#### File Renderer (Optional)
+
+If your game has PDF export, image generation, or any downloadable file output, add a file renderer. When a file renderer is registered, the bot automatically attaches the file alongside the card embed.
+
+```csharp
+public sealed class YourPdfRenderer : IResultRenderer
+{
+    public Type ResultType => typeof(GenerationBatch<YourCharacter>);
+    public OutputFormat Format => OutputFormat.File;
+
+    public bool CanRender(GenerateResult result) =>
+        result is GenerationBatch<YourCharacter> && PdfTemplateExists();
+
+    public RenderOutput Render(GenerateResult result)
+    {
+        if (result is not GenerationBatch<YourCharacter> batch)
+            throw new InvalidOperationException($"Cannot render {result.GetType().Name}.");
+
+        if (batch.Characters.Count == 1)
+        {
+            var pdf = RenderPdf(batch.Characters[0]);
+            return new FileOutput(pdf, $"{batch.Characters[0].Name}.pdf");
+        }
+
+        // Multiple characters: render each as a PDF, bundle into a ZIP
+        var memberPdfs = batch.Characters
+            .Select(c => (c.Name, PdfBytes: RenderPdf(c)))
+            .ToList();
+        var zipBytes = CharacterZipBuilder.CreateZip(memberPdfs);
+        var zipName = CharacterZipBuilder.GenerateZipFileName(
+            batch.GroupName ?? "characters");
+        return new FileOutput(zipBytes, zipName);
+    }
+}
+```
+
+`CharacterZipBuilder` handles ZIP creation and filename sanitization — use it instead of rolling your own.
+
+#### Renderer Rules
+
+- Each `(ResultType, OutputFormat)` pair must have exactly one renderer. `RendererRegistry` validates this at startup.
+- `CanRender` is a runtime guard — return `false` if a required resource is unavailable (e.g. missing PDF template) and the host will skip file rendering gracefully.
+
+### Step 5: Add Tests
+
+Create a test project `tests/ScvmBot.Games.YourGame.Tests/` for game logic tests and optionally `tests/ScvmBot.Modules.YourGame.Tests/` for module adapter tests. The shared test infrastructure in `ScvmBot.Tests.Shared` provides helpers like `SharedTestInfrastructure.GetRepositoryRoot()` for locating data files.
+
+Test the module through the same pipeline the hosts use:
+
+```csharp
+[Fact]
+public async Task Generate_ReturnsCharacterWithRequiredFields()
+{
+    var config = new ConfigurationBuilder()
+        .AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Modules:YourGame:DataPath"] = "/path/to/data"
+        })
+        .Build();
+    var register = await new YourGameModuleRegistration().InitializeAsync(config);
+
+    var services = new ServiceCollection();
+    register(services);
+    services.AddSingleton<RendererRegistry>();
+    services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+    var provider = services.BuildServiceProvider();
+
+    var module = provider.GetRequiredService<IGameModule>();
+    var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+
+    var batch = Assert.IsType<GenerationBatch<YourCharacter>>(result);
+    Assert.False(string.IsNullOrWhiteSpace(batch.Characters[0].Name));
+}
+```
+
+### Architecture Summary
+
+```
+Host (Bot or CLI)
+  │
+  ├── ModuleBootstrapper.DiscoverAndInitializeAsync()
+  │     └── Scans for ScvmBot.Modules.* assemblies
+  │     └── Calls IModuleRegistration.InitializeAsync() on each
+  │     └── Returns DI registration callbacks
+  │
+  ├── DI Container
+  │     ├── IGameModule instances (one per game system)
+  │     ├── IResultRenderer instances (card + optional file per module)
+  │     └── RendererRegistry (selects renderer by result type + format)
+  │
+  └── /generate command
+        ├── Routes to IGameModule by CommandKey
+        ├── Module returns GenerationBatch<T>
+        ├── RendererRegistry.RenderCard() → CardOutput → Discord embed
+        └── RendererRegistry.TryRenderFile() → FileOutput? → attachment
+```
+
+## Running Tests
+
 ```bash
 dotnet test
 ```
 
-### Build Solution
+Individual test projects:
+
 ```bash
-dotnet build ScvmBot.sln
+dotnet test tests/ScvmBot.Bot.Tests
+dotnet test tests/ScvmBot.Games.MorkBorg.Tests
+dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
+dotnet test tests/ScvmBot.Cli.Tests
 ```
 
-### Project Dependencies
-- **Discord.Net** (3.19.1) — Discord API integration
-- **iText7** (9.5.0) — PDF generation
-- **Microsoft.Extensions.*** (10.0.5) — Dependency injection, configuration, logging, hosting
+## Dependencies
+
+| Package | Version | Purpose |
+|---|---|---|
+| Discord.Net | 3.19.1 | Discord API |
+| iText7 | 9.5.0 | PDF form filling |
+| itext7.bouncy-castle-adapter | 9.5.0 | iText7 cryptography runtime requirement |
+| Newtonsoft.Json | 13.0.4 | Version pin — prevents vulnerable transitive version via Discord.Net |
+| Microsoft.Extensions.Hosting | 10.0.5 | DI / hosted service |
+| Microsoft.Extensions.Logging | 10.0.5 | Structured logging |
 
 ## MÖRK BORG Attribution
 
-ScvmBot is an independent production by Christopher Martin and is not affiliated
-with Ockult Örtmästare Games or Stockholm Kartell. It is published under the
-[MÖRK BORG Third Party License](https://morkborg.com/license/).
+ScvmBot is an independent production by Christopher Martin and is not affiliated with Ockult Örtmästare Games or Stockholm Kartell. It is published under the [MÖRK BORG Third Party License](https://morkborg.com/license/).
 
 MÖRK BORG is © 2019 Ockult Örtmästare Games and Stockholm Kartell.
 
-See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for full details.
+See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for full third-party licence details.
 
-## License
+## Licence
 
 [MIT](LICENSE) © 2025 Christopher Martin
 
 Third-party content is licensed separately — see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+

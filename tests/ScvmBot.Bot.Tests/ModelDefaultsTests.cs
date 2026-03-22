@@ -1,4 +1,4 @@
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Bot.Tests;
 

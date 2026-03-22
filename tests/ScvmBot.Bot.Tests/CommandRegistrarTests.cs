@@ -42,7 +42,7 @@ public class CommandRegistrarTests
     }
 
     [Fact]
-    public void ResolveStrategy_GuildIdsAllZero_ReturnsGlobal()
+    public void ResolveStrategy_GuildIdsAllZero_Throws()
     {
         var config = BuildConfig(new Dictionary<string, string?>
         {
@@ -50,10 +50,10 @@ public class CommandRegistrarTests
             ["Discord:GuildIds:1"] = "0"
         });
 
-        var strategy = CommandRegistrar.ResolveStrategy(config);
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => CommandRegistrar.ResolveStrategy(config));
 
-        Assert.Equal(RegistrationMode.Global, strategy.Mode);
-        Assert.Empty(strategy.GuildIds);
+        Assert.Contains("invalid entry", ex.Message);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class CommandRegistrarTests
     }
 
     [Fact]
-    public void ResolveStrategy_MixOfValidAndInvalidGuildIds_ReturnsOnlyValid()
+    public void ResolveStrategy_MixOfValidAndInvalidGuildIds_Throws()
     {
         var config = BuildConfig(new Dictionary<string, string?>
         {
@@ -101,16 +101,14 @@ public class CommandRegistrarTests
             ["Discord:GuildIds:3"] = "123456789012345678"
         });
 
-        var strategy = CommandRegistrar.ResolveStrategy(config);
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => CommandRegistrar.ResolveStrategy(config));
 
-        Assert.Equal(RegistrationMode.Guild, strategy.Mode);
-        Assert.Equal(2, strategy.GuildIds.Count);
-        Assert.Contains(1296851784899366944UL, strategy.GuildIds);
-        Assert.Contains(123456789012345678UL, strategy.GuildIds);
+        Assert.Contains("invalid entry", ex.Message);
     }
 
     [Fact]
-    public void ResolveStrategy_GuildIdsSectionWithOnlyInvalidEntries_ReturnsGlobal()
+    public void ResolveStrategy_GuildIdsSectionWithOnlyInvalidEntries_Throws()
     {
         var config = BuildConfig(new Dictionary<string, string?>
         {
@@ -118,9 +116,25 @@ public class CommandRegistrarTests
             ["Discord:GuildIds:1"] = ""
         });
 
-        var strategy = CommandRegistrar.ResolveStrategy(config);
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => CommandRegistrar.ResolveStrategy(config));
 
-        Assert.Equal(RegistrationMode.Global, strategy.Mode);
-        Assert.Empty(strategy.GuildIds);
+        Assert.Contains("invalid entry", ex.Message);
+    }
+
+    [Fact]
+    public void ResolveStrategy_CommaSeparatedStringValue_Throws()
+    {
+        // The canonical format is array-style keys: Discord:GuildIds:0, Discord:GuildIds:1, ...
+        // A plain comma-separated string under Discord:GuildIds is a config mistake.
+        var config = BuildConfig(new Dictionary<string, string?>
+        {
+            ["Discord:GuildIds"] = "1296851784899366944,123456789012345678"
+        });
+
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => CommandRegistrar.ResolveStrategy(config));
+
+        Assert.Contains("must be configured as an array", ex.Message);
     }
 }

@@ -1,5 +1,6 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -24,10 +25,10 @@ public class CharacterGeneratorGameLogicTests
                 1,
                 1,
                 1
-            });
+            }.Concat(Enumerable.Repeat(1, 20)));
             var generator = new CharacterGenerator(referenceData, rng);
 
-            var character = await generator.GenerateAsync(null);
+            var character = generator.Generate(null);
 
             Assert.False(string.IsNullOrWhiteSpace(character.Name));
             Assert.NotNull(character.EquippedWeapon);
@@ -59,9 +60,11 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(new[] { roll }));
+            var rng = new DeterministicRandom(new[] { roll });
+            var dice = new DiceRoller(rng);
+            var resolver = new WeaponResolver(referenceData, dice, rng);
 
-            var result = TestUtilities.InvokePrivate<string?>(generator, "ResolveWeapon", new CharacterGenerationOptions(), null!);
+            var result = resolver.Resolve(new CharacterGenerationOptions(), null);
 
             Assert.NotNull(result);
             Assert.Contains(expectedName, result, StringComparison.OrdinalIgnoreCase);
@@ -83,9 +86,11 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(new[] { roll }));
+            var rng = new DeterministicRandom(new[] { roll });
+            var dice = new DiceRoller(rng);
+            var resolver = new ArmorResolver(referenceData, dice, rng);
 
-            var result = TestUtilities.InvokePrivate<string?>(generator, "ResolveArmor", new CharacterGenerationOptions(), null!);
+            var result = resolver.Resolve(new CharacterGenerationOptions(), null);
 
             Assert.NotNull(result);
             Assert.Contains(expectedName, result, StringComparison.OrdinalIgnoreCase);
@@ -97,15 +102,23 @@ public class CharacterGeneratorGameLogicTests
     }
 
     [Fact]
-    public void ResolveWeapon_WithoutReferenceData_ReturnsNullOnRandomPath()
+    public async Task ResolveWeapon_WithoutReferenceData_ReturnsNullOnRandomPath()
     {
         var directory = TestUtilities.CreateTempDirectory();
         try
         {
-            var referenceData = new MorkBorgReferenceDataService();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(new[] { 1 }));
+            await File.WriteAllTextAsync(Path.Combine(directory, "classes.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "spells.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "names.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "weapons.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "items.json"), "[]");
+            var referenceData = await MorkBorgReferenceDataService.CreateAsync(directory);
+            var rng = new DeterministicRandom(new[] { 1 });
+            var dice = new DiceRoller(rng);
+            var resolver = new WeaponResolver(referenceData, dice, rng);
 
-            var result = TestUtilities.InvokePrivate<string?>(generator, "ResolveWeapon", new CharacterGenerationOptions(), null!);
+            var result = resolver.Resolve(new CharacterGenerationOptions(), null);
 
             Assert.Null(result);
         }
@@ -116,15 +129,23 @@ public class CharacterGeneratorGameLogicTests
     }
 
     [Fact]
-    public void ResolveArmor_WithoutReferenceData_ReturnsNullOnRandomPath()
+    public async Task ResolveArmor_WithoutReferenceData_ReturnsNullOnRandomPath()
     {
         var directory = TestUtilities.CreateTempDirectory();
         try
         {
-            var referenceData = new MorkBorgReferenceDataService();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(new[] { 1 }));
+            await File.WriteAllTextAsync(Path.Combine(directory, "classes.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "spells.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "names.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "weapons.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "items.json"), "[]");
+            var referenceData = await MorkBorgReferenceDataService.CreateAsync(directory);
+            var rng = new DeterministicRandom(new[] { 1 });
+            var dice = new DiceRoller(rng);
+            var resolver = new ArmorResolver(referenceData, dice, rng);
 
-            var result = TestUtilities.InvokePrivate<string?>(generator, "ResolveArmor", new CharacterGenerationOptions(), null!);
+            var result = resolver.Resolve(new CharacterGenerationOptions(), null);
 
             Assert.Null(result);
         }
@@ -135,37 +156,26 @@ public class CharacterGeneratorGameLogicTests
     }
 
     [Fact]
-    public async Task GenerateAsync_InvalidWeaponAndArmorNames_ResultInNullEquipment()
+    public async Task GenerateAsync_InvalidWeaponName_Throws()
     {
         var directory = TestUtilities.CreateTempDirectory();
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var rng = new DeterministicRandom(new[] { 2, 0, 0, 0, 0, 1, 1, 1 });
-            var generator = new CharacterGenerator(referenceData, rng);
+            var generator = new CharacterGenerator(referenceData, new Random(42));
 
             var options = new CharacterGenerationOptions
             {
                 Name = "NoGear",
                 ClassName = "",
-                Strength = 0,
-                Agility = 0,
-                Presence = 0,
-                Toughness = 0,
-                Omens = 1,
-                HitPoints = 5,
-                MaxHitPoints = 5,
-                Silver = 20,
                 WeaponName = "Missing Weapon",
-                ArmorName = "Missing Armor",
                 StartingContainerOverride = "Backpack",
                 SkipRandomStartingGear = true
             };
 
-            var character = await generator.GenerateAsync(options);
-
-            Assert.Null(character.EquippedWeapon);
-            Assert.Null(character.EquippedArmor);
+            var ex = Assert.Throws<InvalidOperationException>(() => generator.Generate(options));
+            Assert.Contains("Missing Weapon", ex.Message);
+            Assert.Contains("not found in weapons data", ex.Message);
         }
         finally
         {
@@ -180,69 +190,36 @@ public class CharacterGeneratorGameLogicTests
 
 
     [Fact]
-    public async Task RollDie_Throws_WhenSidesIsNotPositive()
+    public void RollDie_Throws_WhenSidesIsNotPositive()
     {
-        var directory = TestUtilities.CreateTempDirectory();
-        try
-        {
-            var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(referenceData, new DeterministicRandom(Array.Empty<int>()));
+        var dice = new DiceRoller(new DeterministicRandom(Array.Empty<int>()));
 
-            var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() =>
-                TestUtilities.InvokePrivate<int>(generator, "RollDie", 0));
-
-            Assert.IsType<ArgumentOutOfRangeException>(exception.InnerException);
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
+        Assert.Throws<ArgumentOutOfRangeException>(() => dice.RollDie(0));
     }
 
     [Fact]
-    public async Task RollFourD6DropLowest_DropsMinimumDie()
+    public void RollFourD6DropLowest_DropsMinimumDie()
     {
-        var directory = TestUtilities.CreateTempDirectory();
-        try
-        {
-            var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
-                referenceData,
-                new DeterministicRandom(new[] { 1, 2, 3, 4 }));
+        var dice = new DiceRoller(new DeterministicRandom(new[] { 1, 2, 3, 4 }));
 
-            var total = TestUtilities.InvokePrivate<int>(generator, "RollFourD6DropLowest");
+        var total = dice.RollFourD6DropLowest();
 
-            Assert.Equal(9, total);
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
+        Assert.Equal(9, total);
     }
 
     [Theory]
     [InlineData(new[] { 1, 1, 1, 1 }, -3)]
     [InlineData(new[] { 6, 6, 6, 6 }, 3)]
     [InlineData(new[] { 4, 4, 4, 4 }, 0)]
-    public async Task RollAbilityModifier_FourD6DropLowest_MapsCorrectly(int[] rolls, int expected)
+    public void RollAbilityModifier_FourD6DropLowest_MapsCorrectly(int[] rolls, int expected)
     {
-        var directory = TestUtilities.CreateTempDirectory();
-        try
-        {
-            var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
-                referenceData,
-                new DeterministicRandom(rolls));
+        var rng = new DeterministicRandom(rolls);
+        var dice = new DiceRoller(rng);
+        var roller = new AbilityRoller(dice, rng);
 
-            var modifier = TestUtilities.InvokePrivate<int>(
-                generator, "RollAbilityModifier", AbilityRollMethod.FourD6DropLowest);
+        var modifier = roller.RollAbilityModifier(AbilityRollMethod.FourD6DropLowest);
 
-            Assert.Equal(expected, modifier);
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
+        Assert.Equal(expected, modifier);
     }
 
     [Fact]
@@ -255,7 +232,7 @@ public class CharacterGeneratorGameLogicTests
             var generator = new CharacterGenerator(
                 referenceData, new Random(42));
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 RollMethod = AbilityRollMethod.FourD6DropLowest,
             });
@@ -286,7 +263,7 @@ public class CharacterGeneratorGameLogicTests
             var generator = new CharacterGenerator(
                 referenceData, new Random(42));
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
             });
@@ -315,11 +292,11 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var rng = new DeterministicRandom(new[] { 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 });
+            var rng = new DeterministicRandom(Enumerable.Repeat(6, 12).Concat(Enumerable.Repeat(1, 18)));
             var generator = new CharacterGenerator(
                 referenceData, rng);
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = "Fanged Deserter",
                 RollMethod = AbilityRollMethod.FourD6DropLowest,
@@ -350,7 +327,7 @@ public class CharacterGeneratorGameLogicTests
 
             for (int i = 0; i < 20; i++)
             {
-                var character = await generator.GenerateAsync(new CharacterGenerationOptions
+                var character = generator.Generate(new CharacterGenerationOptions
                 {
                 });
 
@@ -386,7 +363,7 @@ public class CharacterGeneratorGameLogicTests
 
             for (int i = 0; i < 10; i++)
             {
-                var character = await generator.GenerateAsync(new CharacterGenerationOptions
+                var character = generator.Generate(new CharacterGenerationOptions
                 {
                 });
 
@@ -413,7 +390,7 @@ public class CharacterGeneratorGameLogicTests
             var generator = new CharacterGenerator(
                 referenceData, new Random(99));
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = "Fanged Deserter",
             });
@@ -438,7 +415,7 @@ public class CharacterGeneratorGameLogicTests
             var generator = new CharacterGenerator(
                 referenceData, new Random(111));
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = "Heretical Priest",
             });
@@ -461,7 +438,7 @@ public class CharacterGeneratorGameLogicTests
             var generator = new CharacterGenerator(
                 referenceData, new Random(222));
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = "Esoteric Hermit",
             });
@@ -516,7 +493,7 @@ public class CharacterGeneratorGameLogicTests
             for (int seed = 1; seed <= 10; seed++)
             {
                 var generator = new CharacterGenerator(refData, new Random(seed));
-                var character = await generator.GenerateAsync(new CharacterGenerationOptions
+                var character = generator.Generate(new CharacterGenerationOptions
                 {
                     ClassName = "Esoteric Hermit",
                 });
@@ -545,9 +522,9 @@ public class CharacterGeneratorGameLogicTests
             var refData = await LoadReferenceDataAsync();
             var generator = new CharacterGenerator(refData, new Random(42));
 
-            var character = await generator.GenerateAsync(new CharacterGenerationOptions
+            var character = generator.Generate(new CharacterGenerationOptions
             {
-                ClassName = "none",
+                ClassName = MorkBorgConstants.ClasslessClassName,
                 ForceItemNames = { "Rope", "Torch" },
             });
 
@@ -573,8 +550,8 @@ public class CharacterGeneratorGameLogicTests
             var refData = await LoadReferenceDataAsync();
             var generator = new CharacterGenerator(refData, new Random(42));
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                generator.GenerateAsync(new CharacterGenerationOptions
+            Assert.Throws<InvalidOperationException>(() =>
+                generator.Generate(new CharacterGenerationOptions
                 {
                     ClassName = "Totally Fake Class",
                 }));
@@ -587,9 +564,7 @@ public class CharacterGeneratorGameLogicTests
 
     private static async Task<MorkBorgReferenceDataService> LoadReferenceDataAsync()
     {
-        var dataRoot = Path.Combine(TestUtilities.GetBotProjectPath(), "Data", "MorkBorg");
-        var service = new MorkBorgReferenceDataService(dataRoot);
-        await service.LoadDataAsync();
-        return service;
+        var dataRoot = TestUtilities.GetMorkBorgDataPath();
+        return await MorkBorgReferenceDataService.CreateAsync(dataRoot);
     }
 }

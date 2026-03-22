@@ -1,5 +1,6 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -75,7 +76,7 @@ public class VignetteGeneratorTests
         data.Traits["Cowardly"] = new List<string> { "brave enough to show up, barely" };
         var generator = new VignetteGenerator(data, new DeterministicRandom(ManyZeros()));
         var character = MakeCharacter();
-        character.Descriptions.Add("Trait: Cowardly");
+        character.Descriptions.Add(new CharacterDescription(DescriptionCategory.Trait, "Cowardly"));
 
         var result = generator.Generate(character);
 
@@ -89,7 +90,7 @@ public class VignetteGeneratorTests
         data.Bodies["Decaying teeth."] = new List<string> { "smiles like a graveyard" };
         var generator = new VignetteGenerator(data, new DeterministicRandom(ManyZeros()));
         var character = MakeCharacter();
-        character.Descriptions.Add("Body: Decaying teeth.");
+        character.Descriptions.Add(new CharacterDescription(DescriptionCategory.Body, "Decaying teeth."));
 
         var result = generator.Generate(character);
 
@@ -103,7 +104,7 @@ public class VignetteGeneratorTests
         data.Habits["Pyromaniac"] = new List<string> { "loves fire too much" };
         var generator = new VignetteGenerator(data, new DeterministicRandom(ManyZeros()));
         var character = MakeCharacter();
-        character.Descriptions.Add("Habit: Pyromaniac");
+        character.Descriptions.Add(new CharacterDescription(DescriptionCategory.Habit, "Pyromaniac"));
 
         var result = generator.Generate(character);
 
@@ -117,7 +118,7 @@ public class VignetteGeneratorTests
         data.Traits["Cowardly"] = new List<string> { "the fallback phrase" };
         var generator = new VignetteGenerator(data, new DeterministicRandom(ManyZeros()));
         var character = MakeCharacter();
-        character.Descriptions.Add("Trait: Some Unknown Trait");
+        character.Descriptions.Add(new CharacterDescription(DescriptionCategory.Trait, "Some Unknown Trait"));
 
         var result = generator.Generate(character);
 
@@ -134,8 +135,8 @@ public class VignetteGeneratorTests
         data.Closers = new List<string> { "Good luck." };
         var generator = new VignetteGenerator(data, new DeterministicRandom(ManyZeros()));
         var character = MakeCharacter(name: "Grittr", className: "Unknown");
-        character.Descriptions.Add("Body: Decaying teeth.");
-        character.Descriptions.Add("Habit: Pyromaniac");
+        character.Descriptions.Add(new CharacterDescription(DescriptionCategory.Body, "Decaying teeth."));
+        character.Descriptions.Add(new CharacterDescription(DescriptionCategory.Habit, "Pyromaniac"));
 
         var result = generator.Generate(character);
 
@@ -159,12 +160,11 @@ public class VignetteGeneratorTests
     [Fact]
     public async Task GenerateAsync_CharacterHasVignette()
     {
-        var refData = new MorkBorgReferenceDataService(
-            Path.Combine(TestUtilities.GetBotProjectPath(), "Data", "MorkBorg"));
-        await refData.LoadDataAsync();
+        var refData = await MorkBorgReferenceDataService.CreateAsync(
+            TestUtilities.GetMorkBorgDataPath());
 
         var generator = new CharacterGenerator(refData);
-        var character = await generator.GenerateAsync();
+        var character = generator.Generate();
 
         Assert.False(string.IsNullOrWhiteSpace(character.Vignette));
     }
@@ -172,12 +172,11 @@ public class VignetteGeneratorTests
     [Fact]
     public async Task GenerateAsync_VignetteContainsCharacterName()
     {
-        var refData = new MorkBorgReferenceDataService(
-            Path.Combine(TestUtilities.GetBotProjectPath(), "Data", "MorkBorg"));
-        await refData.LoadDataAsync();
+        var refData = await MorkBorgReferenceDataService.CreateAsync(
+            TestUtilities.GetMorkBorgDataPath());
 
         var generator = new CharacterGenerator(refData);
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions { Name = "Grittr" });
+        var character = generator.Generate(new CharacterGenerationOptions { Name = "Grittr" });
 
         Assert.Contains("Grittr", character.Vignette);
     }
@@ -204,14 +203,14 @@ public class VignetteGeneratorTests
         return new VignetteData
         {
             Templates = new List<string> { template },
-            ClassIntros = new Dictionary<string, List<string>>(),
-            Bodies = new Dictionary<string, List<string>>(),
-            Habits = new Dictionary<string, List<string>>(),
-            Items = new Dictionary<string, List<string>>
+            ClassIntros = new Dictionary<string, IReadOnlyList<string>>(),
+            Bodies = new Dictionary<string, IReadOnlyList<string>>(),
+            Habits = new Dictionary<string, IReadOnlyList<string>>(),
+            Items = new Dictionary<string, IReadOnlyList<string>>
             {
                 ["Default"] = new List<string> { "armed with junk" }
             },
-            Traits = new Dictionary<string, List<string>>(),
+            Traits = new Dictionary<string, IReadOnlyList<string>>(),
             Closers = new List<string> { "good luck" }
         };
     }

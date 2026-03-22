@@ -1,5 +1,6 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -106,7 +107,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         var rng = new DeterministicRandom(dice);
         var gen = new CharacterGenerator(refData, rng);
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             Name = "Test",
             ClassName = className,
@@ -131,7 +132,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         var gen = new CharacterGenerator(refData, rng);
 
         // Fanged Deserter: STR+1, PRE-1, TOU+1
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             Name = "Test",
             ClassName = "Fanged Deserter",
@@ -155,7 +156,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var gen = new CharacterGenerator(refData, new Random(42));
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             Name = "Test",
             ClassName = "Occult Herbmaster",
@@ -217,7 +218,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         var rng = new DeterministicRandom(dice);
         var gen = new CharacterGenerator(refData, rng);
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             Name = "Test",
             ClassName = "none",
@@ -243,7 +244,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         for (int run = 0; run < 5; run++)
         {
             var gen = new CharacterGenerator(refData, new Random(100 + run));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
                 Name = $"Test_{run}",
                 ClassName = "none",
@@ -266,7 +267,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         for (int run = 0; run < 20; run++)
         {
             var gen = new CharacterGenerator(refData, new Random(200 + run));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
                 Name = $"Test_{run}",
                 ClassName = null,  // Omitted, triggers random roll
@@ -293,7 +294,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         for (int run = 0; run < 5; run++)
         {
             var gen = new CharacterGenerator(refData, new Random(300 + run));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
                 Name = $"Test_{run}",
                 ClassName = targetClass,

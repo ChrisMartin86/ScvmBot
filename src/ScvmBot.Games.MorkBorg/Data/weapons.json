@@ -1,0 +1,139 @@
+[
+  {
+    "name": "Unarmed",
+    "damage": "d2",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Femur",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": false,
+    "tableIndex": 1
+  },
+  {
+    "name": "Staff",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": true,
+    "tableIndex": 2
+  },
+  {
+    "name": "Knife",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": false,
+    "tableIndex": 4
+  },
+  {
+    "name": "Shortsword",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": false,
+    "tableIndex": 3
+  },
+  {
+    "name": "Shortbow",
+    "damage": "d4",
+    "isRanged": true,
+    "twoHanded": true
+  },
+  {
+    "name": "Sling",
+    "damage": "d4",
+    "isRanged": true,
+    "twoHanded": false
+  },
+  {
+    "name": "Club",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Handaxe",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Mace",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Sword",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false,
+    "tableIndex": 6
+  },
+  {
+    "name": "Warhammer",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false,
+    "tableIndex": 5
+  },
+  {
+    "name": "Bow",
+    "damage": "d6",
+    "isRanged": true,
+    "twoHanded": true,
+    "tableIndex": 7
+  },
+  {
+    "name": "Battle axe",
+    "damage": "d8",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Flail",
+    "damage": "d8",
+    "isRanged": false,
+    "twoHanded": false,
+    "tableIndex": 8
+  },
+  {
+    "name": "Crossbow",
+    "damage": "d8",
+    "isRanged": true,
+    "twoHanded": true,
+    "tableIndex": 9
+  },
+  {
+    "name": "Whip",
+    "damage": "d2",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Zweihänder",
+    "damage": "d10",
+    "isRanged": false,
+    "twoHanded": true,
+    "special": "Scrolls will never work when wielding zweihand weapons or medium/heavy armor.",
+    "tableIndex": 10
+  },
+  {
+    "name": "Dagger",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Axe",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false
+  },
+  {
+    "name": "Walking staff",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": true
+  }
+]

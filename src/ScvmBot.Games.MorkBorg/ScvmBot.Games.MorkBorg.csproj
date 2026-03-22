@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ScvmBot.Games.MorkBorg.Tests" />
+  </ItemGroup>
+
+
+
+  <ItemGroup>
+    <!--
+      Newtonsoft.Json is NOT used directly for deserialization (the reference data service uses
+      System.Text.Json). It is declared here explicitly to pin the version across the full
+      dependency graph and prevent an older, potentially vulnerable version from being selected
+      via Discord.Net's transitive dependency on it. Do not remove or downgrade without reviewing
+      all resolved versions in the dependency tree.
+    -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Data/**" Link="Data/MorkBorg/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

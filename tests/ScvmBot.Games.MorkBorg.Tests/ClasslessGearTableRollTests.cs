@@ -1,5 +1,5 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
 
@@ -27,9 +27,9 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(1));
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
             StartingGearRollA = roll,
             StartingGearRollB = 10,    // Lard — simple item with no sub-rolls
         });
@@ -53,9 +53,9 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(1));
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
             StartingGearRollA = 1,     // Rope — simple item with no sub-rolls
             StartingGearRollB = roll,
         });
@@ -69,14 +69,14 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(1));
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
             StartingGearRollA = 1,
             StartingGearRollB = 2,   // Monkeys — description only, no item
         });
 
-        Assert.Contains(character.Descriptions, d => d.Contains("monkeys", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(character.Descriptions, d => d.Text.Contains("monkeys", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -85,9 +85,9 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(1));
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
             StartingGearRollA = 1,
             StartingGearRollB = 11,  // Sacred scroll
         });
@@ -102,9 +102,9 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var generator = new CharacterGenerator(refData, new Random(42));
 
-        var character = await generator.GenerateAsync(new CharacterGenerationOptions
+        var character = generator.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
             SkipRandomStartingGear = true,
         });
 

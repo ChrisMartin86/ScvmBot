@@ -1,13 +1,12 @@
-using Discord;
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Modules.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
 
 public class CharacterCardBuilderTests
 {
     [Fact]
-    public void Build_ReturnsEmbed_WithCharacterNameAsTitle()
+    public void Build_ReturnsCard_WithCharacterNameAsTitle()
     {
         var character = new Character
         {
@@ -23,14 +22,13 @@ public class CharacterCardBuilderTests
             EquippedArmor = "No Armor"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        Assert.Equal(EmbedType.Rich, embed.Type);
-        Assert.Equal("Karg the Doomed", embed.Title);
+        Assert.Equal("Karg the Doomed", card.Title);
     }
 
     [Fact]
-    public void Build_ReturnsEmbed_WithSummaryDescription()
+    public void Build_ReturnsCard_WithSummaryDescription()
     {
         var character = new Character
         {
@@ -43,13 +41,13 @@ public class CharacterCardBuilderTests
             EquippedArmor = "Leather"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        Assert.Equal("Fanged Deserter — HP 8 | Omens 4 | 20s", embed.Description);
+        Assert.Equal("Fanged Deserter — HP 8 | Omens 4 | 20s", card.Description);
     }
 
     [Fact]
-    public void Build_ReturnsEmbed_WithNoClassInSummary_WhenClassNameIsEmpty()
+    public void Build_ReturnsCard_WithNoClassInSummary_WhenClassNameIsEmpty()
     {
         var character = new Character
         {
@@ -62,13 +60,13 @@ public class CharacterCardBuilderTests
             EquippedArmor = "No Armor"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        Assert.StartsWith("No Class", embed.Description);
+        Assert.StartsWith("No Class", card.Description);
     }
 
     [Fact]
-    public void Build_ReturnsEmbed_WithNoClassInSummary_WhenClassNameIsNull()
+    public void Build_ReturnsCard_WithNoClassInSummary_WhenClassNameIsNull()
     {
         var character = new Character
         {
@@ -80,13 +78,13 @@ public class CharacterCardBuilderTests
             EquippedArmor = "No Armor"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        Assert.StartsWith("No Class", embed.Description);
+        Assert.StartsWith("No Class", card.Description);
     }
 
     [Fact]
-    public void Build_ReturnsEmbed_WithAbilitiesField()
+    public void Build_ReturnsCard_WithAbilitiesField()
     {
         var character = new Character
         {
@@ -100,14 +98,14 @@ public class CharacterCardBuilderTests
             EquippedArmor = "No Armor"
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        var field = embed.Fields.First(f => f.Name == "Abilities");
+        var field = card.Fields!.First(f => f.Name == "Abilities");
         Assert.Equal("STR +2 · AGI -1 · PRE 0 · TGH +3", field.Value);
     }
 
     [Fact]
-    public void Build_ReturnsEmbed_WithEquipmentField()
+    public void Build_ReturnsCard_WithEquipmentField()
     {
         var character = new Character
         {
@@ -118,9 +116,9 @@ public class CharacterCardBuilderTests
             Items = new List<string> { "Rope", "Torches (3)" }
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        var field = embed.Fields.First(f => f.Name == "Equipment");
+        var field = card.Fields!.First(f => f.Name == "Equipment");
         Assert.Contains("Femur (d6)", field.Value);
         Assert.Contains("Leather (tier 1)", field.Value);
         Assert.Contains("Rope", field.Value);
@@ -128,7 +126,7 @@ public class CharacterCardBuilderTests
     }
 
     [Fact]
-    public void Build_ReturnsEmbed_WithDescriptionField()
+    public void Build_ReturnsCard_WithDescriptionField()
     {
         var character = new Character
         {
@@ -136,18 +134,18 @@ public class CharacterCardBuilderTests
             HitPoints = 3,
             EquippedWeapon = "Knife (d4)",
             EquippedArmor = "No Armor",
-            Descriptions = new List<string>
+            Descriptions = new List<CharacterDescription>
             {
-                "Food: 2 day(s)",
-                "Trait: Endlessly Cursed",
-                "Body: Rotting Teeth",
-                "Habit: Picks Nails Obsessively"
+                new(DescriptionCategory.Food, "2 day(s)"),
+                new(DescriptionCategory.Trait, "Endlessly Cursed"),
+                new(DescriptionCategory.Body, "Rotting Teeth"),
+                new(DescriptionCategory.Habit, "Picks Nails Obsessively")
             }
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        var field = embed.Fields.First(f => f.Name == "Description");
+        var field = card.Fields!.First(f => f.Name == "Description");
         Assert.Contains("Trait: Endlessly Cursed", field.Value);
         Assert.Contains("Body: Rotting Teeth", field.Value);
         Assert.Contains("Habit: Picks Nails Obsessively", field.Value);
@@ -155,7 +153,7 @@ public class CharacterCardBuilderTests
     }
 
     [Fact]
-    public void Build_ReturnsEmbed_WithScrollsField_WhenScrollsExist()
+    public void Build_ReturnsCard_WithScrollsField_WhenScrollsExist()
     {
         var character = new Character
         {
@@ -166,15 +164,15 @@ public class CharacterCardBuilderTests
             ScrollsKnown = new List<string> { "Daemon of the Pit", "Grace of a Dead Saint" }
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        var field = embed.Fields.First(f => f.Name == "Scrolls");
+        var field = card.Fields!.First(f => f.Name == "Scrolls");
         Assert.Contains("Daemon of the Pit", field.Value);
         Assert.Contains("Grace of a Dead Saint", field.Value);
     }
 
     [Fact]
-    public void Build_ReturnsEmbed_WithoutScrollsField_WhenNoScrolls()
+    public void Build_ReturnsCard_WithoutScrollsField_WhenNoScrolls()
     {
         var character = new Character
         {
@@ -185,9 +183,9 @@ public class CharacterCardBuilderTests
             ScrollsKnown = new List<string>()
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        Assert.DoesNotContain(embed.Fields, f => f.Name == "Scrolls");
+        Assert.DoesNotContain(card.Fields!, f => f.Name == "Scrolls");
     }
 
     [Fact]
@@ -207,15 +205,20 @@ public class CharacterCardBuilderTests
             EquippedWeapon = "Sword (d6)",
             EquippedArmor = "Leather (tier 1)",
             Items = new List<string> { "Rope" },
-            Descriptions = new List<string> { "Trait: Bold", "Body: Scarred", "Habit: Spits" },
+            Descriptions = new List<CharacterDescription>
+            {
+                new(DescriptionCategory.Trait, "Bold"),
+                new(DescriptionCategory.Body, "Scarred"),
+                new(DescriptionCategory.Habit, "Spits")
+            },
             ScrollsKnown = new List<string> { "Fireball" }
         };
 
-        var embed = CharacterCardBuilder.Build(character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
 
-        Assert.Equal("Abilities", embed.Fields[0].Name);
-        Assert.Equal("Equipment", embed.Fields[1].Name);
-        Assert.Equal("Description", embed.Fields[2].Name);
-        Assert.Equal("Scrolls", embed.Fields[3].Name);
+        Assert.Equal("Abilities", card.Fields![0].Name);
+        Assert.Equal("Equipment", card.Fields[1].Name);
+        Assert.Equal("Description", card.Fields[2].Name);
+        Assert.Equal("Scrolls", card.Fields[3].Name);
     }
 }

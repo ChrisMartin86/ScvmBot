@@ -1,6 +1,6 @@
-using ScvmBot.Bot.Games.MorkBorg;
-using ScvmBot.Bot.Models.MorkBorg;
-using ScvmBot.Bot.Services.MorkBorg;
+using ScvmBot.Games.MorkBorg.Generation;
+using ScvmBot.Games.MorkBorg.Models;
+using ScvmBot.Games.MorkBorg.Reference;
 using System.Text.RegularExpressions;
 
 namespace ScvmBot.Games.MorkBorg.Tests;
@@ -10,7 +10,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     #region A1 – Character identity invariants
 
     [Theory]
-    [InlineData("none")]
+    [InlineData(MorkBorgConstants.ClasslessClassName)]
     [InlineData("Esoteric Hermit")]
     [InlineData("Fanged Deserter")]
     [InlineData("Gutterborn Scum")]
@@ -24,7 +24,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
             });
@@ -57,7 +57,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
             for (int seed = 0; seed < 30; seed++)
             {
                 var gen = new CharacterGenerator(refData, new Random(seed));
-                var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+                var ch = gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = cls.Name,
                 });
@@ -75,7 +75,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     #region A3 – HP invariants
 
     [Theory]
-    [InlineData("none", "d8")]
+    [InlineData(MorkBorgConstants.ClasslessClassName, "d8")]
     [InlineData("Esoteric Hermit", "d4")]
     [InlineData("Fanged Deserter", "d6")]
     [InlineData("Gutterborn Scum", "d6")]
@@ -90,7 +90,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 50; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
             });
@@ -110,45 +110,76 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     #region A4 – Silver formulas
 
     [Theory]
-    [InlineData("d6x10", 10, 60)]
-    [InlineData("2d6x10", 20, 120)]
-    [InlineData("d6x10x3", 30, 180)]
-    public async Task A4_SilverFormula_ProducesExpectedRange(string formula, int min, int max)
+    [InlineData(1, 6, 10, 10, 60)]
+    [InlineData(2, 6, 10, 20, 120)]
+    [InlineData(1, 6, 30, 30, 180)]
+    public void A4_SilverFormula_ProducesExpectedRange(int diceCount, int diceSides, int multiplier, int min, int max)
     {
-        var refData = await LoadGameReferenceDataAsync();
-
+        var formula = new SilverFormula(diceCount, diceSides, multiplier);
         for (int seed = 0; seed < 50; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
-            var result = TestUtilities.InvokePrivate<int>(gen, "RollSilver", formula);
+            var dice = new DiceRoller(new Random(seed));
+            var result = dice.RollSilver(formula);
             Assert.InRange(result, min, max);
         }
     }
 
     [Fact]
-    public async Task A4_UnsupportedSilverFormula_Throws()
+    public async Task A4_AllClasses_HaveValidSilverFormulas()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var gen = new CharacterGenerator(refData, new Random(1));
-
-        var ex = Assert.Throws<System.Reflection.TargetInvocationException>(
-            () => TestUtilities.InvokePrivate<int>(gen, "RollSilver", "3d8x5"));
-        Assert.IsType<InvalidOperationException>(ex.InnerException);
-    }
-
-    [Fact]
-    public async Task A4_AllClasses_UseSupportedSilverFormulas()
-    {
-        var refData = await LoadGameReferenceDataAsync();
-        var supported = new HashSet<string> { "d6x10", "2d6x10", "d6x10x3" };
 
         foreach (var cls in refData.Classes)
         {
-            var formula = cls.StartingSilver ?? "";
-            if (formula.Length > 0)
-            {
-                Assert.Contains(formula.ToLowerInvariant(), supported);
-            }
+            if (cls.StartingSilver is not { } f) continue;
+            Assert.True(f.DiceCount > 0, $"{cls.Name}: diceCount must be positive");
+            Assert.True(f.DiceSides > 0, $"{cls.Name}: diceSides must be positive");
+            Assert.True(f.Multiplier > 0, $"{cls.Name}: multiplier must be positive");
+        }
+    }
+
+    [Fact]
+    public async Task A4_InvalidSilverFormula_RejectedAtStartup()
+    {
+        var sourceDataRoot = GetDataRootPath();
+        var tempDir = Path.Combine(Path.GetTempPath(), $"scvmbot-test-{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+
+            // Copy all data files from the real data directory
+            foreach (var file in Directory.GetFiles(sourceDataRoot, "*.json"))
+                File.Copy(file, Path.Combine(tempDir, Path.GetFileName(file)));
+
+            // Overwrite classes.json with a class that has an invalid silver formula (zero dice)
+            var badClassJson = """
+            [
+              {
+                "name": "Bad Silver Class",
+                "hitDie": "d8",
+                "omenDie": "d2",
+                "description": "test",
+                "classAbility": "test",
+                "startingSilver": { "diceCount": 0, "diceSides": 6, "multiplier": 10 },
+                "startingEquipmentMode": "ordinary",
+                "startingWeapons": [],
+                "startingArmor": [],
+                "startingScrolls": [],
+                "startingItems": []
+              }
+            ]
+            """;
+            File.WriteAllText(Path.Combine(tempDir, "classes.json"), badClassJson);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => MorkBorgReferenceDataService.CreateAsync(tempDir));
+            Assert.Contains("Bad Silver Class", ex.Message);
+            Assert.Contains("invalid startingSilver", ex.Message);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
         }
     }
 
@@ -162,9 +193,9 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var gen = new CharacterGenerator(refData, new Random(42));
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
         });
 
         Assert.Contains(ch.Items, i => i.Contains("Waterskin"));
@@ -177,7 +208,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var gen = new CharacterGenerator(refData, new Random(42));
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
         });
@@ -192,7 +223,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var gen = new CharacterGenerator(refData, new Random(42));
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             ClassName = "Occult Herbmaster",
         });
@@ -212,8 +243,8 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         try
         {
             var gen = new CharacterGenerator(refData, new Random(1));
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => gen.GenerateAsync(new CharacterGenerationOptions
+            var ex = Assert.Throws<InvalidOperationException>(
+                () => gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = cls.Name,
                 }));
@@ -238,7 +269,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 50; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+            var ch = gen.Generate(new CharacterGenerationOptions
             {
             });
 
@@ -287,7 +318,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         };
         opts.ForceItemNames.Add("Rope");
 
-        var ch = await gen.GenerateAsync(opts);
+        var ch = gen.Generate(opts);
 
         Assert.Equal("Override Test", ch.Name);
         Assert.Equal("Fanged Deserter", ch.ClassName);
@@ -315,7 +346,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var gen = new CharacterGenerator(refData, new DeterministicRandom(dice));
 
         // Wretched Royalty: STR-1, PRE+2
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
             ClassName = "Wretched Royalty",
             Strength = 1,
@@ -350,8 +381,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     public async Task B1_AllClasses_HaveValidConfiguration()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var supportedSilver = new HashSet<string> { "d6x10", "2d6x10", "d6x10x3" };
-        var supportedEquipModes = new HashSet<string> { "classless", "ordinary", "custom" };
+        var supportedEquipModes = new HashSet<string> { MorkBorgConstants.EquipmentMode.Classless, MorkBorgConstants.EquipmentMode.Ordinary, MorkBorgConstants.EquipmentMode.Custom };
         var classNames = new HashSet<string>();
 
         foreach (var cls in refData.Classes)
@@ -364,9 +394,11 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
             AssertStrictDieString(cls.OmenDie, cls.Name, "omenDie");
 
-            if (!string.IsNullOrEmpty(cls.StartingSilver))
+            if (cls.StartingSilver is { } sf)
             {
-                Assert.Contains(cls.StartingSilver.ToLowerInvariant(), supportedSilver);
+                Assert.True(sf.DiceCount > 0, $"{cls.Name}: startingSilver.diceCount must be positive");
+                Assert.True(sf.DiceSides > 0, $"{cls.Name}: startingSilver.diceSides must be positive");
+                Assert.True(sf.Multiplier > 0, $"{cls.Name}: startingSilver.multiplier must be positive");
             }
 
             if (cls.WeaponRollDie != null)
@@ -381,7 +413,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
             Assert.Contains(cls.StartingEquipmentMode, supportedEquipModes);
 
-            var supportedScrollTokens = new HashSet<string> { "random_unclean", "random_sacred", "random_any_scroll" };
+            var supportedScrollTokens = new HashSet<string> { MorkBorgConstants.ScrollToken.RandomUnclean, MorkBorgConstants.ScrollToken.RandomSacred, MorkBorgConstants.ScrollToken.RandomAnyScroll };
             foreach (var token in cls.StartingScrolls)
             {
                 Assert.Contains(token, supportedScrollTokens);
@@ -393,7 +425,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
                 {
                     var supportedItemTokens = new HashSet<string>
                     {
-                        "random_sacred_scroll", "random_unclean_scroll", "random_any_scroll"
+                        MorkBorgConstants.ScrollToken.RandomSacredScroll, MorkBorgConstants.ScrollToken.RandomUncleanScroll, MorkBorgConstants.ScrollToken.RandomAnyScroll
                     };
                     Assert.Contains(item.ToLowerInvariant(), supportedItemTokens);
                 }
@@ -408,62 +440,6 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
     #endregion
 
-    #region B2 – Command definition alignment
-
-    [Fact]
-    public async Task B2_CommandDefinition_ExposesAllClasses_PlusNone()
-    {
-        var refData = await LoadGameReferenceDataAsync();
-        var jsonClassNames = refData.Classes.Select(c => c.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var optionBuilder = MorkBorgCommandDefinition.BuildCommandGroupOptions();
-        var charSubcommand = optionBuilder.Options!
-            .First(o => o.Name == "character");
-        var classOption = charSubcommand.Options!
-            .First(o => o.Name == "class");
-
-        var commandChoices = classOption.Choices!
-            .Select(c => c.Value.ToString()!)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        Assert.Contains(MorkBorgCommandDefinition.ChoiceClassNone, commandChoices);
-
-        foreach (var name in jsonClassNames)
-        {
-            Assert.Contains(name, commandChoices);
-        }
-
-        var expectedCount = jsonClassNames.Count + 1; // +1 for "none"
-        Assert.Equal(expectedCount, commandChoices.Count);
-    }
-
-    #endregion
-
-    #region B3 – Parser alignment
-
-    [Fact]
-    public void B3_Parser_NoneProducesClassless()
-    {
-        var opts = MorkBorgGenerateOptionParser.ParseRawOptions(null, "none", null);
-        Assert.Equal("none", opts.ClassName);
-    }
-
-    [Fact]
-    public void B3_Parser_NullProducesNullClassName()
-    {
-        var opts = MorkBorgGenerateOptionParser.ParseRawOptions(null, null, null);
-        Assert.Null(opts.ClassName);
-    }
-
-    [Fact]
-    public void B3_Parser_ExplicitClassPreserved()
-    {
-        var opts = MorkBorgGenerateOptionParser.ParseRawOptions(null, "Fanged Deserter", null);
-        Assert.Equal("Fanged Deserter", opts.ClassName);
-    }
-
-    #endregion
-
     #region B4 – Classless vs classed isolation
 
     [Fact]
@@ -473,9 +449,9 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var dice = Enumerable.Repeat(2, 50).ToArray();
         var gen = new CharacterGenerator(refData, new DeterministicRandom(dice));
 
-        var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+        var ch = gen.Generate(new CharacterGenerationOptions
         {
-            ClassName = "none",
+            ClassName = MorkBorgConstants.ClasslessClassName,
         });
 
         Assert.Null(ch.ClassName);
@@ -499,7 +475,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
             for (int seed = 0; seed < 10; seed++)
             {
                 var gen = new CharacterGenerator(refData, new Random(seed));
-                var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+                var ch = gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = cls.Name,
                 });
@@ -586,8 +562,8 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     {
         var refData = await LoadGameReferenceDataAsync();
 
-        var sacred = refData.Scrolls.Where(s => s.ScrollType.Equals("Sacred", StringComparison.OrdinalIgnoreCase)).ToList();
-        var unclean = refData.Scrolls.Where(s => s.ScrollType.Equals("Unclean", StringComparison.OrdinalIgnoreCase)).ToList();
+        var sacred = refData.Scrolls.Where(s => s.Kind == ScrollKind.Sacred).ToList();
+        var unclean = refData.Scrolls.Where(s => s.Kind == ScrollKind.Unclean).ToList();
 
         Assert.NotEmpty(sacred);
         Assert.NotEmpty(unclean);
@@ -603,8 +579,8 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
         for (int i = 0; i < 50; i++)
         {
-            Assert.NotNull(refData.GetRandomScroll("Sacred", rng));
-            Assert.NotNull(refData.GetRandomScroll("Unclean", rng));
+            Assert.NotNull(refData.GetRandomScroll(ScrollKind.Sacred, rng));
+            Assert.NotNull(refData.GetRandomScroll(ScrollKind.Unclean, rng));
         }
     }
 
@@ -679,13 +655,9 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var rng = new Random(42);
 
-        var required = new[] { "Trait", "BrokenBody", "BadHabit" };
-
-        foreach (var table in required)
-        {
-            var result = refData.GetRandomFromTable(table, rng);
-            Assert.False(string.IsNullOrEmpty(result), $"Table '{table}' returned empty");
-        }
+        Assert.False(string.IsNullOrEmpty(refData.GetRandomTrait(rng)), "Trait table returned empty");
+        Assert.False(string.IsNullOrEmpty(refData.GetRandomBody(rng)), "BrokenBody table returned empty");
+        Assert.False(string.IsNullOrEmpty(refData.GetRandomHabit(rng)), "BadHabit table returned empty");
     }
 
     [Fact]
@@ -738,7 +710,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions());
+            var ch = gen.Generate(new CharacterGenerationOptions());
 
             Assert.NotEmpty(ch.Name);
             Assert.True(ch.HitPoints >= 1);
@@ -760,95 +732,11 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions());
+            var ch = gen.Generate(new CharacterGenerationOptions());
 
-            Assert.Contains(ch.Descriptions, d => d.StartsWith("Trait:"));
-            Assert.Contains(ch.Descriptions, d => d.StartsWith("Body:"));
-            Assert.Contains(ch.Descriptions, d => d.StartsWith("Habit:"));
-        }
-    }
-
-    [Theory]
-    [InlineData("none")]
-    [InlineData("Esoteric Hermit")]
-    [InlineData("Fanged Deserter")]
-    [InlineData("Gutterborn Scum")]
-    [InlineData("Heretical Priest")]
-    [InlineData("Occult Herbmaster")]
-    [InlineData("Wretched Royalty")]
-    public async Task E1_MappedOutput_HasPopulatedFieldsForRendering(string className)
-    {
-        var refData = await LoadGameReferenceDataAsync();
-
-        for (int seed = 0; seed < 10; seed++)
-        {
-            var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions
-            {
-                ClassName = className,
-            });
-
-            var mapped = CharacterSheetMapper.Map(ch);
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.Name),
-                $"Seed {seed}: mapped Name must be populated");
-
-            if (className != "none")
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.ClassName),
-                    $"Seed {seed}: mapped ClassName must be populated for '{className}'");
-            }
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.HP_Current),
-                $"Seed {seed}: mapped HP_Current must be populated");
-            Assert.False(string.IsNullOrWhiteSpace(mapped.HP_Max),
-                $"Seed {seed}: mapped HP_Max must be populated");
-            Assert.True(int.TryParse(mapped.HP_Current, out var hpCur) && hpCur >= 1,
-                $"Seed {seed}: HP_Current '{mapped.HP_Current}' must be a positive integer");
-            Assert.True(int.TryParse(mapped.HP_Max, out var hpMax) && hpMax >= 1,
-                $"Seed {seed}: HP_Max '{mapped.HP_Max}' must be a positive integer");
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.Silver),
-                $"Seed {seed}: mapped Silver must be populated");
-            Assert.True(int.TryParse(mapped.Silver, out _),
-                $"Seed {seed}: Silver '{mapped.Silver}' must be numeric");
-
-            Assert.Matches(@"^[+-]\d+$", mapped.Strength);
-            Assert.Matches(@"^[+-]\d+$", mapped.Agility);
-            Assert.Matches(@"^[+-]\d+$", mapped.Presence);
-            Assert.Matches(@"^[+-]\d+$", mapped.Toughness);
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.Omens),
-                $"Seed {seed}: mapped Omens must be populated");
-
-            Assert.False(string.IsNullOrWhiteSpace(mapped.Description),
-                $"Seed {seed}: mapped Description must be populated");
-
-            if (ch.EquippedWeapon != null)
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.Weapons[0]),
-                    $"Seed {seed}: Weapons[0] must be populated when character has weapon");
-            }
-
-            if (ch.EquippedArmor != null)
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.ArmorText),
-                    $"Seed {seed}: ArmorText must be populated when character has armor");
-            }
-
-            if (ch.Items.Count > 0)
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.Equipment[0]),
-                    $"Seed {seed}: Equipment[0] must be populated when character has items");
-            }
-
-            if (ch.ScrollsKnown.Count > 0)
-            {
-                Assert.False(string.IsNullOrWhiteSpace(mapped.Powers[0]),
-                    $"Seed {seed}: Powers[0] must be populated when character has scrolls");
-            }
-
-
+            Assert.Contains(ch.Descriptions, d => d.Category == DescriptionCategory.Trait);
+            Assert.Contains(ch.Descriptions, d => d.Category == DescriptionCategory.Body);
+            Assert.Contains(ch.Descriptions, d => d.Category == DescriptionCategory.Habit);
         }
     }
 
@@ -868,7 +756,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
             for (int seed = 0; seed < 10; seed++)
             {
                 var gen = new CharacterGenerator(refData, new Random(seed));
-                var ch = await gen.GenerateAsync(new CharacterGenerationOptions
+                var ch = gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = className,
                 });
@@ -895,7 +783,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions());
+            var ch = gen.Generate(new CharacterGenerationOptions());
 
             if (ch.EquippedWeapon != null)
             {
@@ -919,7 +807,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         for (int seed = 0; seed < 20; seed++)
         {
             var gen = new CharacterGenerator(refData, new Random(seed));
-            var ch = await gen.GenerateAsync(new CharacterGenerationOptions());
+            var ch = gen.Generate(new CharacterGenerationOptions());
 
             foreach (var item in ch.Items)
             {
