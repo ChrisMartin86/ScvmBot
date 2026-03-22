@@ -42,6 +42,21 @@ public class CommandRegistrarTests
     }
 
     [Fact]
+    public void ResolveStrategy_EmptyJsonArray_ReturnsGlobal()
+    {
+        // An empty JSON array [] produces Value="" with no children in .NET config.
+        var config = BuildConfig(new Dictionary<string, string?>
+        {
+            ["Discord:GuildIds"] = ""
+        });
+
+        var strategy = CommandRegistrar.ResolveStrategy(config);
+
+        Assert.Equal(RegistrationMode.Global, strategy.Mode);
+        Assert.Empty(strategy.GuildIds);
+    }
+
+    [Fact]
     public void ResolveStrategy_GuildIdsAllZero_Throws()
     {
         var config = BuildConfig(new Dictionary<string, string?>

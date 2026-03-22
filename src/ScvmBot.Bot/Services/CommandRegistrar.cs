@@ -22,7 +22,8 @@ public static class CommandRegistrar
         var children = section.GetChildren().ToList();
 
         // A scalar value like "id1,id2" means someone used the wrong format.
-        if (children.Count == 0 && section.Value is not null)
+        // An empty JSON array [] produces Value="" with no children — that's fine.
+        if (children.Count == 0 && section.Value is not null and not "")
         {
             throw new InvalidOperationException(
                 $"Discord:GuildIds must be configured as an array " +
