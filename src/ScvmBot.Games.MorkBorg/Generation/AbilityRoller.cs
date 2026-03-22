@@ -18,6 +18,11 @@ public sealed class AbilityRoller
 
     public AbilityScores Roll(CharacterGenerationOptions options, ClassData? classData)
     {
+        ValidateStatOverride(options.Strength, nameof(options.Strength));
+        ValidateStatOverride(options.Agility, nameof(options.Agility));
+        ValidateStatOverride(options.Presence, nameof(options.Presence));
+        ValidateStatOverride(options.Toughness, nameof(options.Toughness));
+
         var classless = classData == null;
         var useHeroicRoll = classless && options.RollMethod == AbilityRollMethod.FourD6DropLowest;
 
@@ -63,5 +68,11 @@ public sealed class AbilityRoller
             <= 16 => 2,
             _ => 3
         };
+    }
+
+    private static void ValidateStatOverride(int? value, string name)
+    {
+        if (value is not null && (value < -3 || value > 3))
+            throw new ArgumentException($"{name} override must be between -3 and 3 (was {value}).");
     }
 }

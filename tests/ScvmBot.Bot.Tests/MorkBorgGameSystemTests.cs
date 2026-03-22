@@ -88,10 +88,10 @@ public class MorkBorgGameSystemTests
     }
 
     [Fact]
-    public void BuildOptions_ThreeD6_WhenChoiceIsUnknown()
+    public void BuildOptions_ThrowsArgumentException_WhenRollMethodIsUnknown()
     {
-        var opts = MorkBorgGenerateOptionParser.ParseRawOptions("bogus-value", null, null);
-        Assert.Equal(AbilityRollMethod.ThreeD6, opts.RollMethod);
+        Assert.Throws<ArgumentException>(() =>
+            MorkBorgGenerateOptionParser.ParseRawOptions("bogus-value", null, null));
     }
 
     [Fact]

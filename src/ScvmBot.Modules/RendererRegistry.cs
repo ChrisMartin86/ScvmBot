@@ -38,9 +38,13 @@ public sealed class RendererRegistry
     /// <summary>
     /// Returns the first renderer that supports the given result and format,
     /// or null if no renderer matches.
+    /// Uses ResultType as the primary match (consistent with startup validation),
+    /// with CanRender as a secondary confirmation.
     /// </summary>
     public IResultRenderer? FindRenderer(GenerateResult result, OutputFormat format) =>
-        _renderers.FirstOrDefault(r => r.Format == format && r.CanRender(result));
+        _renderers.FirstOrDefault(r => r.Format == format
+            && r.ResultType == result.GetType()
+            && r.CanRender(result));
 
     /// <summary>
     /// Returns the first renderer that supports the given result and format.

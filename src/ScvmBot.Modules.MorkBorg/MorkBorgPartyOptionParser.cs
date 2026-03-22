@@ -13,8 +13,9 @@ public sealed class MorkBorgPartyOptionParser
 
     /// <summary>
     /// Parses party options to extract party size.
-    /// Returns <see cref="DefaultPartySize"/> if size is not specified or invalid.
+    /// Returns <see cref="DefaultPartySize"/> if size is not specified.
     /// Clamps the size to <see cref="MinPartySize"/> - <see cref="MaxPartySize"/>.
+    /// Throws <see cref="ArgumentException"/> if the value is present but not a valid integer.
     /// </summary>
     public static int ParsePartySize(IReadOnlyDictionary<string, object?> options)
     {
@@ -30,10 +31,10 @@ public sealed class MorkBorgPartyOptionParser
             }
             catch (Exception ex) when (ex is OverflowException or FormatException or InvalidCastException)
             {
-                return DefaultPartySize;
+                throw new ArgumentException($"Invalid party size: '{sizeValue}'. Must be an integer between {MinPartySize} and {MaxPartySize}.", ex);
             }
         }
 
-        return DefaultPartySize;
+        throw new ArgumentException($"Invalid party size: '{sizeValue}'. Must be an integer between {MinPartySize} and {MaxPartySize}.");
     }
 }

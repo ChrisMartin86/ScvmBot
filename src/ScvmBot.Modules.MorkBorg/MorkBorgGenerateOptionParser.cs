@@ -26,6 +26,12 @@ public sealed class MorkBorgGenerateOptionParser
     /// - "none" => explicitly classless
     /// - null/omitted => random 50/50 classless vs classed
     /// - any other string => exact class name lookup
+    /// 
+    /// RollMethod interpretation:
+    /// - null/omitted => ThreeD6 (default)
+    /// - "3d6" => ThreeD6
+    /// - "4d6-drop-lowest" => FourD6DropLowest
+    /// - anything else => ArgumentException
     /// </summary>
     public static CharacterGenerationOptions ParseRawOptions(
         string? rollMethod,
@@ -33,10 +39,23 @@ public sealed class MorkBorgGenerateOptionParser
         string? nameOverride) =>
         new CharacterGenerationOptions
         {
-            RollMethod = rollMethod == MorkBorgCommandDefinition.ChoiceFourD6Drop
-                ? AbilityRollMethod.FourD6DropLowest
-                : AbilityRollMethod.ThreeD6,
+            RollMethod = ParseRollMethod(rollMethod),
             ClassName = className,
             Name = nameOverride,
         };
+
+    private static AbilityRollMethod ParseRollMethod(string? rollMethod)
+    {
+        if (rollMethod is null)
+            return AbilityRollMethod.ThreeD6;
+
+        if (string.Equals(rollMethod, MorkBorgCommandDefinition.Choice3D6, StringComparison.OrdinalIgnoreCase))
+            return AbilityRollMethod.ThreeD6;
+
+        if (string.Equals(rollMethod, MorkBorgCommandDefinition.ChoiceFourD6Drop, StringComparison.OrdinalIgnoreCase))
+            return AbilityRollMethod.FourD6DropLowest;
+
+        throw new ArgumentException(
+            $"Invalid roll method: '{rollMethod}'. Valid values are '{MorkBorgCommandDefinition.Choice3D6}' and '{MorkBorgCommandDefinition.ChoiceFourD6Drop}'.");
+    }
 }

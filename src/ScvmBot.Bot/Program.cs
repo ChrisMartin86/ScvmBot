@@ -1,5 +1,6 @@
 using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -16,12 +17,18 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
+        // Load configuration early so module settings are available before host build.
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+
         // Discover and initialize game modules via assembly scanning.
         // Each module performs its own startup validation; failures are fatal.
         List<IModuleRegistration> modules;
         try
         {
-            modules = await DiscoverAndInitializeModulesAsync();
+            modules = await DiscoverAndInitializeModulesAsync(configuration);
         }
         catch (FileNotFoundException ex)
         {
@@ -75,9 +82,15 @@ class Program
     /// discovers <see cref="IModuleRegistration"/> implementations, instantiates each via
     /// its parameterless constructor, and calls <see cref="IModuleRegistration.InitializeAsync"/>.
     /// </summary>
-    private static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync()
+    private static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync(IConfiguration configuration)
     {
         var settings = new Dictionary<string, string>();
+        var moduleSection = configuration.GetSection("Modules");
+        foreach (var kvp in moduleSection.GetChildren())
+        {
+            if (kvp.Value is not null)
+                settings[kvp.Key] = kvp.Value;
+        }
 
         var baseDir = AppContext.BaseDirectory;
         var registrationTypes = Directory.GetFiles(baseDir, "ScvmBot.Modules.*.dll")

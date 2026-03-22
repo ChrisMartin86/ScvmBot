@@ -56,6 +56,8 @@ public sealed class CharacterGenerator
                 ? _dice.RollSilver(silverFormula)
                 : (_dice.RollDie(6) + _dice.RollDie(6)) * 10);
 
+        ValidateOverrides(maxHp, hp, omens, silver);
+
         var weaponFormatted = _weaponResolver.Resolve(options, classData);
         var armorFormatted = _armorResolver.Resolve(options, classData);
 
@@ -132,6 +134,20 @@ public sealed class CharacterGenerator
 
         return _refData.GetClassByName(options.ClassName)
             ?? throw new InvalidOperationException($"Unknown class '{options.ClassName}'.");
+    }
+
+    private static void ValidateOverrides(int maxHp, int hp, int omens, int silver)
+    {
+        if (maxHp < 1)
+            throw new ArgumentException($"MaxHitPoints must be at least 1 (was {maxHp}).");
+        if (hp < 1)
+            throw new ArgumentException($"HitPoints must be at least 1 (was {hp}).");
+        if (hp > maxHp)
+            throw new ArgumentException($"HitPoints ({hp}) cannot exceed MaxHitPoints ({maxHp}).");
+        if (omens < 0)
+            throw new ArgumentException($"Omens must be non-negative (was {omens}).");
+        if (silver < 0)
+            throw new ArgumentException($"Silver must be non-negative (was {silver}).");
     }
 
     /// <summary>Backward-compatible static helper for die string parsing.</summary>

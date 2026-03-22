@@ -45,11 +45,11 @@ public class MorkBorgPartyOptionParserTests
     }
 
     [Fact]
-    public void ParsePartySize_ReturnsDefault_WhenValueIsNonNumericString()
+    public void ParsePartySize_ThrowsArgumentException_WhenValueIsNonNumericString()
     {
-        var size = MorkBorgPartyOptionParser.ParsePartySize(
-            new Dictionary<string, object?> { ["size"] = "three" });
-        Assert.Equal(4, size);
+        Assert.Throws<ArgumentException>(() =>
+            MorkBorgPartyOptionParser.ParsePartySize(
+                new Dictionary<string, object?> { ["size"] = "three" }));
     }
 
     [Fact]
