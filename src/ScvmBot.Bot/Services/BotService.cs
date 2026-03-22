@@ -28,7 +28,20 @@ public class BotService : IHostedService
     {
         _client = client;
         _configuration = configuration;
-        _slashCommands = slashCommands.ToDictionary(cmd => cmd.Name, StringComparer.OrdinalIgnoreCase);
+
+        var commands = new Dictionary<string, ISlashCommand>(StringComparer.OrdinalIgnoreCase);
+        foreach (var cmd in slashCommands)
+        {
+            if (!commands.TryAdd(cmd.Name, cmd))
+            {
+                throw new InvalidOperationException(
+                    $"Duplicate slash command name '{cmd.Name}': " +
+                    $"'{commands[cmd.Name].GetType().Name}' and '{cmd.GetType().Name}' both register the same name. " +
+                    $"Each ISlashCommand must have a unique Name.");
+            }
+        }
+        _slashCommands = commands;
+
         _logger = logger;
     }
 

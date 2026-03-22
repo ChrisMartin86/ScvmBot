@@ -141,8 +141,10 @@ ScvmBot is open source under the MIT license. The project welcomes contributions
 The project is designed to be expanded from within the solution itself — not as a drop-in plugin system. To add a new TTRPG system:
 
 1. Create a game logic project under `src/` (e.g., `src/ScvmBot.Games.YourSystem/`)
-2. Create a module adapter project under `src/` (e.g., `src/ScvmBot.Modules.YourSystem/`)
+2. Create a module adapter project under `src/` named **`ScvmBot.Modules.YourSystem`** — this exact prefix is required; only assemblies named `ScvmBot.Modules.*` are discovered at startup
 3. Implement the `IGameModule` and `IModuleRegistration` interfaces
 4. Add a project reference from `ScvmBot.Bot` (and/or `ScvmBot.Cli`) to the module adapter project
+
+> **Important:** The assembly name must start with `ScvmBot.Modules.`. Assemblies with any other naming pattern will be silently ignored by the module discovery system, even if they implement `IModuleRegistration`.
 
 The host discovers `IModuleRegistration` implementations from referenced assemblies at startup. The new system will appear under `/generate yoursystem`. See the MÖRK BORG implementation across `src/ScvmBot.Games.MorkBorg/` and `src/ScvmBot.Modules.MorkBorg/` as a reference.

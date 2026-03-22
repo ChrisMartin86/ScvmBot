@@ -120,7 +120,7 @@ public class GenerateCommandHandler : ISlashCommand
                 var (subCommand, options) = ExtractCommandInput(context);
                 result = await gameModule.HandleGenerateCommandAsync(subCommand, options);
             }
-            catch (InvalidOperationException genEx)
+            catch (Exception genEx) when (genEx is InvalidOperationException or ArgumentException)
             {
                 await context.FollowupAsync(
                     embed: ResponseCardBuilder.Build("Error", genEx.Message, new Color(200, 50, 50)),

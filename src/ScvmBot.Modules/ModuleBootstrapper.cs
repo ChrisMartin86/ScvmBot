@@ -6,9 +6,17 @@ namespace ScvmBot.Modules;
 
 /// <summary>
 /// Shared module discovery and initialization logic used by both the bot and CLI hosts.
-/// Reads the build manifest (<c>.deps.json</c>) to discover module assemblies
-/// matching <c>ScvmBot.Modules.*</c>, then locates <see cref="IModuleRegistration"/>
-/// implementations, applies configuration, and initialises each module.
+/// Reads the build manifest (<c>.deps.json</c>) via <see cref="DependencyContext"/> to
+/// discover module assemblies whose names start with <c>ScvmBot.Modules.</c>, then
+/// locates <see cref="IModuleRegistration"/> implementations, applies configuration,
+/// and initialises each module.
+/// <para>
+/// <strong>Hard naming rule:</strong> only assemblies named <c>ScvmBot.Modules.{SystemName}</c>
+/// are scanned. An assembly that implements <see cref="IModuleRegistration"/> but uses a
+/// different naming pattern will never be discovered. This is by design — the convention
+/// keeps the base <c>ScvmBot.Modules</c> abstractions assembly out of the scan and
+/// provides a predictable discovery boundary.
+/// </para>
 /// </summary>
 public static class ModuleBootstrapper
 {

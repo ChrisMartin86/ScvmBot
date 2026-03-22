@@ -5,9 +5,16 @@ namespace ScvmBot.Modules;
 
 /// <summary>
 /// Implemented by each game module assembly to support automatic discovery.
-/// The bot scans referenced assemblies for concrete implementations at startup,
-/// calls <see cref="InitializeAsync"/> to perform any async validation (e.g. loading
-/// data files), then calls <see cref="Register"/> to wire services into the DI container.
+/// <para>
+/// <strong>Naming requirement:</strong> the containing assembly must be named
+/// <c>ScvmBot.Modules.{SystemName}</c> (e.g. <c>ScvmBot.Modules.MorkBorg</c>).
+/// Assemblies that do not match this prefix are invisible to module discovery
+/// and will be silently ignored at startup.
+/// </para>
+/// The host scans the dependency graph for matching assemblies, locates concrete
+/// implementations, calls <see cref="InitializeAsync"/> to perform any async
+/// validation (e.g. loading data files), then calls <see cref="Register"/> to
+/// wire services into the DI container.
 /// Implementations must have a public parameterless constructor.
 /// </summary>
 public interface IModuleRegistration

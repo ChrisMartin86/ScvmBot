@@ -39,6 +39,20 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
         _refData = _dataPath is not null
             ? await MorkBorgReferenceDataService.CreateAsync(_dataPath)
             : await MorkBorgReferenceDataService.CreateAsync();
+
+        // Check whether the PDF template is present. PDF rendering is optional but
+        // first-class — a missing template likely indicates a packaging mistake,
+        // so log loudly at startup rather than silently disabling file output.
+        var templatePath = _dataPath is not null
+            ? Path.Combine(_dataPath, "character_sheet.pdf")
+            : MorkBorgPdfRenderer.DefaultTemplatePath;
+        if (!File.Exists(templatePath))
+        {
+            Console.Error.WriteLine(
+                $"[MorkBorg] WARNING: PDF template not found at '{templatePath}'. " +
+                $"PDF character sheet generation will be disabled. " +
+                $"If this is unexpected, check your build output or Data/ directory.");
+        }
     }
 
     public void Register(IServiceCollection services)

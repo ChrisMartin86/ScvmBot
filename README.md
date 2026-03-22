@@ -24,7 +24,7 @@ A Discord bot for tabletop RPG character generation with built-in support for **
 ### Engineering
 - **.NET 10** with nullable reference types enabled throughout
 - **Six-project solution** — `ScvmBot.Bot` (Discord host), `ScvmBot.Cli` (CLI host for local generation), `ScvmBot.Modules` (shared module contracts and abstractions), `ScvmBot.Modules.MorkBorg` (MÖRK BORG module adapter — command definitions, option parsing, renderers), `ScvmBot.Games.MorkBorg` (game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering)
-- **Modular game system architecture** — game modules implement `IModuleRegistration` and are wired into the host via project references; adding a new game means adding projects to the solution and referencing them from the host — designed for in-project expansion, not external plugins
+- **Modular game system architecture** — game modules implement `IModuleRegistration` in an assembly named `ScvmBot.Modules.*` and are wired into the host via project references; only assemblies matching this prefix are discovered — adding a new game means adding projects to the solution and referencing them from the host — designed for in-project expansion, not external plugins
 - **420 tests** across four test projects — character generation logic, equipment flow, PDF mapping, option parsing, command handling, and party building
 - **Fail-fast module initialization** — each `IModuleRegistration` loads required data during `InitializeAsync()`; missing files abort startup with a non-zero exit code
 - **Testable command layer** — `ISlashCommandContext` interface decouples command handlers from the sealed Discord.Net type, enabling full unit test coverage
