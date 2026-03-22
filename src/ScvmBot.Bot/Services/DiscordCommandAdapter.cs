@@ -9,14 +9,15 @@ namespace ScvmBot.Bot.Services;
 /// </summary>
 internal static class DiscordCommandAdapter
 {
-    public static SlashCommandOptionBuilder ToSlashCommandOption(IGameModule module, int? countMax = null)
+    public static SlashCommandOptionBuilder ToSlashCommandOption(
+        string commandKey, string displayName, IReadOnlyList<SubCommandDefinition> subCommands)
     {
         var builder = new SlashCommandOptionBuilder()
-            .WithName(module.CommandKey)
-            .WithDescription($"{module.Name} game system")
+            .WithName(commandKey)
+            .WithDescription($"{displayName} game system")
             .WithType(ApplicationCommandOptionType.SubCommandGroup);
 
-        foreach (var sub in module.SubCommands)
+        foreach (var sub in subCommands)
         {
             var subBuilder = new SlashCommandOptionBuilder()
                 .WithName(sub.Name)
@@ -34,12 +35,7 @@ internal static class DiscordCommandAdapter
                         .WithRequired(opt.Required);
 
                     if (opt.MinValue.HasValue) optBuilder.WithMinValue(opt.MinValue.Value);
-
-                    var effectiveMax = opt.MaxValue;
-                    if (opt.Name == "count" && opt.Type == CommandOptionType.Integer && countMax.HasValue)
-                        effectiveMax = effectiveMax.HasValue ? Math.Min(effectiveMax.Value, countMax.Value) : countMax.Value;
-
-                    if (effectiveMax.HasValue) optBuilder.WithMaxValue(effectiveMax.Value);
+                    if (opt.MaxValue.HasValue) optBuilder.WithMaxValue(opt.MaxValue.Value);
 
                     if (opt.Choices is not null)
                         foreach (var choice in opt.Choices)

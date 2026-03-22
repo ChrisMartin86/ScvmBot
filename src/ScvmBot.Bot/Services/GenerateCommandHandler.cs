@@ -57,9 +57,31 @@ public class GenerateCommandHandler : ISlashCommand
             .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
 
         foreach (var m in _gameModules.Values)
-            builder.AddOption(DiscordCommandAdapter.ToSlashCommandOption(m, countMax: MaxDiscordCharacterCount));
+        {
+            var constrained = ApplyDiscordConstraints(m.SubCommands);
+            builder.AddOption(DiscordCommandAdapter.ToSlashCommandOption(m.CommandKey, m.Name, constrained));
+        }
 
         return builder;
+    }
+
+    /// <summary>
+    /// Applies Discord-specific option constraints to module command definitions.
+    /// Integer options named "count" are capped at <see cref="MaxDiscordCharacterCount"/>.
+    /// </summary>
+    private static IReadOnlyList<SubCommandDefinition> ApplyDiscordConstraints(
+        IReadOnlyList<SubCommandDefinition> subCommands)
+    {
+        return subCommands.Select(sub => sub with
+        {
+            Options = sub.Options?.Select(opt =>
+                opt is { Name: "count", Type: CommandOptionType.Integer }
+                    ? opt with { MaxValue = opt.MaxValue.HasValue
+                        ? Math.Min(opt.MaxValue.Value, MaxDiscordCharacterCount)
+                        : MaxDiscordCharacterCount }
+                    : opt
+            ).ToList()
+        }).ToList();
     }
 
     private (IGameModule Module, string SubCommand, IReadOnlyDictionary<string, object?> Options)
@@ -179,14 +201,6 @@ public class GenerateCommandHandler : ISlashCommand
             }
 
             var result = await gameModule.HandleGenerateCommandAsync(subCommand, options, ct);
-
-            if (result.CharacterCount == 0)
-            {
-                await context.FollowupAsync(
-                    embed: ResponseCardBuilder.Build("Error", "Generation produced no characters.", new Color(200, 50, 50)),
-                    ephemeral: true);
-                return;
-            }
 
             var (embed, attachment, stream) = RenderResult(result);
             try

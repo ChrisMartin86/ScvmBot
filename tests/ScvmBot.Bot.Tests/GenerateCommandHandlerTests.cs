@@ -218,10 +218,10 @@ public class GenerateCommandHandlerTests
         Assert.Contains("samegame", ex.Message);
     }
 
-    // ── Zero-character error ────────────────────────────────────────────────
+    // ── Empty generation error ─────────────────────────────────────────────
 
     [Fact]
-    public async Task HandleAsync_SendsError_WhenGenerationProducesZeroCharacters()
+    public async Task HandleAsync_SendsError_WhenModuleThrowsDueToEmptyGeneration()
     {
         var emptyModule = new EmptyResultModule();
         var registry = new RendererRegistry(new IResultRenderer[]
@@ -250,7 +250,17 @@ public class GenerateCommandHandlerTests
         var embed = context.FollowupEmbeds[0];
         Assert.NotNull(embed);
         Assert.Equal("Error", embed!.Title);
-        Assert.Contains("no characters", embed.Description);
+        Assert.Contains("at least one character", embed.Description);
+    }
+
+    [Fact]
+    public void GenerationBatch_RejectsEmptyCharacterList()
+    {
+        var ex = Assert.Throws<ArgumentException>(() =>
+            new GenerationBatch<ScvmBot.Games.MorkBorg.Models.Character>(
+                new List<ScvmBot.Games.MorkBorg.Models.Character>().AsReadOnly()));
+
+        Assert.Contains("at least one character", ex.Message);
     }
 
     // ── DM privacy failure path ─────────────────────────────────────────────

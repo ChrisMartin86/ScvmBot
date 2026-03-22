@@ -16,6 +16,10 @@ public sealed record GenerationBatch<TCharacter>(
     IReadOnlyList<TCharacter> Characters,
     string? GroupName = null) : GenerationBatch
 {
+    public IReadOnlyList<TCharacter> Characters { get; } = Characters.Count > 0
+        ? Characters
+        : throw new ArgumentException("A generation batch must contain at least one character.", nameof(Characters));
+
     /// <inheritdoc />
     public override int CharacterCount => Characters.Count;
 }
