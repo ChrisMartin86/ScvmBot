@@ -41,13 +41,6 @@ class Program
             return 1;
         }
 
-        if (modules.Count == 0)
-        {
-            Console.Error.WriteLine("[ScvmBot] Startup failed: no game modules were discovered.");
-            Console.Error.WriteLine("  Ensure at least one ScvmBot.Modules.* project is referenced and built.");
-            return 1;
-        }
-
         foreach (var module in modules)
             module.Register(builder.Services);
 

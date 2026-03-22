@@ -50,13 +50,6 @@ catch (InvalidOperationException ex)
     return 1;
 }
 
-if (registrations.Count == 0)
-{
-    Console.Error.WriteLine("[scvmbot-cli] Startup failed: no game modules were discovered.");
-    Console.Error.WriteLine("  Ensure at least one ScvmBot.Modules.* project is referenced and built.");
-    return 1;
-}
-
 // ── Build DI container from discovered modules ──────────────────────────
 var services = new ServiceCollection();
 foreach (var reg in registrations)

@@ -17,6 +17,7 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
 
     private string? _dataPath;
     private MorkBorgReferenceDataService? _refData;
+    private string? _pdfTemplatePath;
 
     /// <summary>Parameterless constructor used by automatic discovery.</summary>
     public MorkBorgModuleRegistration() : this(null) { }
@@ -40,16 +41,15 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
             ? await MorkBorgReferenceDataService.CreateAsync(_dataPath)
             : await MorkBorgReferenceDataService.CreateAsync();
 
-        // Check whether the PDF template is present. PDF rendering is optional but
-        // first-class — a missing template likely indicates a packaging mistake,
-        // so log loudly at startup rather than silently disabling file output.
-        var templatePath = _dataPath is not null
-            ? Path.Combine(_dataPath, "character_sheet.pdf")
-            : MorkBorgPdfRenderer.DefaultTemplatePath;
-        if (!File.Exists(templatePath))
+        // The PDF template always lives alongside the MorkBorgPdfRenderer assembly
+        // output (copied via Content build item), not in the reference data directory.
+        // DataPath controls JSON reference data location only.
+        _pdfTemplatePath = MorkBorgPdfRenderer.DefaultTemplatePath;
+
+        if (!File.Exists(_pdfTemplatePath))
         {
             Console.Error.WriteLine(
-                $"[MorkBorg] WARNING: PDF template not found at '{templatePath}'. " +
+                $"[MorkBorg] WARNING: PDF template not found at '{_pdfTemplatePath}'. " +
                 $"PDF character sheet generation will be disabled. " +
                 $"If this is unexpected, check your build output or Data/ directory.");
         }
@@ -62,7 +62,7 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
 
         services.AddSingleton(_refData);
         services.AddSingleton<CharacterGenerator>();
-        services.AddSingleton<MorkBorgPdfRenderer>();
+        services.AddSingleton(new MorkBorgPdfRenderer(_pdfTemplatePath!));
         services.AddSingleton<IGameModule, MorkBorgModule>();
 
         // Renderers

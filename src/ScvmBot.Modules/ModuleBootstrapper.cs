@@ -55,6 +55,14 @@ public static class ModuleBootstrapper
             modules.Add(module);
         }
 
+        if (modules.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "No game modules were discovered. " +
+                "Ensure at least one ScvmBot.Modules.* assembly is referenced and contains " +
+                "a concrete IModuleRegistration implementation.");
+        }
+
         return modules;
     }
 
