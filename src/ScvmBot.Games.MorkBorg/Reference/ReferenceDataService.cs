@@ -49,7 +49,7 @@ public class MorkBorgReferenceDataService
         {
             // Use AppContext.BaseDirectory which is consistent across all execution contexts
             var baseDir = AppContext.BaseDirectory;
-            _dataRootPath = Path.Combine(baseDir, "Data");
+            _dataRootPath = Path.Combine(baseDir, "Data", "MorkBorg");
         }
     }
 

@@ -13,6 +13,6 @@ public sealed class HelloCommand : ISlashCommand
             .WithDescription("Say hello to ScvmBot!")
             .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
 
-    public Task HandleAsync(ISlashCommandContext context) =>
+    public Task HandleAsync(ISlashCommandContext context, CancellationToken ct = default) =>
         context.RespondAsync($"Hello, {context.UserMention}! I'm ScvmBot!");
 }

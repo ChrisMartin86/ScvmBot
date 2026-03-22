@@ -1,5 +1,6 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Bot.Services;
 
@@ -19,6 +20,8 @@ public class BotServiceStartupTests
 
     private static DiscordSocketClient CreateClient() => new();
 
+    private static IHostApplicationLifetime FakeLifetime() => new FakeAppLifetime();
+
     // ── Constructor: duplicate command-name detection ────────────────────
 
     [Fact]
@@ -29,7 +32,7 @@ public class BotServiceStartupTests
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
             new BotService(CreateClient(), EmptyConfig(), new ISlashCommand[] { cmd1, cmd2 },
-                NullLogger<BotService>.Instance));
+                FakeLifetime(), NullLogger<BotService>.Instance));
 
         Assert.Contains("Duplicate slash command name", ex.Message);
         Assert.Contains("generate", ex.Message);
@@ -43,7 +46,7 @@ public class BotServiceStartupTests
 
         var service = new BotService(CreateClient(), EmptyConfig(),
             new ISlashCommand[] { cmd1, cmd2 },
-            NullLogger<BotService>.Instance);
+            FakeLifetime(), NullLogger<BotService>.Instance);
 
         Assert.NotNull(service);
     }
@@ -192,6 +195,14 @@ public class BotServiceStartupTests
         public string Name { get; }
         public Discord.SlashCommandBuilder BuildCommand() =>
             new Discord.SlashCommandBuilder().WithName(Name).WithDescription("test");
-        public Task HandleAsync(ISlashCommandContext context) => Task.CompletedTask;
+        public Task HandleAsync(ISlashCommandContext context, CancellationToken ct = default) => Task.CompletedTask;
+    }
+
+    private sealed class FakeAppLifetime : IHostApplicationLifetime
+    {
+        public CancellationToken ApplicationStarted => CancellationToken.None;
+        public CancellationToken ApplicationStopping => CancellationToken.None;
+        public CancellationToken ApplicationStopped => CancellationToken.None;
+        public void StopApplication() { }
     }
 }

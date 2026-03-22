@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Data/**" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Data/**" Link="Data/MorkBorg/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

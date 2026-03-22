@@ -85,10 +85,18 @@ public class GenerateCommandHandlerTests
         await handler.HandleAsync(context);
 
         Assert.True(context.Deferred);
-        Assert.True(channel.SendMessageCallCount + channel.SendFileCallCount > 0,
-            "Expected at least one message or file to be sent to the channel.");
-        Assert.Single(context.FollowupTexts, t => t is not null);
+        Assert.Equal(1, channel.SendMessageCallCount);
         Assert.Contains("Here's your character!", context.FollowupTexts);
+
+        // Verify the rendered card is a real character card, not a blank/error
+        var embed = Assert.Single(channel.SentEmbeds);
+        Assert.NotNull(embed);
+        Assert.False(string.IsNullOrWhiteSpace(embed!.Title),
+            "Character card must have a non-empty title (character name).");
+        Assert.NotNull(embed.Description);
+        Assert.Contains("HP", embed.Description);
+        Assert.Contains(embed.Fields, f => f.Name == "Abilities");
+        Assert.Contains(embed.Fields, f => f.Name == "Equipment");
     }
 
     [Fact]
@@ -117,9 +125,18 @@ public class GenerateCommandHandlerTests
         await handler.HandleAsync(context);
 
         Assert.True(context.Deferred);
-        Assert.True(channel.SendMessageCallCount + channel.SendFileCallCount > 0,
-            "Expected at least one message or file to be sent to the channel.");
+        Assert.Equal(1, channel.SendMessageCallCount);
         Assert.Contains("Here's your party!", context.FollowupTexts);
+
+        // Verify the rendered card is a real party card with member roster
+        var embed = Assert.Single(channel.SentEmbeds);
+        Assert.NotNull(embed);
+        Assert.False(string.IsNullOrWhiteSpace(embed!.Title),
+            "Party card must have a non-empty title (party name).");
+        Assert.NotNull(embed.Description);
+        Assert.Contains("Party of", embed.Description);
+        // Each member should appear as a bullet in the roster
+        Assert.Contains("\u2022", embed.Description); // bullet character
     }
 
     // ── Party PDF failure isolation ───────────────────────────────────────────
@@ -156,6 +173,14 @@ public class GenerateCommandHandlerTests
         Assert.Equal(1, channel.SendMessageCallCount);  // card sent without PDF archive
         Assert.Equal(0, channel.SendFileCallCount);
         Assert.Contains("Here's your party!", context.FollowupTexts);
+
+        // Verify the party card has real content
+        var embed = Assert.Single(channel.SentEmbeds);
+        Assert.NotNull(embed);
+        Assert.False(string.IsNullOrWhiteSpace(embed!.Title),
+            "Party card must have a non-empty title.");
+        Assert.NotNull(embed.Description);
+        Assert.Contains("Party of", embed.Description);
     }
 
     // ── Constructor validation ─────────────────────────────────────────────
@@ -279,10 +304,16 @@ public class GenerateCommandHandlerTests
         await handler.HandleAsync(context);
 
         // The result was delivered to the channel despite followup failure
-        Assert.True(channel.SendMessageCallCount + channel.SendFileCallCount > 0,
-            "Result should be delivered to channel even when followup acknowledgement fails");
+        Assert.Equal(1, channel.SendMessageCallCount);
         // No followup text was recorded because the exception was thrown
         Assert.Empty(context.FollowupTexts);
+
+        // Verify the delivered card has real content
+        var embed = Assert.Single(channel.SentEmbeds);
+        Assert.NotNull(embed);
+        Assert.False(string.IsNullOrWhiteSpace(embed!.Title),
+            "Character card must be delivered even when followup acknowledgement fails.");
+        Assert.Contains(embed.Fields, f => f.Name == "Abilities");
     }
 
     // ── File-rendering exception isolation ──────────────────────────────────
@@ -320,6 +351,13 @@ public class GenerateCommandHandlerTests
         Assert.Equal(1, channel.SendMessageCallCount);
         Assert.Equal(0, channel.SendFileCallCount);
         Assert.Contains("Here's your character!", context.FollowupTexts);
+
+        // Verify the rendered card is a real character card, not blank
+        var embed = Assert.Single(channel.SentEmbeds);
+        Assert.NotNull(embed);
+        Assert.False(string.IsNullOrWhiteSpace(embed!.Title),
+            "Character card must have a title even when file rendering fails.");
+        Assert.Contains(embed.Fields, f => f.Name == "Abilities");
     }
 
     // ── Send failure path ───────────────────────────────────────────────────

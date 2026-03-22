@@ -10,7 +10,7 @@ public sealed class MorkBorgPdfRenderer
 {
     /// <summary>Runtime path where the PDF template is expected after build/publish.</summary>
     public static readonly string DefaultTemplatePath =
-        Path.Combine(AppContext.BaseDirectory, "Data", "character_sheet.pdf");
+        Path.Combine(AppContext.BaseDirectory, "Data", "MorkBorg", "character_sheet.pdf");
 
     private readonly byte[]? _templateBytes;
 

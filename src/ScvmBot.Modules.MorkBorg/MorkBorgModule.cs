@@ -32,6 +32,8 @@ public sealed class MorkBorgModule : IGameModule
         IReadOnlyDictionary<string, object?> options,
         CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+
         if (string.Equals(subCommand, "party", StringComparison.OrdinalIgnoreCase))
             return Task.FromResult<GenerateResult>(BuildPartyResult(options));
 

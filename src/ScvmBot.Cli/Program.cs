@@ -2,20 +2,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using ScvmBot.Cli;
 using ScvmBot.Modules;
 using System.Diagnostics;
 
-// ── Pre-parse --data (extracted before module discovery) ──────────────────
-string? dataPath = null;
-var filteredArgs = new List<string>();
-for (var i = 0; i < args.Length; i++)
-{
-    if (args[i] == "--data" && i + 1 < args.Length)
-        dataPath = args[++i];
-    else
-        filteredArgs.Add(args[i]);
-}
-var commandArgs = filteredArgs.ToArray();
+// ── Cancellation support (Ctrl+C) ───────────────────────────────────────
+using var cts = new CancellationTokenSource();
+Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+var ct = cts.Token;
+
+// ── Pre-parse --data (must happen before module discovery) ───────────────
+var (dataPath, commandArgs) = CliCommandParser.ExtractDataPath(args);
 
 bool showHelp = commandArgs.Length == 0 || commandArgs[0] is "-h" or "--help";
 
@@ -71,137 +68,40 @@ if (showHelp)
     return 0;
 }
 
-// ── Parse command structure ─────────────────────────────────────────────
-if (!string.Equals(commandArgs[0], "generate", StringComparison.OrdinalIgnoreCase))
+// ── Parse command ───────────────────────────────────────────────────────
+CliCommand cmd;
+try
 {
-    Console.Error.WriteLine($"Unknown command: {commandArgs[0]}");
-    Console.Error.WriteLine("Run with --help for usage.");
+    cmd = CliCommandParser.Parse(commandArgs, gameModules);
+}
+catch (CliParseException ex)
+{
+    Console.Error.WriteLine(ex.Message);
     return 1;
 }
 
-if (commandArgs.Length < 2)
-{
-    Console.Error.WriteLine("Missing game system. Available: " + string.Join(", ", gameModules.Keys));
-    return 1;
-}
-
-if (!gameModules.TryGetValue(commandArgs[1], out var module))
-{
-    Console.Error.WriteLine($"Unknown game system: {commandArgs[1]}");
-    Console.Error.WriteLine("Available: " + string.Join(", ", gameModules.Keys));
-    return 1;
-}
-
-if (commandArgs.Length < 3)
-{
-    var subNames = string.Join(", ", module.SubCommands.Select(sc => sc.Name));
-    Console.Error.WriteLine($"Missing subcommand. Available: {subNames}");
-    return 1;
-}
-
-var subCommandName = commandArgs[2];
-var subCommandDef = module.SubCommands
-    .FirstOrDefault(sc => string.Equals(sc.Name, subCommandName, StringComparison.OrdinalIgnoreCase));
-
-if (subCommandDef is null)
-{
-    var subNames = string.Join(", ", module.SubCommands.Select(sc => sc.Name));
-    Console.Error.WriteLine($"Unknown subcommand: {subCommandName}");
-    Console.Error.WriteLine($"Available: {subNames}");
-    return 1;
-}
-
-// ── Parse options ───────────────────────────────────────────────────────
-var moduleOptionNames = new HashSet<string>(
-    subCommandDef.Options?.Select(o => o.Name) ?? [],
-    StringComparer.OrdinalIgnoreCase);
-
-var optionsDict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-int count = 1;
-bool quiet = false;
-bool detailed = false;
-bool generatePdf = false;
-string? pdfPath = null;
-
-for (var i = 3; i < commandArgs.Length; i++)
-{
-    switch (commandArgs[i])
-    {
-        case "--count" when i + 1 < commandArgs.Length:
-            if (!int.TryParse(commandArgs[++i], out count) || count < 1)
-            {
-                Console.Error.WriteLine("--count must be a positive integer.");
-                return 1;
-            }
-            break;
-        case "--quiet":
-            quiet = true;
-            break;
-        case "--detailed":
-            detailed = true;
-            break;
-        case "--pdf":
-            generatePdf = true;
-            if (i + 1 < commandArgs.Length && !commandArgs[i + 1].StartsWith("--"))
-                pdfPath = commandArgs[++i];
-            break;
-        default:
-        {
-            var optName = commandArgs[i].TrimStart('-');
-            if (moduleOptionNames.Contains(optName))
-            {
-                if (i + 1 >= commandArgs.Length)
-                {
-                    Console.Error.WriteLine($"Missing value for --{optName}");
-                    return 1;
-                }
-                var optDef = subCommandDef.Options!
-                    .First(o => string.Equals(o.Name, optName, StringComparison.OrdinalIgnoreCase));
-                var rawValue = commandArgs[++i];
-                optionsDict[optDef.Name] = optDef.Type == CommandOptionType.Integer
-                    && long.TryParse(rawValue, out var longVal)
-                        ? longVal
-                        : rawValue;
-            }
-            else
-            {
-                Console.Error.WriteLine($"Unknown option: {commandArgs[i]}");
-                return 1;
-            }
-            break;
-        }
-    }
-}
-
-if (!quiet && count > 20)
-{
-    Console.Error.WriteLine("--count maximum is 20 without --quiet mode.");
-    return 1;
-}
-
-if (detailed && !quiet)
-{
-    Console.Error.WriteLine("--detailed requires --quiet.");
-    return 1;
-}
+var module = cmd.Module;
+var subCommandDef = cmd.SubCommand;
+var optionsDict = cmd.ModuleOptions;
+var cliOpts = cmd.Options;
 
 try
 {
 
 // ── Benchmark mode ──────────────────────────────────────────────────────
-if (quiet)
+if (cliOpts.Quiet)
 {
-    if (detailed)
+    if (cliOpts.Detailed)
     {
-        var ticksPerGeneration = new long[count];
+        var ticksPerGeneration = new long[cliOpts.Count];
         var sw = new Stopwatch();
         var startTime = DateTimeOffset.Now;
         var totalSw = Stopwatch.StartNew();
 
-        for (var n = 0; n < count; n++)
+        for (var n = 0; n < cliOpts.Count; n++)
         {
             sw.Restart();
-            await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict);
+            await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict, ct);
             sw.Stop();
             ticksPerGeneration[n] = sw.ElapsedTicks;
         }
@@ -212,15 +112,15 @@ if (quiet)
         Array.Sort(ticksPerGeneration);
         var tickFreq = (double)Stopwatch.Frequency;
         var minMs = ticksPerGeneration[0] / tickFreq * 1000;
-        var maxMs = ticksPerGeneration[count - 1] / tickFreq * 1000;
-        var medianMs = ticksPerGeneration[count / 2] / tickFreq * 1000;
+        var maxMs = ticksPerGeneration[cliOpts.Count - 1] / tickFreq * 1000;
+        var medianMs = ticksPerGeneration[cliOpts.Count / 2] / tickFreq * 1000;
         var avgMs = ticksPerGeneration.Average() / tickFreq * 1000;
-        var p95Ms = ticksPerGeneration[(int)(count * 0.95)] / tickFreq * 1000;
-        var p99Ms = ticksPerGeneration[(int)(count * 0.99)] / tickFreq * 1000;
+        var p95Ms = ticksPerGeneration[(int)(cliOpts.Count * 0.95)] / tickFreq * 1000;
+        var p99Ms = ticksPerGeneration[(int)(cliOpts.Count * 0.99)] / tickFreq * 1000;
 
         Console.WriteLine($"  Started:   {startTime:yyyy-MM-dd HH:mm:ss.fff zzz}");
         Console.WriteLine($"  Finished:  {endTime:yyyy-MM-dd HH:mm:ss.fff zzz}");
-        Console.WriteLine($"  Count:     {count:N0}");
+        Console.WriteLine($"  Count:     {cliOpts.Count:N0}");
         Console.WriteLine($"  Elapsed:   {totalSw.Elapsed}");
         Console.WriteLine();
         Console.WriteLine("  Per-generation timing:");
@@ -236,23 +136,23 @@ if (quiet)
         var startTime = DateTimeOffset.Now;
         var sw = Stopwatch.StartNew();
 
-        for (var n = 0; n < count; n++)
-            await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict);
+        for (var n = 0; n < cliOpts.Count; n++)
+            await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict, ct);
 
         sw.Stop();
         var endTime = DateTimeOffset.Now;
 
         Console.WriteLine($"  Started:   {startTime:yyyy-MM-dd HH:mm:ss.fff zzz}");
         Console.WriteLine($"  Finished:  {endTime:yyyy-MM-dd HH:mm:ss.fff zzz}");
-        Console.WriteLine($"  Count:     {count:N0}");
+        Console.WriteLine($"  Count:     {cliOpts.Count:N0}");
         Console.WriteLine($"  Elapsed:   {sw.Elapsed}");
     }
     return 0;
 }
 
 // ── Normal generation mode ──────────────────────────────────────────────
-var results = new List<(GenerateResult Result, CardOutput Card)>(count);
-for (var n = 0; n < count; n++)
+var results = new List<(GenerateResult Result, CardOutput Card)>(cliOpts.Count);
+for (var n = 0; n < cliOpts.Count; n++)
 {
     // Only apply name override to the first character when generating multiples
     var iterOptions = (n == 0 || !optionsDict.ContainsKey("name"))
@@ -261,7 +161,7 @@ for (var n = 0; n < count; n++)
             optionsDict.Where(kv => !string.Equals(kv.Key, "name", StringComparison.OrdinalIgnoreCase)),
             StringComparer.OrdinalIgnoreCase);
 
-    var result = await module.HandleGenerateCommandAsync(subCommandDef.Name, iterOptions);
+    var result = await module.HandleGenerateCommandAsync(subCommandDef.Name, iterOptions, ct);
     var card = registry.RenderCard(result);
     results.Add((result, card));
 }
@@ -272,8 +172,9 @@ for (var n = 0; n < results.Count; n++)
     PrintCard(results[n].Card);
 }
 
-if (generatePdf)
+if (cliOpts.GeneratePdf)
 {
+    var pdfPath = cliOpts.PdfPath;
     if (results.Count == 1)
     {
         var file = registry.TryRenderFile(results[0].Result);

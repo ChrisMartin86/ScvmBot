@@ -56,32 +56,17 @@ public class GenerateCommandHandler : ISlashCommand
         return builder;
     }
 
-    private IGameModule ParseCommandRequest(ISlashCommandContext context)
+    private (IGameModule Module, string SubCommand, IReadOnlyDictionary<string, object?> Options)
+        ParseCommand(ISlashCommandContext context)
     {
         var subcommandGroup = context.Options
-            .FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommandGroup);
+            .FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommandGroup)
+            ?? throw new InvalidOperationException("No game system specified (SubCommandGroup not found).");
 
-        if (subcommandGroup is null)
-        {
-            throw new InvalidOperationException("No game system specified (SubCommandGroup not found).");
-        }
+        if (!_gameModules.TryGetValue(subcommandGroup.Name, out var gameModule))
+            throw new InvalidOperationException($"Unknown game system: {subcommandGroup.Name}");
 
-        var gameSystemKey = subcommandGroup.Name;
-        if (!_gameModules.TryGetValue(gameSystemKey, out var gameModule))
-        {
-            throw new InvalidOperationException($"Unknown game system: {gameSystemKey}");
-        }
-
-        return gameModule;
-    }
-
-    private static (string SubCommand, IReadOnlyDictionary<string, object?> Options) ExtractCommandInput(
-        ISlashCommandContext context)
-    {
-        var subcommandGroup = context.Options
-            .FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommandGroup);
-
-        var subCommand = subcommandGroup?.Options
+        var subCommand = subcommandGroup.Options
             ?.FirstOrDefault(o => o.Type == ApplicationCommandOptionType.SubCommand)
             ?? throw new InvalidOperationException("No subcommand found in options.");
 
@@ -92,41 +77,92 @@ public class GenerateCommandHandler : ISlashCommand
                 options[opt.Name] = opt.Value;
         }
 
-        return (subCommand.Name, options);
+        return (gameModule, subCommand.Name, options);
     }
 
-    public async Task HandleAsync(ISlashCommandContext context)
+    private (Embed Embed, FileAttachment? Attachment, MemoryStream? Stream)
+        RenderResult(GenerateResult result)
+    {
+        var cardOutput = _rendererRegistry.RenderCard(result);
+        var embed = DiscordCardAdapter.ToEmbed(cardOutput);
+
+        FileOutput? fileOutput = null;
+        try
+        {
+            fileOutput = _rendererRegistry.TryRenderFile(result);
+        }
+        catch (Exception pdfEx)
+        {
+            _logger.LogWarning(pdfEx,
+                "File rendering failed for {ResultType}; continuing without attachment.",
+                result.GetType().Name);
+        }
+
+        MemoryStream? stream = null;
+        FileAttachment? attachment = null;
+        if (fileOutput is not null)
+        {
+            stream = new MemoryStream(fileOutput.Bytes);
+            attachment = new FileAttachment(stream, fileOutput.FileName);
+        }
+
+        return (embed, attachment, stream);
+    }
+
+    private async Task DeliverAndAcknowledgeAsync(
+        ISlashCommandContext context,
+        GenerateResult result,
+        Embed embed,
+        FileAttachment? attachment,
+        CancellationToken ct)
+    {
+        bool sent;
+        try
+        {
+            sent = await _delivery.SendResultAsync(context, embed, attachment, ct);
+        }
+        catch (Exception sendEx)
+        {
+            _logger.LogError(sendEx, "Failed to deliver generation result via DM");
+            await context.FollowupAsync(
+                embed: ResponseCardBuilder.Build("Send Failed",
+                    "Something went wrong sending your result. Please try again.", new Color(200, 50, 50)),
+                ephemeral: true);
+            return;
+        }
+
+        if (!sent)
+        {
+            await context.FollowupAsync(
+                text: "I couldn't send you a DM. Please enable DMs from server members and try again.",
+                ephemeral: true);
+            return;
+        }
+
+        // Result was delivered successfully. The followup acknowledgement is
+        // best-effort — if it fails, the user already has their result.
+        try
+        {
+            var followupText = context.GuildId is null
+                ? (result is PartyGenerationResult ? "Here's your party!" : "Here's your character!")
+                : "Check your DMs.";
+            await context.FollowupAsync(text: followupText, ephemeral: true);
+        }
+        catch (Exception ackEx)
+        {
+            _logger.LogWarning(ackEx,
+                "Result delivered successfully but followup acknowledgement failed");
+        }
+    }
+
+    public async Task HandleAsync(ISlashCommandContext context, CancellationToken ct = default)
     {
         await context.DeferAsync(ephemeral: true);
 
         try
         {
-            IGameModule gameModule;
-            try
-            {
-                gameModule = ParseCommandRequest(context);
-            }
-            catch (InvalidOperationException parseEx)
-            {
-                await context.FollowupAsync(
-                    embed: ResponseCardBuilder.Build("Error", parseEx.Message, new Color(200, 50, 50)),
-                    ephemeral: true);
-                return;
-            }
-
-            GenerateResult result;
-            try
-            {
-                var (subCommand, options) = ExtractCommandInput(context);
-                result = await gameModule.HandleGenerateCommandAsync(subCommand, options);
-            }
-            catch (Exception genEx) when (genEx is InvalidOperationException or ArgumentException)
-            {
-                await context.FollowupAsync(
-                    embed: ResponseCardBuilder.Build("Error", genEx.Message, new Color(200, 50, 50)),
-                    ephemeral: true);
-                return;
-            }
+            var (gameModule, subCommand, options) = ParseCommand(context);
+            var result = await gameModule.HandleGenerateCommandAsync(subCommand, options, ct);
 
             if (result is PartyGenerationResult { CharacterCount: 0 })
             {
@@ -136,78 +172,21 @@ public class GenerateCommandHandler : ISlashCommand
                 return;
             }
 
-            // Render card (required)
-            var cardOutput = _rendererRegistry.RenderCard(result);
-            var embed = DiscordCardAdapter.ToEmbed(cardOutput);
-
-            // Render file attachment (optional, best-effort)
-            FileOutput? fileOutput = null;
+            var (embed, attachment, stream) = RenderResult(result);
             try
             {
-                fileOutput = _rendererRegistry.TryRenderFile(result);
-            }
-            catch (Exception pdfEx)
-            {
-                _logger.LogWarning(pdfEx,
-                    "File rendering failed for {ResultType}; continuing without attachment.",
-                    result.GetType().Name);
-            }
-
-            // Deliver
-            MemoryStream? stream = null;
-            FileAttachment? attachment = null;
-            if (fileOutput is not null)
-            {
-                stream = new MemoryStream(fileOutput.Bytes);
-                attachment = new FileAttachment(stream, fileOutput.FileName);
-            }
-
-            try
-            {
-                var isDm = context.GuildId is null;
-
-                bool sent;
-                try
-                {
-                    sent = await _delivery.SendResultAsync(context, embed, attachment);
-                }
-                catch (Exception sendEx)
-                {
-                    _logger.LogError(sendEx, "Failed to deliver generation result via DM");
-                    await context.FollowupAsync(
-                        embed: ResponseCardBuilder.Build("Send Failed",
-                            "Something went wrong sending your result. Please try again.", new Color(200, 50, 50)),
-                        ephemeral: true);
-                    return;
-                }
-
-                if (!sent)
-                {
-                    await context.FollowupAsync(
-                        text: "I couldn't send you a DM. Please enable DMs from server members and try again.",
-                        ephemeral: true);
-                    return;
-                }
-
-                // Result was delivered successfully. The followup acknowledgement is
-                // best-effort — if it fails, the user already has their result.
-                try
-                {
-                    var followupText = isDm
-                        ? (result is PartyGenerationResult ? "Here's your party!" : "Here's your character!")
-                        : "Check your DMs.";
-                    await context.FollowupAsync(text: followupText, ephemeral: true);
-                }
-                catch (Exception ackEx)
-                {
-                    _logger.LogWarning(ackEx,
-                        "Result delivered successfully but followup acknowledgement failed");
-                }
+                await DeliverAndAcknowledgeAsync(context, result, embed, attachment, ct);
             }
             finally
             {
                 stream?.Dispose();
             }
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            await context.FollowupAsync(
+                embed: ResponseCardBuilder.Build("Error", ex.Message, new Color(200, 50, 50)),
+                ephemeral: true);
         }
         catch (Exception ex)
         {

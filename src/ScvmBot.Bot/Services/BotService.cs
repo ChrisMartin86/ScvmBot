@@ -15,16 +15,19 @@ public class BotService : IHostedService
     private readonly IConfiguration _configuration;
     private readonly IReadOnlyDictionary<string, ISlashCommand> _slashCommands;
     private readonly CommandRegistrationOrchestrator _registrationOrchestrator;
+    private readonly IHostApplicationLifetime _appLifetime;
     private readonly ILogger<BotService> _logger;
 
     public BotService(
         DiscordSocketClient client,
         IConfiguration configuration,
         IEnumerable<ISlashCommand> slashCommands,
+        IHostApplicationLifetime appLifetime,
         ILogger<BotService> logger)
     {
         _client = client;
         _configuration = configuration;
+        _appLifetime = appLifetime;
 
         var commands = new Dictionary<string, ISlashCommand>(StringComparer.OrdinalIgnoreCase);
         foreach (var cmd in slashCommands)
@@ -122,7 +125,7 @@ public class BotService : IHostedService
             // can continue without waiting for the entire command processing to complete.
             // This prevents the "handler is blocking the gateway task" warning.
             var context = new SocketSlashCommandContext(command);
-            _ = handler.HandleAsync(context).ContinueWith(task =>
+            _ = handler.HandleAsync(context, _appLifetime.ApplicationStopping).ContinueWith(task =>
             {
                 if (task.IsFaulted)
                 {

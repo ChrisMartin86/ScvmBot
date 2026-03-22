@@ -10,5 +10,5 @@ public interface ISlashCommand
 {
     string Name { get; }
     SlashCommandBuilder BuildCommand();
-    Task HandleAsync(ISlashCommandContext context);
+    Task HandleAsync(ISlashCommandContext context, CancellationToken ct = default);
 }

@@ -23,7 +23,8 @@ public class GenerationDeliveryService(ILogger<GenerationDeliveryService> logger
     public async Task<bool> SendResultAsync(
         ISlashCommandContext context,
         Embed embed,
-        FileAttachment? attachment)
+        FileAttachment? attachment,
+        CancellationToken ct = default)
     {
         try
         {
