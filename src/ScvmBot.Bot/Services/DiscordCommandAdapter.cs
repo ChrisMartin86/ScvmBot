@@ -5,10 +5,33 @@ namespace ScvmBot.Bot.Services;
 
 /// <summary>
 /// Converts transport-agnostic <see cref="SubCommandDefinition"/> trees into
-/// Discord <see cref="SlashCommandOptionBuilder"/> trees.
+/// Discord <see cref="SlashCommandOptionBuilder"/> trees, optionally applying
+/// Discord-specific constraints before mapping.
 /// </summary>
 internal static class DiscordCommandAdapter
 {
+    /// <summary>
+    /// Rewrites module-defined subcommands to satisfy Discord-specific limits.
+    /// Options tagged with <see cref="CommandOptionRole.GenerationCount"/> are capped
+    /// at <paramref name="maxGenerationCount"/> so the Discord UI enforces the limit
+    /// before the command ever reaches the handler.
+    /// </summary>
+    public static IReadOnlyList<SubCommandDefinition> ApplyConstraints(
+        IReadOnlyList<SubCommandDefinition> subCommands,
+        int maxGenerationCount)
+    {
+        return subCommands.Select(sub => sub with
+        {
+            Options = sub.Options?.Select(opt =>
+                opt.Role == CommandOptionRole.GenerationCount
+                    ? opt with { MaxValue = opt.MaxValue.HasValue
+                        ? Math.Min(opt.MaxValue.Value, maxGenerationCount)
+                        : maxGenerationCount }
+                    : opt
+            ).ToList()
+        }).ToList();
+    }
+
     public static SlashCommandOptionBuilder ToSlashCommandOption(
         string commandKey, string displayName, IReadOnlyList<SubCommandDefinition> subCommands)
     {

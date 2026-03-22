@@ -44,7 +44,9 @@ public sealed class MorkBorgModule : IGameModule
         var characters = new List<Character>(count);
         for (var i = 0; i < count; i++)
         {
-            // Name override only applies to the first character
+            // Name override applies only to the first character. Subsequent characters
+            // receive random names so a multi-character batch contains distinct identities
+            // rather than N copies of the same user-supplied name.
             var iterOptions = i == 0 ? genOptions : new CharacterGenerationOptions
             {
                 RollMethod = genOptions.RollMethod,

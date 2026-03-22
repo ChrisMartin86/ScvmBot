@@ -165,26 +165,23 @@ public class CliCharacterGenerationTests
     public async Task Generate_MultipleCharacters_ZipContainsAllPdfs()
     {
         var (module, registry) = await CreateModulePipelineAsync();
+        var options = new Dictionary<string, object?> { ["count"] = 3L };
 
-        var memberPdfs = new List<(string CharacterName, byte[] PdfBytes)>();
-        for (var i = 0; i < 3; i++)
-        {
-            var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
-            var card = registry.RenderCard(result);
-            var file = registry.TryRenderFile(result);
-            if (file is not null)
-                memberPdfs.Add((card.Title ?? "character", file.Bytes));
-        }
+        var result = await module.HandleGenerateCommandAsync("character", options);
+        var charResult = Assert.IsType<GenerationBatch<Character>>(result);
+        Assert.Equal(3, charResult.Characters.Count);
 
-        if (memberPdfs.Count == 0)
+        var file = registry.TryRenderFile(result);
+        if (file is null)
             return; // skip if no PDF template
 
-        var zipBytes = CharacterZipBuilder.CreateZip(memberPdfs);
-        Assert.True(zipBytes.Length > 0);
+        Assert.EndsWith(".zip", file.FileName);
+        Assert.True(file.Bytes.Length > 0);
 
-        using var stream = new MemoryStream(zipBytes);
+        using var stream = new MemoryStream(file.Bytes);
         using var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read);
-        Assert.Equal(memberPdfs.Count, archive.Entries.Count);
+        Assert.Equal(3, archive.Entries.Count);
+        Assert.All(archive.Entries, e => Assert.EndsWith(".pdf", e.Name));
     }
 
     // ── Multi-character generation through module pipeline ─────────────────────────

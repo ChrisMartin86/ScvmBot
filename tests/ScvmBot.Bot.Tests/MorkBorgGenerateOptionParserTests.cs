@@ -72,4 +72,74 @@ public class MorkBorgGenerateOptionParserTests
         Assert.Equal("Wretched Royalty", result.ClassName);
         Assert.Equal("Gertrude", result.Name);
     }
+
+    // ── ParseCount ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public void ParseCount_ReturnsOne_WhenCountNotSpecified()
+    {
+        var count = MorkBorgGenerateOptionParser.ParseCount(
+            new Dictionary<string, object?>());
+
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public void ParseCount_ReturnsOne_WhenCountIsNull()
+    {
+        var count = MorkBorgGenerateOptionParser.ParseCount(
+            new Dictionary<string, object?> { ["count"] = null });
+
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public void ParseCount_ReturnsExplicitValue_WhenProvided()
+    {
+        var count = MorkBorgGenerateOptionParser.ParseCount(
+            new Dictionary<string, object?> { ["count"] = 3L });
+
+        Assert.Equal(3, count);
+    }
+
+    [Fact]
+    public void ParseCount_AcceptsOne()
+    {
+        var count = MorkBorgGenerateOptionParser.ParseCount(
+            new Dictionary<string, object?> { ["count"] = 1L });
+
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public void ParseCount_ThrowsArgumentException_WhenZero()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            MorkBorgGenerateOptionParser.ParseCount(
+                new Dictionary<string, object?> { ["count"] = 0L }));
+    }
+
+    [Fact]
+    public void ParseCount_ThrowsArgumentException_WhenNegative()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            MorkBorgGenerateOptionParser.ParseCount(
+                new Dictionary<string, object?> { ["count"] = -1L }));
+    }
+
+    [Fact]
+    public void ParseCount_ThrowsArgumentException_WhenNotNumeric()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            MorkBorgGenerateOptionParser.ParseCount(
+                new Dictionary<string, object?> { ["count"] = "nope" }));
+    }
+
+    [Fact]
+    public void ParseCount_ThrowsArgumentException_WhenNotConvertible()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            MorkBorgGenerateOptionParser.ParseCount(
+                new Dictionary<string, object?> { ["count"] = new object() }));
+    }
 }

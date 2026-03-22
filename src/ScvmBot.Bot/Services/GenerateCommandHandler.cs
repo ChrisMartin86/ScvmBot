@@ -58,31 +58,11 @@ public class GenerateCommandHandler : ISlashCommand
 
         foreach (var m in _gameModules.Values)
         {
-            var constrained = ApplyDiscordConstraints(m.SubCommands);
+            var constrained = DiscordCommandAdapter.ApplyConstraints(m.SubCommands, MaxDiscordCharacterCount);
             builder.AddOption(DiscordCommandAdapter.ToSlashCommandOption(m.CommandKey, m.Name, constrained));
         }
 
         return builder;
-    }
-
-    /// <summary>
-    /// Applies Discord-specific option constraints to module command definitions.
-    /// Options with <see cref="CommandOptionRole.GenerationCount"/> are capped
-    /// at <see cref="MaxDiscordCharacterCount"/>.
-    /// </summary>
-    private static IReadOnlyList<SubCommandDefinition> ApplyDiscordConstraints(
-        IReadOnlyList<SubCommandDefinition> subCommands)
-    {
-        return subCommands.Select(sub => sub with
-        {
-            Options = sub.Options?.Select(opt =>
-                opt.Role == CommandOptionRole.GenerationCount
-                    ? opt with { MaxValue = opt.MaxValue.HasValue
-                        ? Math.Min(opt.MaxValue.Value, MaxDiscordCharacterCount)
-                        : MaxDiscordCharacterCount }
-                    : opt
-            ).ToList()
-        }).ToList();
     }
 
     private (IGameModule Module, string SubCommand, IReadOnlyDictionary<string, object?> Options)
@@ -194,6 +174,10 @@ public class GenerateCommandHandler : ISlashCommand
 
             var result = await gameModule.HandleGenerateCommandAsync(subCommand, options, ct);
 
+            // Defense-in-depth: the Discord command definition already caps count via
+            // ApplyConstraints, but a module could ignore that cap or be called from a
+            // non-Discord host. Validate the actual result so oversized batches never
+            // reach the renderer/delivery path regardless of how they were produced.
             if (result.CharacterCount > MaxDiscordCharacterCount)
                 throw new ArgumentException(
                     $"Character count cannot exceed {MaxDiscordCharacterCount} in Discord (attachment size limits).");

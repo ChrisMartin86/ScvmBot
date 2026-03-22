@@ -7,7 +7,14 @@ public enum CommandOptionType
     Integer
 }
 
-/// <summary>Semantic role of a command option, used by hosts to apply transport-specific constraints.</summary>
+/// <summary>
+/// Semantic role of a command option, used by transport hosts (e.g. Discord, CLI)
+/// to apply transport-specific constraints without hard-coding option names.
+/// <para>
+/// Hosts match on role rather than name so module-defined options survive renames.
+/// Add new roles sparingly — each one is a contract between modules and every host.
+/// </para>
+/// </summary>
 public enum CommandOptionRole
 {
     None,
