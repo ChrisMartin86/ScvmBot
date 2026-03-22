@@ -21,23 +21,44 @@ internal sealed class FakeCommandContext : ScvmBot.Bot.Services.ISlashCommandCon
     public Discord.IMessageChannel Channel { get; set; } = null!;
 
     public bool Deferred { get; private set; }
+    public bool DeferredEphemeral { get; private set; }
     public List<string?> FollowupTexts { get; } = new();
     public List<Discord.Embed?> FollowupEmbeds { get; } = new();
+    public List<bool> FollowupEphemerals { get; } = new();
     public List<string> RespondTexts { get; } = new();
+    public int DmChannelCreationCount { get; private set; }
 
-    public Task DeferAsync(bool ephemeral = false) { Deferred = true; return Task.CompletedTask; }
+    /// <summary>When non-null, FollowupAsync will throw this on the next call.</summary>
+    public Exception? FollowupException { get; set; }
+
+    public Task DeferAsync(bool ephemeral = false)
+    {
+        Deferred = true;
+        DeferredEphemeral = ephemeral;
+        return Task.CompletedTask;
+    }
 
     public Task FollowupAsync(string? text = null, Discord.Embed? embed = null, bool ephemeral = false)
     {
+        if (FollowupException is not null)
+        {
+            var ex = FollowupException;
+            FollowupException = null; // only throw once
+            throw ex;
+        }
         FollowupTexts.Add(text);
         FollowupEmbeds.Add(embed);
+        FollowupEphemerals.Add(ephemeral);
         return Task.CompletedTask;
     }
 
     public Task RespondAsync(string text) { RespondTexts.Add(text); return Task.CompletedTask; }
 
-    public Task<Discord.IMessageChannel> CreateUserDMChannelAsync() =>
-        Task.FromResult(Channel);
+    public Task<Discord.IMessageChannel> CreateUserDMChannelAsync()
+    {
+        DmChannelCreationCount++;
+        return Task.FromResult(Channel);
+    }
 }
 
 /// <summary>
@@ -48,8 +69,12 @@ internal sealed class FakeCommandContext : ScvmBot.Bot.Services.ISlashCommandCon
 internal sealed class FakeMessageChannel : Discord.IMessageChannel
 {
     public List<Discord.Embed?> SentEmbeds { get; } = new();
+    public List<string?> SentFileNames { get; } = new();
     public int SendMessageCallCount { get; private set; }
     public int SendFileCallCount { get; private set; }
+
+    /// <summary>When non-null, SendMessageAsync / SendFileAsync will throw this.</summary>
+    public Exception? SendException { get; set; }
 
     // IEntity<ulong>
     public ulong Id => 1;
@@ -78,6 +103,7 @@ internal sealed class FakeMessageChannel : Discord.IMessageChannel
         Discord.ISticker[]? stickers = null, Discord.Embed[]? embeds = null, Discord.MessageFlags flags = Discord.MessageFlags.None,
         Discord.PollProperties? pollProperties = null)
     {
+        if (SendException is not null) throw SendException;
         SendMessageCallCount++;
         SentEmbeds.Add(embed);
         return Task.FromResult<Discord.IUserMessage>(null!);
@@ -89,7 +115,9 @@ internal sealed class FakeMessageChannel : Discord.IMessageChannel
         Discord.ISticker[]? stickers = null, Discord.Embed[]? embeds = null, Discord.MessageFlags flags = Discord.MessageFlags.None,
         Discord.PollProperties? pollProperties = null)
     {
+        if (SendException is not null) throw SendException;
         SendFileCallCount++;
+        SentFileNames.Add(attachment.FileName);
         SentEmbeds.Add(embed);
         return Task.FromResult<Discord.IUserMessage>(null!);
     }

@@ -84,28 +84,45 @@ public class CliCharacterGenerationTests
     }
 
     [Fact]
-    public async Task Generate_WithFourD6Drop_ProducesCharacter()
-    {
-        var (module, _) = await CreateModulePipelineAsync();
-        var options = new Dictionary<string, object?> { ["roll-method"] = "4d6-drop-lowest" };
-
-        var result = await module.HandleGenerateCommandAsync("character", options);
-
-        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
-        Assert.False(string.IsNullOrWhiteSpace(charResult.Character.Name));
-    }
-
-    [Fact]
-    public async Task CliPath_DoesNotRequireDiscordAssemblies()
+    public async Task Generate_WithFourD6Drop_Classless_ProducesDifferentAbilities_ThanThreeD6()
     {
         var (module, _) = await CreateModulePipelineAsync();
 
-        // The fact that this test compiles and runs proves the CLI path
-        // is free of Discord.Net. This test project has no Discord.Net
-        // reference — if IGameModule or its dependencies pulled
-        // Discord types, this would fail to build.
-        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
-        Assert.IsType<CharacterGenerationResult<Character>>(result);
+        // Generate many classless characters with each roll method using the same seed range.
+        // The heroic roll path (4d6 drop lowest on 2 random abilities) should produce
+        // statistically different ability distributions than straight 3d6.
+        var threeD6Abilities = new List<(int S, int A, int P, int T)>();
+        var fourD6Abilities = new List<(int S, int A, int P, int T)>();
+
+        for (int seed = 0; seed < 20; seed++)
+        {
+            var gen3 = new ScvmBot.Games.MorkBorg.Generation.CharacterGenerator(
+                await ScvmBot.Games.MorkBorg.Reference.MorkBorgReferenceDataService.CreateAsync(
+                    Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data")),
+                new Random(seed));
+            var ch3 = gen3.Generate(new CharacterGenerationOptions
+            {
+                ClassName = "none",
+                RollMethod = AbilityRollMethod.ThreeD6
+            });
+            threeD6Abilities.Add((ch3.Strength, ch3.Agility, ch3.Presence, ch3.Toughness));
+
+            var gen4 = new ScvmBot.Games.MorkBorg.Generation.CharacterGenerator(
+                await ScvmBot.Games.MorkBorg.Reference.MorkBorgReferenceDataService.CreateAsync(
+                    Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data")),
+                new Random(seed));
+            var ch4 = gen4.Generate(new CharacterGenerationOptions
+            {
+                ClassName = "none",
+                RollMethod = AbilityRollMethod.FourD6DropLowest
+            });
+            fourD6Abilities.Add((ch4.Strength, ch4.Agility, ch4.Presence, ch4.Toughness));
+        }
+
+        // At least some characters must have different abilities, proving the roll method matters
+        var differences = threeD6Abilities.Zip(fourD6Abilities, (a, b) => a != b).Count(d => d);
+        Assert.True(differences > 0,
+            "4d6-drop-lowest should produce different ability scores than 3d6 for classless characters.");
     }
 
     // ── Rendering through RendererRegistry ───────────────────────────────
@@ -138,25 +155,6 @@ public class CliCharacterGenerationTests
             Assert.True(file.Bytes.Length > 0);
             Assert.EndsWith(".pdf", file.FileName);
         }
-    }
-
-    // ── Multi-character generation (CLI --count) ─────────────────────────
-
-    [Fact]
-    public async Task Generate_MultipleCharacters_ProducesRequestedCount()
-    {
-        var (module, _) = await CreateModulePipelineAsync();
-
-        var results = new List<GenerateResult>();
-        for (var i = 0; i < 4; i++)
-            results.Add(await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>()));
-
-        Assert.Equal(4, results.Count);
-        Assert.All(results, r =>
-        {
-            var charResult = Assert.IsType<CharacterGenerationResult<Character>>(r);
-            Assert.False(string.IsNullOrWhiteSpace(charResult.Character.Name));
-        });
     }
 
     [Fact]

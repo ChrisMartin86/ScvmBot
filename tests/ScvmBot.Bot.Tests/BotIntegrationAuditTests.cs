@@ -55,21 +55,21 @@ public class BotIntegrationAuditTests
     #region B3 – Parser alignment
 
     [Fact]
-    public void B3_Parser_NoneProducesClassless()
+    public void B3_Parser_NoneChoice_PreservesSentinelString()
     {
         var opts = MorkBorgGenerateOptionParser.ParseRawOptions(null, "none", null);
         Assert.Equal("none", opts.ClassName);
     }
 
     [Fact]
-    public void B3_Parser_NullProducesNullClassName()
+    public void B3_Parser_NullClass_PreservesNullForRandomSelection()
     {
         var opts = MorkBorgGenerateOptionParser.ParseRawOptions(null, null, null);
         Assert.Null(opts.ClassName);
     }
 
     [Fact]
-    public void B3_Parser_ExplicitClassPreserved()
+    public void B3_Parser_ExplicitClassName_PassesThroughUnchanged()
     {
         var opts = MorkBorgGenerateOptionParser.ParseRawOptions(null, "Fanged Deserter", null);
         Assert.Equal("Fanged Deserter", opts.ClassName);
