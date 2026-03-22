@@ -128,7 +128,7 @@ key in `vignettes.json → ClassIntros`.
     "startingWeapons": ["string"],        // weapon names from weapons.json
     "startingArmor": ["string"],          // armor names from armor.json
     "startingScrolls": ["string"],
-    "startingSilver": "string|null",      // die expression, e.g. "d6*10"
+    "startingSilver": "object|null",      // structured silver formula, e.g. { "diceCount": 1, "diceSides": 6, "multiplier": 10 }
     "strengthModifier": 0,
     "agilityModifier": 0,
     "presenceModifier": 0,

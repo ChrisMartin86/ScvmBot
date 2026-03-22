@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyModel;
 using System.Reflection;
 
@@ -27,9 +28,9 @@ public static class ModuleBootstrapper
     /// </summary>
     /// <param name="configuration">
     /// The full host configuration tree. Each module navigates to its own
-    /// section (e.g. <c>Modules:MorkBorg</c>) inside its <c>Configure</c> method.
+    /// section (e.g. <c>Modules:MorkBorg</c>) inside its <c>InitializeAsync</c> method.
     /// </param>
-    public static async Task<List<IModuleRegistration>> DiscoverAndInitializeAsync(
+    public static async Task<List<Action<IServiceCollection>>> DiscoverAndInitializeAsync(
         IConfiguration configuration)
     {
         var registrationTypes = GetModuleAssemblies()
@@ -42,15 +43,15 @@ public static class ModuleBootstrapper
     }
 
     /// <summary>
-    /// Instantiates, configures, and initialises <see cref="IModuleRegistration"/>
+    /// Instantiates and initialises <see cref="IModuleRegistration"/>
     /// implementations from the provided types. Throws if any type lacks a public
     /// parameterless constructor or if no modules are discovered.
     /// </summary>
-    internal static async Task<List<IModuleRegistration>> InitializeFromTypesAsync(
+    internal static async Task<List<Action<IServiceCollection>>> InitializeFromTypesAsync(
         IEnumerable<Type> registrationTypes,
         IConfiguration configuration)
     {
-        var modules = new List<IModuleRegistration>();
+        var registrations = new List<Action<IServiceCollection>>();
         foreach (var type in registrationTypes)
         {
             if (type.GetConstructor(Type.EmptyTypes) is null)
@@ -62,12 +63,11 @@ public static class ModuleBootstrapper
             }
 
             var module = (IModuleRegistration)Activator.CreateInstance(type)!;
-            module.Configure(configuration);
-            await module.InitializeAsync();
-            modules.Add(module);
+            var register = await module.InitializeAsync(configuration);
+            registrations.Add(register);
         }
 
-        if (modules.Count == 0)
+        if (registrations.Count == 0)
         {
             throw new InvalidOperationException(
                 "No game modules were discovered. " +
@@ -75,7 +75,7 @@ public static class ModuleBootstrapper
                 "a concrete IModuleRegistration implementation.");
         }
 
-        return modules;
+        return registrations;
     }
 
     private static IEnumerable<Assembly> GetModuleAssemblies()

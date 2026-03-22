@@ -52,7 +52,7 @@ public sealed class CharacterGenerator
 
         // Use class-specific silver formula if defined, otherwise 2d6 × 10
         var silver = options.Silver
-            ?? (classData?.StartingSilver is { Length: > 0 } silverFormula
+            ?? (classData?.StartingSilver is { } silverFormula
                 ? _dice.RollSilver(silverFormula)
                 : (_dice.RollDie(6) + _dice.RollDie(6)) * 10);
 

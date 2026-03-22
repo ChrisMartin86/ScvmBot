@@ -17,11 +17,7 @@ for (var i = 0; i < args.Length; i++)
 }
 var commandArgs = filteredArgs.ToArray();
 
-if (commandArgs.Length == 0 || commandArgs[0] is "-h" or "--help")
-{
-    PrintUsage();
-    return 0;
-}
+bool showHelp = commandArgs.Length == 0 || commandArgs[0] is "-h" or "--help";
 
 // ── Module discovery & initialization ────────────────────────────────────
 var configPairs = new Dictionary<string, string?>();
@@ -31,10 +27,17 @@ var configuration = new ConfigurationBuilder()
     .AddInMemoryCollection(configPairs)
     .Build();
 
-List<IModuleRegistration> registrations;
+List<Action<IServiceCollection>> registrations;
 try
 {
     registrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(configuration);
+}
+catch (Exception ex) when (showHelp)
+{
+    PrintUsage([]);
+    Console.Error.WriteLine();
+    Console.Error.WriteLine($"  (Module details unavailable: {ex.Message})");
+    return 0;
 }
 catch (FileNotFoundException ex)
 {
@@ -52,8 +55,8 @@ catch (InvalidOperationException ex)
 
 // ── Build DI container from discovered modules ──────────────────────────
 var services = new ServiceCollection();
-foreach (var reg in registrations)
-    reg.Register(services);
+foreach (var register in registrations)
+    register(services);
 services.AddSingleton<RendererRegistry>();
 services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 using var provider = services.BuildServiceProvider();
@@ -61,6 +64,12 @@ using var provider = services.BuildServiceProvider();
 var gameModules = provider.GetServices<IGameModule>()
     .ToDictionary(m => m.CommandKey, StringComparer.OrdinalIgnoreCase);
 var registry = provider.GetRequiredService<RendererRegistry>();
+
+if (showHelp)
+{
+    PrintUsage(gameModules);
+    return 0;
+}
 
 // ── Parse command structure ─────────────────────────────────────────────
 if (!string.Equals(commandArgs[0], "generate", StringComparison.OrdinalIgnoreCase))
@@ -353,23 +362,60 @@ static void PrintCard(CardOutput card)
     }
 }
 
-static void PrintUsage()
+static void PrintUsage(Dictionary<string, IGameModule> gameModules)
 {
     Console.WriteLine("Usage: scvmbot-cli [--data <path>] generate <game> <subcommand> [options]");
     Console.WriteLine();
+
     Console.WriteLine("Games:");
-    Console.WriteLine("  morkborg              MÖRK BORG");
+    if (gameModules.Count == 0)
+    {
+        Console.WriteLine("  (no modules discovered)");
+    }
+    else
+    {
+        foreach (var (key, mod) in gameModules.OrderBy(kv => kv.Key))
+            Console.WriteLine($"  {key,-20} {mod.Name}");
+    }
     Console.WriteLine();
-    Console.WriteLine("Subcommands (morkborg):");
-    Console.WriteLine("  character              Generate a random MÖRK BORG character");
-    Console.WriteLine("  party                  Generate a full adventuring party");
-    Console.WriteLine();
-    Console.WriteLine("Module options (passed through to the game module):");
-    Console.WriteLine("  --name <name>          Character name override");
-    Console.WriteLine("  --class <class>        Class name, 'none' for classless, or omit for random");
-    Console.WriteLine("  --roll-method <method> 3d6 (default) or 4d6-drop-lowest");
-    Console.WriteLine("  --size <n>             Party size (1-4, default 4)");
-    Console.WriteLine();
+
+    foreach (var (key, mod) in gameModules.OrderBy(kv => kv.Key))
+    {
+        Console.WriteLine($"Subcommands ({key}):");
+        foreach (var sc in mod.SubCommands)
+            Console.WriteLine($"  {sc.Name,-20} {sc.Description}");
+        Console.WriteLine();
+
+        foreach (var sc in mod.SubCommands)
+        {
+            if (sc.Options is not { Count: > 0 }) continue;
+            Console.WriteLine($"Options ({key} {sc.Name}):");
+            foreach (var opt in sc.Options)
+            {
+                var hint = opt.Type == CommandOptionType.Integer ? "<n>" : "<value>";
+                var label = $"--{opt.Name} {hint}";
+                Console.WriteLine($"  {label,-22}{opt.Description}");
+                if (opt.Choices is { Count: > 0 })
+                {
+                    var values = string.Join(", ", opt.Choices.Select(c => c.Value));
+                    Console.WriteLine($"  {"",22}Values: {values}");
+                }
+                if (opt.MinValue.HasValue || opt.MaxValue.HasValue)
+                {
+                    var range = (opt.MinValue, opt.MaxValue) switch
+                    {
+                        (long min, long max) => $"Range: {min}-{max}",
+                        (long min, null) => $"Min: {min}",
+                        (null, long max) => $"Max: {max}",
+                        _ => ""
+                    };
+                    Console.WriteLine($"  {"",22}{range}");
+                }
+            }
+            Console.WriteLine();
+        }
+    }
+
     Console.WriteLine("CLI options:");
     Console.WriteLine("  --count <n>            Number of characters to generate (1-20, default: 1)");
     Console.WriteLine("  --quiet                Benchmark mode: no output, prints timing only");
@@ -379,13 +425,24 @@ static void PrintUsage()
     Console.WriteLine("  --pdf [path]           Output a filled PDF or ZIP (format depends on result type)");
     Console.WriteLine("  --data <path>          Path to game data directory");
     Console.WriteLine();
+
     Console.WriteLine("Examples:");
-    Console.WriteLine("  scvmbot-cli generate morkborg character");
-    Console.WriteLine("  scvmbot-cli generate morkborg character --class none --pdf");
-    Console.WriteLine("  scvmbot-cli generate morkborg character --name Karg --roll-method 4d6-drop-lowest --pdf karg.pdf");
-    Console.WriteLine("  scvmbot-cli generate morkborg character --count 4 --pdf party.zip");
-    Console.WriteLine("  scvmbot-cli generate morkborg party --size 3");
-    Console.WriteLine("  scvmbot-cli generate morkborg party --size 3 --pdf");
-    Console.WriteLine("  scvmbot-cli generate morkborg character --quiet --count 10000");
-    Console.WriteLine("  scvmbot-cli generate morkborg character --quiet --detailed --count 10000");
+    var first = gameModules.OrderBy(kv => kv.Key).Select(kv => (kv.Key, kv.Value)).FirstOrDefault();
+    if (first.Value is not null)
+    {
+        foreach (var sc in first.Value.SubCommands)
+        {
+            Console.WriteLine($"  scvmbot-cli generate {first.Key} {sc.Name}");
+            Console.WriteLine($"  scvmbot-cli generate {first.Key} {sc.Name} --pdf");
+        }
+        var exSub = first.Value.SubCommands.FirstOrDefault()?.Name ?? "subcommand";
+        Console.WriteLine($"  scvmbot-cli generate {first.Key} {exSub} --count 4 --pdf");
+        Console.WriteLine($"  scvmbot-cli generate {first.Key} {exSub} --quiet --count 10000");
+        Console.WriteLine($"  scvmbot-cli generate {first.Key} {exSub} --quiet --detailed --count 10000");
+    }
+    else
+    {
+        Console.WriteLine("  scvmbot-cli generate <game> <subcommand>");
+        Console.WriteLine("  scvmbot-cli generate <game> <subcommand> --pdf");
+    }
 }

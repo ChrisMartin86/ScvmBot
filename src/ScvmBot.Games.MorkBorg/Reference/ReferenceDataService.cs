@@ -66,6 +66,21 @@ public class MorkBorgReferenceDataService
         // Supplementary datasets — missing file is tolerated; malformed JSON still throws.
         _descriptions = await LoadJsonOptionalAsync<DescriptionTables>(Path.Combine(_dataRootPath, "descriptions.json")) ?? new();
         _vignettes = await LoadJsonOptionalAsync<VignetteData>(Path.Combine(_dataRootPath, "vignettes.json")) ?? new();
+
+        ValidateSilverFormulas();
+    }
+
+    private void ValidateSilverFormulas()
+    {
+        foreach (var cls in _classes)
+        {
+            if (cls.StartingSilver is not { } f) continue;
+            if (f.DiceCount <= 0 || f.DiceSides <= 0 || f.Multiplier <= 0)
+                throw new InvalidOperationException(
+                    $"Class '{cls.Name}' has an invalid startingSilver formula: " +
+                    $"diceCount={f.DiceCount}, diceSides={f.DiceSides}, multiplier={f.Multiplier}. " +
+                    $"All values must be positive integers.");
+        }
     }
 
     private async Task<T> LoadJsonAsync<T>(string filePath) where T : class

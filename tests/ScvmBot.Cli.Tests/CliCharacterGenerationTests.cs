@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -16,11 +17,14 @@ public class CliCharacterGenerationTests
     private static async Task<(IGameModule Module, RendererRegistry Registry)> CreateModulePipelineAsync()
     {
         var dataPath = Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data");
-        var registration = new MorkBorgModuleRegistration(dataPath);
-        await registration.InitializeAsync();
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Modules:MorkBorg:DataPath"] = dataPath })
+            .Build();
+
+        var register = await new MorkBorgModuleRegistration().InitializeAsync(config);
 
         var services = new ServiceCollection();
-        registration.Register(services);
+        register(services);
         services.AddSingleton<RendererRegistry>();
         services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
         var provider = services.BuildServiceProvider();

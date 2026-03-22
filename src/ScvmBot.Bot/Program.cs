@@ -22,10 +22,10 @@ class Program
 
         // Discover and initialize game modules via the shared bootstrapper.
         // Each module navigates to its own config section (e.g. Modules:MorkBorg).
-        List<IModuleRegistration> modules;
+        List<Action<IServiceCollection>> moduleRegistrations;
         try
         {
-            modules = await ModuleBootstrapper.DiscoverAndInitializeAsync(builder.Configuration);
+            moduleRegistrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(builder.Configuration);
         }
         catch (FileNotFoundException ex)
         {
@@ -41,8 +41,8 @@ class Program
             return 1;
         }
 
-        foreach (var module in modules)
-            module.Register(builder.Services);
+        foreach (var register in moduleRegistrations)
+            register(builder.Services);
 
         // Rendering infrastructure
         builder.Services.AddSingleton<RendererRegistry>();

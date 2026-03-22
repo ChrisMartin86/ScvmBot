@@ -110,11 +110,12 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     #region A4 – Silver formulas
 
     [Theory]
-    [InlineData("d6x10", 10, 60)]
-    [InlineData("2d6x10", 20, 120)]
-    [InlineData("d6x10x3", 30, 180)]
-    public async Task A4_SilverFormula_ProducesExpectedRange(string formula, int min, int max)
+    [InlineData(1, 6, 10, 10, 60)]
+    [InlineData(2, 6, 10, 20, 120)]
+    [InlineData(1, 6, 30, 30, 180)]
+    public void A4_SilverFormula_ProducesExpectedRange(int diceCount, int diceSides, int multiplier, int min, int max)
     {
+        var formula = new SilverFormula(diceCount, diceSides, multiplier);
         for (int seed = 0; seed < 50; seed++)
         {
             var dice = new DiceRoller(new Random(seed));
@@ -124,27 +125,61 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     }
 
     [Fact]
-    public void A4_UnsupportedSilverFormula_Throws()
-    {
-        var dice = new DiceRoller(new Random(1));
-
-        Assert.Throws<InvalidOperationException>(
-            () => dice.RollSilver("3d8x5"));
-    }
-
-    [Fact]
-    public async Task A4_AllClasses_UseSupportedSilverFormulas()
+    public async Task A4_AllClasses_HaveValidSilverFormulas()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var supported = new HashSet<string> { "d6x10", "2d6x10", "d6x10x3" };
 
         foreach (var cls in refData.Classes)
         {
-            var formula = cls.StartingSilver ?? "";
-            if (formula.Length > 0)
-            {
-                Assert.Contains(formula.ToLowerInvariant(), supported);
-            }
+            if (cls.StartingSilver is not { } f) continue;
+            Assert.True(f.DiceCount > 0, $"{cls.Name}: diceCount must be positive");
+            Assert.True(f.DiceSides > 0, $"{cls.Name}: diceSides must be positive");
+            Assert.True(f.Multiplier > 0, $"{cls.Name}: multiplier must be positive");
+        }
+    }
+
+    [Fact]
+    public async Task A4_InvalidSilverFormula_RejectedAtStartup()
+    {
+        var sourceDataRoot = GetDataRootPath();
+        var tempDir = Path.Combine(Path.GetTempPath(), $"scvmbot-test-{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+
+            // Copy all data files from the real data directory
+            foreach (var file in Directory.GetFiles(sourceDataRoot, "*.json"))
+                File.Copy(file, Path.Combine(tempDir, Path.GetFileName(file)));
+
+            // Overwrite classes.json with a class that has an invalid silver formula (zero dice)
+            var badClassJson = """
+            [
+              {
+                "name": "Bad Silver Class",
+                "hitDie": "d8",
+                "omenDie": "d2",
+                "description": "test",
+                "classAbility": "test",
+                "startingSilver": { "diceCount": 0, "diceSides": 6, "multiplier": 10 },
+                "startingEquipmentMode": "ordinary",
+                "startingWeapons": [],
+                "startingArmor": [],
+                "startingScrolls": [],
+                "startingItems": []
+              }
+            ]
+            """;
+            File.WriteAllText(Path.Combine(tempDir, "classes.json"), badClassJson);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => MorkBorgReferenceDataService.CreateAsync(tempDir));
+            Assert.Contains("Bad Silver Class", ex.Message);
+            Assert.Contains("invalid startingSilver", ex.Message);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
         }
     }
 
@@ -346,7 +381,6 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     public async Task B1_AllClasses_HaveValidConfiguration()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var supportedSilver = new HashSet<string> { "d6x10", "2d6x10", "d6x10x3" };
         var supportedEquipModes = new HashSet<string> { MorkBorgConstants.EquipmentMode.Classless, MorkBorgConstants.EquipmentMode.Ordinary, MorkBorgConstants.EquipmentMode.Custom };
         var classNames = new HashSet<string>();
 
@@ -360,9 +394,11 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
             AssertStrictDieString(cls.OmenDie, cls.Name, "omenDie");
 
-            if (!string.IsNullOrEmpty(cls.StartingSilver))
+            if (cls.StartingSilver is { } sf)
             {
-                Assert.Contains(cls.StartingSilver.ToLowerInvariant(), supportedSilver);
+                Assert.True(sf.DiceCount > 0, $"{cls.Name}: startingSilver.diceCount must be positive");
+                Assert.True(sf.DiceSides > 0, $"{cls.Name}: startingSilver.diceSides must be positive");
+                Assert.True(sf.Multiplier > 0, $"{cls.Name}: startingSilver.multiplier must be positive");
             }
 
             if (cls.WeaponRollDie != null)

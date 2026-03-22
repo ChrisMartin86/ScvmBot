@@ -122,6 +122,12 @@ public class ScrollData
         => $"{Name} ({Kind} #{ScrollNumber}, DR{UsageDR})";
 }
 
+/// <summary>Structured silver-roll definition: roll <see cref="DiceCount"/>d<see cref="DiceSides"/> × <see cref="Multiplier"/>.</summary>
+public sealed record SilverFormula(
+    [property: JsonPropertyName("diceCount")] int DiceCount,
+    [property: JsonPropertyName("diceSides")] int DiceSides,
+    [property: JsonPropertyName("multiplier")] int Multiplier);
+
 public class ClassData
 {
     [JsonPropertyName("name")]
@@ -149,7 +155,7 @@ public class ClassData
     public IReadOnlyList<string> StartingScrolls { get; set; } = [];
 
     [JsonPropertyName("startingSilver")]
-    public string? StartingSilver { get; set; }
+    public SilverFormula? StartingSilver { get; set; }
 
     [JsonPropertyName("strengthModifier")]
     public int StrengthModifier { get; set; } = 0;

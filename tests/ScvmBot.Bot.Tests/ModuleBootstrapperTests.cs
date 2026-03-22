@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using ScvmBot.Modules;
 using ScvmBot.Modules.MorkBorg;
 
@@ -28,10 +29,15 @@ public class ModuleBootstrapperTests
             ["Modules:MorkBorg:DataPath"] = dataPath
         });
 
-        var modules = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
+        var registrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
 
-        Assert.NotEmpty(modules);
-        Assert.Contains(modules, m => m is MorkBorgModuleRegistration);
+        Assert.NotEmpty(registrations);
+
+        // Verify the discovered registration produces a working module
+        var services = new ServiceCollection();
+        foreach (var register in registrations)
+            register(services);
+        Assert.True(services.Count > 0);
     }
 
     // ── Discovery with minimal data directory still works ────────────────
@@ -52,14 +58,13 @@ public class ModuleBootstrapperTests
             ["Modules:MorkBorg:DataPath"] = dir
         });
 
-        var modules = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
+        var registrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
 
-        Assert.Single(modules);
-        var registration = Assert.IsType<MorkBorgModuleRegistration>(modules[0]);
+        Assert.Single(registrations);
 
         // Verify the registration can populate a DI container
-        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
-        registration.Register(services);
+        var services = new ServiceCollection();
+        registrations[0](services);
         Assert.True(services.Count > 0);
     }
 
@@ -81,15 +86,15 @@ public class ModuleBootstrapperTests
             () => ModuleBootstrapper.DiscoverAndInitializeAsync(config));
     }
 
-    // ── Configure is called before InitializeAsync ──────────────────────
+    // ── Configuration is passed to InitializeAsync ──────────────────────
 
     [Fact]
     public async Task DiscoverAndInitialize_AppliesConfiguredDataPath()
     {
         // Place data files in a unique temp directory that the module cannot
-        // find without Configure being called first. If Configure were skipped,
-        // InitializeAsync would fall back to a default path that doesn't
-        // contain these files and would fail with FileNotFoundException.
+        // find without configuration. If config weren't passed to InitializeAsync,
+        // the module would fall back to a default path that doesn't contain
+        // these files and would fail with FileNotFoundException.
         var dir = SharedTestInfrastructure.CreateTempDirectory();
         await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
         await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
@@ -103,15 +108,13 @@ public class ModuleBootstrapperTests
             ["Modules:MorkBorg:DataPath"] = dir
         });
 
-        var modules = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
+        var registrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
 
-        Assert.Single(modules);
-        // Verify the module was configured with our custom path by exercising
-        // its Register method. If the wrong path were used, InitializeAsync
-        // would have thrown before reaching here.
-        var registration = Assert.IsType<MorkBorgModuleRegistration>(modules[0]);
-        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
-        registration.Register(services);
+        Assert.Single(registrations);
+        // If the wrong path were used, InitializeAsync would have thrown.
+        // Verify the registration produces services.
+        var services = new ServiceCollection();
+        registrations[0](services);
         Assert.True(services.Count > 0);
     }
 
@@ -153,7 +156,7 @@ public class ModuleBootstrapperTests
         // No parameterless constructor — this should be rejected
         public NoParameterlessCtorRegistration(string required) => _required = required;
 
-        public Task InitializeAsync() => Task.CompletedTask;
-        public void Register(Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
+        public Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration)
+            => Task.FromResult<Action<IServiceCollection>>(_ => { });
     }
 }

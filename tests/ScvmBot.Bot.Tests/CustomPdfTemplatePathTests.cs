@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -16,6 +17,11 @@ namespace ScvmBot.Bot.Tests;
 /// </summary>
 public class CustomPdfTemplatePathTests
 {
+    private static IConfiguration BuildConfig(string dataPath) =>
+        new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Modules:MorkBorg:DataPath"] = dataPath })
+            .Build();
+
     [Fact]
     public async Task Registration_UsesCustomPdfTemplate_WhenPresentInDataPath()
     {
@@ -33,11 +39,10 @@ public class CustomPdfTemplatePathTests
         var templatePath = Path.Combine(dir, "character_sheet.pdf");
         await File.WriteAllBytesAsync(templatePath, CreateMinimalPdf());
 
-        var registration = new MorkBorgModuleRegistration(dir);
-        await registration.InitializeAsync();
+        var register = await new MorkBorgModuleRegistration().InitializeAsync(BuildConfig(dir));
 
         var services = new ServiceCollection();
-        registration.Register(services);
+        register(services);
         services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 
         using var provider = services.BuildServiceProvider();
@@ -69,11 +74,10 @@ public class CustomPdfTemplatePathTests
 
         File.Copy(realTemplate, Path.Combine(dir, "character_sheet.pdf"));
 
-        var registration = new MorkBorgModuleRegistration(dir);
-        await registration.InitializeAsync();
+        var register = await new MorkBorgModuleRegistration().InitializeAsync(BuildConfig(dir));
 
         var services = new ServiceCollection();
-        registration.Register(services);
+        register(services);
         services.AddSingleton<RendererRegistry>();
         services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

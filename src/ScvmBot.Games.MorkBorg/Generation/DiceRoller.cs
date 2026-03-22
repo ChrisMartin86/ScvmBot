@@ -1,3 +1,5 @@
+using ScvmBot.Games.MorkBorg.Reference;
+
 namespace ScvmBot.Games.MorkBorg.Generation;
 
 public sealed class DiceRoller
@@ -29,14 +31,11 @@ public sealed class DiceRoller
         return int.TryParse(numeric, out var size) && size > 0 ? size : 8;
     }
 
-    public int RollSilver(string formula)
+    public int RollSilver(SilverFormula formula)
     {
-        return formula.ToLowerInvariant() switch
-        {
-            "d6x10" => RollDie(6) * 10,
-            "2d6x10" => (RollDie(6) + RollDie(6)) * 10,
-            "d6x10x3" => RollDie(6) * 10 * 3,
-            _ => throw new InvalidOperationException($"Unsupported silver formula '{formula}'.")
-        };
+        var sum = 0;
+        for (var i = 0; i < formula.DiceCount; i++)
+            sum += RollDie(formula.DiceSides);
+        return sum * formula.Multiplier;
     }
 }

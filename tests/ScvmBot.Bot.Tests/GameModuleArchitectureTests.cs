@@ -1,4 +1,5 @@
 using Discord;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -79,9 +80,15 @@ public class GameModuleArchitectureTests
     [Fact]
     public async Task MorkBorgModuleRegistration_FailsFast_WhenDataDirectoryMissing()
     {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Modules:MorkBorg:DataPath"] = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))
+            })
+            .Build();
+
         var ex = await Assert.ThrowsAsync<FileNotFoundException>(
-            () => MorkBorgModuleRegistration.CreateAsync(
-                Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))));
+            () => new MorkBorgModuleRegistration().InitializeAsync(config));
 
         Assert.Contains("classes.json", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -164,7 +171,10 @@ public class GameModuleArchitectureTests
         await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
         await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
 
-        var register = await MorkBorgModuleRegistration.CreateAsync(dir);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Modules:MorkBorg:DataPath"] = dir })
+            .Build();
+        var register = await new MorkBorgModuleRegistration().InitializeAsync(config);
         register(services);
         services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 
@@ -188,11 +198,14 @@ public class GameModuleArchitectureTests
         await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
         await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
 
-        IModuleRegistration registration = new MorkBorgModuleRegistration(dir);
-        await registration.InitializeAsync();
+        IModuleRegistration registration = new MorkBorgModuleRegistration();
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Modules:MorkBorg:DataPath"] = dir })
+            .Build();
+        var register = await registration.InitializeAsync(config);
 
         var services = new ServiceCollection();
-        registration.Register(services);
+        register(services);
         services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 
         using var provider = services.BuildServiceProvider();
@@ -202,16 +215,6 @@ public class GameModuleArchitectureTests
         Assert.Single(modules);
         Assert.IsType<MorkBorgModule>(modules[0]);
         Assert.Equal(4, renderers.Count);
-    }
-
-    [Fact]
-    public void MorkBorgModuleRegistration_Register_ThrowsWhenCalledBeforeInitialize()
-    {
-        var registration = new MorkBorgModuleRegistration();
-        var services = new ServiceCollection();
-
-        var ex = Assert.Throws<InvalidOperationException>(() => registration.Register(services));
-        Assert.Contains("InitializeAsync()", ex.Message);
     }
 
     // ── Test doubles ─────────────────────────────────────────────────────────
