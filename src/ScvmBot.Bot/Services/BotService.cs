@@ -132,6 +132,7 @@ public class BotService : IHostedService
             var strategy = CommandRegistrar.ResolveStrategy(_configuration);
             if (strategy.Mode == RegistrationMode.Guild)
             {
+                var successCount = 0;
                 foreach (var guildId in strategy.GuildIds)
                 {
                     var guild = _client.GetGuild(guildId);
@@ -144,6 +145,15 @@ public class BotService : IHostedService
                     await guild.BulkOverwriteApplicationCommandAsync(commandProperties);
                     _logger.LogInformation("Registered {CommandCount} slash command(s) to guild {GuildName} ({GuildId}).",
                         _slashCommands.Count, guild.Name, guild.Id);
+                    successCount++;
+                }
+
+                if (successCount == 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Guild-mode command registration failed: none of the {strategy.GuildIds.Count} " +
+                        $"configured guild ID(s) could be resolved. " +
+                        $"Verify Discord:GuildIds contains IDs of guilds this bot has joined.");
                 }
             }
             else
