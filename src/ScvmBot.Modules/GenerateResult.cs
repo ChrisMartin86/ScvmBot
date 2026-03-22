@@ -1,28 +1,20 @@
 namespace ScvmBot.Modules;
 
 /// <summary>Base type for results from game system generation.</summary>
-public abstract record GenerateResult;
-
-/// <summary>Non-generic base for single character generation results.</summary>
-public abstract record CharacterGenerationResult : GenerateResult;
-
-/// <summary>Result for a single character generation.</summary>
-/// <typeparam name="TCharacter">The game-specific character type.</typeparam>
-public sealed record CharacterGenerationResult<TCharacter>(
-    TCharacter Character) : CharacterGenerationResult;
-
-/// <summary>Non-generic base for party generation results.</summary>
-public abstract record PartyGenerationResult(string PartyName) : GenerateResult
+public abstract record GenerateResult
 {
-    /// <summary>Number of characters in the party.</summary>
+    /// <summary>Number of characters in this result.</summary>
     public abstract int CharacterCount { get; }
 }
 
-/// <summary>Result for party generation with multiple characters.</summary>
+/// <summary>Non-generic base for character generation results.</summary>
+public abstract record CharacterGenerationResult : GenerateResult;
+
+/// <summary>Result containing one or more generated characters.</summary>
 /// <typeparam name="TCharacter">The game-specific character type.</typeparam>
-public sealed record PartyGenerationResult<TCharacter>(
+public sealed record CharacterGenerationResult<TCharacter>(
     IReadOnlyList<TCharacter> Characters,
-    string PartyName) : PartyGenerationResult(PartyName)
+    string? GroupName = null) : CharacterGenerationResult
 {
     /// <inheritdoc />
     public override int CharacterCount => Characters.Count;

@@ -40,10 +40,10 @@ public class CliCharacterGenerationTests
         var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
 
         var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
-        Assert.False(string.IsNullOrWhiteSpace(charResult.Character.Name));
-        Assert.True(charResult.Character.MaxHitPoints >= 1);
-        Assert.True(charResult.Character.HitPoints >= 1);
-        Assert.NotNull(charResult.Character.EquippedWeapon);
+        Assert.False(string.IsNullOrWhiteSpace(charResult.Characters[0].Name));
+        Assert.True(charResult.Characters[0].MaxHitPoints >= 1);
+        Assert.True(charResult.Characters[0].HitPoints >= 1);
+        Assert.NotNull(charResult.Characters[0].EquippedWeapon);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class CliCharacterGenerationTests
         var result = await module.HandleGenerateCommandAsync("character", options);
 
         var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
-        Assert.Equal("TestScvm", charResult.Character.Name);
+        Assert.Equal("TestScvm", charResult.Characters[0].Name);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class CliCharacterGenerationTests
         var result = await module.HandleGenerateCommandAsync("character", options);
 
         var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
-        Assert.Null(charResult.Character.ClassName);
+        Assert.Null(charResult.Characters[0].ClassName);
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class CliCharacterGenerationTests
         var result = await module.HandleGenerateCommandAsync("character", options);
 
         var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
-        Assert.Equal(classChoice.Value, charResult.Character.ClassName);
+        Assert.Equal(classChoice.Value, charResult.Characters[0].ClassName);
     }
 
     [Fact]
@@ -190,24 +190,24 @@ public class CliCharacterGenerationTests
     // ── Party generation through module pipeline ─────────────────────────
 
     [Fact]
-    public async Task GenerateParty_ReturnsPartyResult()
+    public async Task GenerateMulti_ReturnsMultiCharacterResult()
     {
         var (module, _) = await CreateModulePipelineAsync();
-        var options = new Dictionary<string, object?> { ["size"] = 3L };
+        var options = new Dictionary<string, object?> { ["count"] = 3L };
 
-        var result = await module.HandleGenerateCommandAsync("party", options);
+        var result = await module.HandleGenerateCommandAsync("character", options);
 
-        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
-        Assert.Equal(3, partyResult.Characters.Count);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.Equal(3, charResult.Characters.Count);
     }
 
     [Fact]
-    public async Task GenerateParty_RenderCard_ReturnsCardOutput()
+    public async Task GenerateMulti_RenderCard_ReturnsCardOutput()
     {
         var (module, registry) = await CreateModulePipelineAsync();
-        var options = new Dictionary<string, object?> { ["size"] = 2L };
+        var options = new Dictionary<string, object?> { ["count"] = 2L };
 
-        var result = await module.HandleGenerateCommandAsync("party", options);
+        var result = await module.HandleGenerateCommandAsync("character", options);
         var card = registry.RenderCard(result);
 
         Assert.NotNull(card.Title);
@@ -227,12 +227,12 @@ public class CliCharacterGenerationTests
     }
 
     [Fact]
-    public async Task GenerateParty_WithInvalidSize_ThrowsArgumentException()
+    public async Task GenerateMulti_WithInvalidCount_ThrowsArgumentException()
     {
         var (module, _) = await CreateModulePipelineAsync();
-        var options = new Dictionary<string, object?> { ["size"] = "nope" };
+        var options = new Dictionary<string, object?> { ["count"] = "nope" };
 
         await Assert.ThrowsAsync<ArgumentException>(
-            () => module.HandleGenerateCommandAsync("party", options));
+            () => module.HandleGenerateCommandAsync("character", options));
     }
 }

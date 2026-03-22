@@ -100,7 +100,7 @@ public class GenerateCommandHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_SendsPartyEmbed_ToChannel_WhenInDm()
+    public async Task HandleAsync_SendsMultiCharacterEmbed_ToChannel_WhenInDm()
     {
         var gs = await CreateMinimalGameSystemAsync();
         var handler = new GenerateCommandHandler(
@@ -117,8 +117,8 @@ public class GenerateCommandHandlerTests
             Options = new[]
             {
                 MakeSubCommandGroup("morkborg",
-                    MakeSubCommand("party"),
-                    MakeOption("size", ApplicationCommandOptionType.Integer, (long)2))
+                    MakeSubCommand("character",
+                        MakeOption("count", ApplicationCommandOptionType.Integer, (long)2)))
             }
         };
 
@@ -126,13 +126,13 @@ public class GenerateCommandHandlerTests
 
         Assert.True(context.Deferred);
         Assert.Equal(1, channel.SendMessageCallCount);
-        Assert.Contains("Here's your party!", context.FollowupTexts);
+        Assert.Contains("Here are your characters!", context.FollowupTexts);
 
-        // Verify the rendered card is a real party card with member roster
+        // Verify the rendered card is a roster card with member list
         var embed = Assert.Single(channel.SentEmbeds);
         Assert.NotNull(embed);
         Assert.False(string.IsNullOrWhiteSpace(embed!.Title),
-            "Party card must have a non-empty title (party name).");
+            "Roster card must have a non-empty title (group name).");
         Assert.NotNull(embed.Description);
         Assert.Contains("Party of", embed.Description);
         // Each member should appear as a bullet in the roster
@@ -142,13 +142,12 @@ public class GenerateCommandHandlerTests
     // ── Party PDF failure isolation ───────────────────────────────────────────
 
     [Fact]
-    public async Task HandleAsync_DeliversPartyCard_EvenWhenAllPdfRendersFail()
+    public async Task HandleAsync_DeliversRosterCard_EvenWhenAllPdfRendersFail()
     {
-        var gs = new ThrowingPdfPartyGameSystem();
-        // Register only embed renderers — no PDF renderer for this game system
+        var gs = new MultiCharacterNoPdfGameSystem();
         var registry = new RendererRegistry(new IResultRenderer[]
         {
-            new MorkBorgPartyEmbedRenderer()
+            new MorkBorgCharacterEmbedRenderer()
         });
         var handler = new GenerateCommandHandler(
             new ScvmBot.Modules.IGameModule[] { gs },
@@ -163,7 +162,7 @@ public class GenerateCommandHandlerTests
             Channel = channel,
             Options = new[]
             {
-                MakeSubCommandGroup("throwing-pdf", MakeSubCommand("party"))
+                MakeSubCommandGroup("multi-char", MakeSubCommand("character"))
             }
         };
 
@@ -172,13 +171,13 @@ public class GenerateCommandHandlerTests
         Assert.True(context.Deferred);
         Assert.Equal(1, channel.SendMessageCallCount);  // card sent without PDF archive
         Assert.Equal(0, channel.SendFileCallCount);
-        Assert.Contains("Here's your party!", context.FollowupTexts);
+        Assert.Contains("Here are your characters!", context.FollowupTexts);
 
-        // Verify the party card has real content
+        // Verify the roster card has real content
         var embed = Assert.Single(channel.SentEmbeds);
         Assert.NotNull(embed);
         Assert.False(string.IsNullOrWhiteSpace(embed!.Title),
-            "Party card must have a non-empty title.");
+            "Roster card must have a non-empty title.");
         Assert.NotNull(embed.Description);
         Assert.Contains("Party of", embed.Description);
     }
@@ -205,15 +204,15 @@ public class GenerateCommandHandlerTests
     // ── Zero-character party error ──────────────────────────────────────────
 
     [Fact]
-    public async Task HandleAsync_SendsError_WhenPartyGeneratesZeroCharacters()
+    public async Task HandleAsync_SendsError_WhenGenerationProducesZeroCharacters()
     {
-        var emptyPartyModule = new EmptyPartyModule();
+        var emptyModule = new EmptyResultModule();
         var registry = new RendererRegistry(new IResultRenderer[]
         {
-            new MorkBorgPartyEmbedRenderer()
+            new MorkBorgCharacterEmbedRenderer()
         });
         var handler = new GenerateCommandHandler(
-            new ScvmBot.Modules.IGameModule[] { emptyPartyModule },
+            new ScvmBot.Modules.IGameModule[] { emptyModule },
             registry,
             CreateDeliveryService(),
             NullLogger<GenerateCommandHandler>.Instance);
@@ -224,7 +223,7 @@ public class GenerateCommandHandlerTests
             Channel = new FakeMessageChannel(),
             Options = new[]
             {
-                MakeSubCommandGroup("empty-party", MakeSubCommand("party"))
+                MakeSubCommandGroup("empty-result", MakeSubCommand("character"))
             }
         };
 
@@ -405,8 +404,7 @@ public class GenerateCommandHandlerTests
     private static RendererRegistry CreateMorkBorgRegistry() =>
         new(new IResultRenderer[]
         {
-            new MorkBorgCharacterEmbedRenderer(),
-            new MorkBorgPartyEmbedRenderer()
+            new MorkBorgCharacterEmbedRenderer()
         });
 
     private static GenerateCommandHandler CreateMinimalHandler() =>
@@ -436,8 +434,15 @@ public class GenerateCommandHandlerTests
             Options = subOptions.ToList().AsReadOnly()
         };
 
-    private static IApplicationCommandInteractionDataOption MakeSubCommand(string name) =>
-        new FakeOption { Name = name, Type = ApplicationCommandOptionType.SubCommand, Options = null };
+    private static IApplicationCommandInteractionDataOption MakeSubCommand(
+        string name,
+        params IApplicationCommandInteractionDataOption[] childOptions) =>
+        new FakeOption
+        {
+            Name = name,
+            Type = ApplicationCommandOptionType.SubCommand,
+            Options = childOptions.Length > 0 ? childOptions.ToList().AsReadOnly() : null
+        };
 
     private static IApplicationCommandInteractionDataOption MakeOption(
         string name,
@@ -453,14 +458,14 @@ public class GenerateCommandHandlerTests
         public IReadOnlyCollection<IApplicationCommandInteractionDataOption>? Options { get; set; }
     }
 
-    private class ThrowingPdfPartyGameSystem : IGameModule
+    private class MultiCharacterNoPdfGameSystem : IGameModule
     {
-        public string Name => "Throwing PDF";
-        public string CommandKey => "throwing-pdf";
+        public string Name => "Multi Char";
+        public string CommandKey => "multi-char";
 
         public IReadOnlyList<SubCommandDefinition> SubCommands { get; } = new[]
         {
-            new SubCommandDefinition("party", "Generate a party")
+            new SubCommandDefinition("character", "Generate characters")
         };
 
         public Task<GenerateResult> HandleGenerateCommandAsync(
@@ -470,12 +475,13 @@ public class GenerateCommandHandlerTests
         {
             var characters = new List<ScvmBot.Games.MorkBorg.Models.Character>
             {
-                new ScvmBot.Games.MorkBorg.Models.Character { Name = "Skag" }
+                new ScvmBot.Games.MorkBorg.Models.Character { Name = "Skag" },
+                new ScvmBot.Games.MorkBorg.Models.Character { Name = "Bleth" }
             };
             return Task.FromResult<GenerateResult>(
-                new PartyGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>(
+                new CharacterGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>(
                     Characters: characters.AsReadOnly(),
-                    PartyName: "Test Party"));
+                    GroupName: "Test Party"));
         }
     }
 
@@ -492,23 +498,22 @@ public class GenerateCommandHandlerTests
             string subCommand, IReadOnlyDictionary<string, object?> options, CancellationToken ct = default)
             => Task.FromResult<GenerateResult>(
                 new CharacterGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>(
-                    new ScvmBot.Games.MorkBorg.Models.Character { Name = "Stub" }));
+                    new[] { new ScvmBot.Games.MorkBorg.Models.Character { Name = "Stub" } }));
     }
 
-    private class EmptyPartyModule : ScvmBot.Modules.IGameModule
+    private class EmptyResultModule : ScvmBot.Modules.IGameModule
     {
-        public string Name => "Empty Party";
-        public string CommandKey => "empty-party";
+        public string Name => "Empty Result";
+        public string CommandKey => "empty-result";
         public IReadOnlyList<SubCommandDefinition> SubCommands { get; } = new[]
         {
-            new SubCommandDefinition("party", "Generate an empty party")
+            new SubCommandDefinition("character", "Generate nothing")
         };
         public Task<GenerateResult> HandleGenerateCommandAsync(
             string subCommand, IReadOnlyDictionary<string, object?> options, CancellationToken ct = default)
             => Task.FromResult<GenerateResult>(
-                new PartyGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>(
-                    Characters: new List<ScvmBot.Games.MorkBorg.Models.Character>().AsReadOnly(),
-                    PartyName: "Ghost Squad"));
+                new CharacterGenerationResult<ScvmBot.Games.MorkBorg.Models.Character>(
+                    new List<ScvmBot.Games.MorkBorg.Models.Character>().AsReadOnly()));
     }
 
     private class ThrowingFileRenderer : IResultRenderer

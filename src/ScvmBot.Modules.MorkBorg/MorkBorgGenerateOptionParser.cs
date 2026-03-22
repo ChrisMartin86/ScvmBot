@@ -20,6 +20,33 @@ public sealed class MorkBorgGenerateOptionParser
     }
 
     /// <summary>
+    /// Parses the count option from the options dictionary.
+    /// Returns 1 if not specified.
+    /// </summary>
+    public static int ParseCount(IReadOnlyDictionary<string, object?> options)
+    {
+        if (!options.TryGetValue("count", out var countValue) || countValue is null)
+            return 1;
+
+        if (countValue is IConvertible convertible)
+        {
+            try
+            {
+                var count = convertible.ToInt32(null);
+                if (count < 1)
+                    throw new ArgumentException($"Invalid count: '{countValue}'. Must be a positive integer.");
+                return count;
+            }
+            catch (Exception ex) when (ex is OverflowException or FormatException or InvalidCastException)
+            {
+                throw new ArgumentException($"Invalid count: '{countValue}'. Must be a positive integer.", ex);
+            }
+        }
+
+        throw new ArgumentException($"Invalid count: '{countValue}'. Must be a positive integer.");
+    }
+
+    /// <summary>
     /// Pure parser testable without any transport types.
     /// 
     /// ClassName interpretation:

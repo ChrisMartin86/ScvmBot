@@ -53,7 +53,7 @@ public class GameModuleArchitectureTests
         var modules = provider.GetServices<IGameModule>().ToList();
         var registry = provider.GetRequiredService<RendererRegistry>();
         var renderer = registry.FindRenderer(
-            new CharacterGenerationResult<FakeCharacter>(new FakeCharacter { Name = "X" }),
+            new CharacterGenerationResult<FakeCharacter>(new[] { new FakeCharacter { Name = "X" } }),
             OutputFormat.Card);
 
         Assert.Single(modules);
@@ -184,7 +184,7 @@ public class GameModuleArchitectureTests
 
         Assert.Single(modules);
         Assert.IsType<MorkBorgModule>(modules[0]);
-        Assert.Equal(4, renderers.Count);
+        Assert.Equal(2, renderers.Count);
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public class GameModuleArchitectureTests
 
         Assert.Single(modules);
         Assert.IsType<MorkBorgModule>(modules[0]);
-        Assert.Equal(4, renderers.Count);
+        Assert.Equal(2, renderers.Count);
     }
 
     // ── Test doubles ─────────────────────────────────────────────────────────
@@ -244,7 +244,7 @@ public class GameModuleArchitectureTests
             InvocationCount++;
             return Task.FromResult<GenerateResult>(
                 new CharacterGenerationResult<FakeCharacter>(
-                    new FakeCharacter { Name = $"FakeChar-{CommandKey}" }));
+                    new[] { new FakeCharacter { Name = $"FakeChar-{CommandKey}" } }));
         }
     }
 

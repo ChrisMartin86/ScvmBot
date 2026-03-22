@@ -67,15 +67,15 @@ public class PartyNameGeneratorTests
 }
 
 // =====================================================================
-// PartyEmbedBuilderTests
+// RosterEmbedBuilderTests
 // =====================================================================
-public class PartyEmbedBuilderTests
+public class RosterEmbedBuilderTests
 {
     [Fact]
-    public void Build_IncludesPartyName_AsTitle()
+    public void Build_IncludesGroupName_AsTitle()
     {
         var members = CreateMembers(2);
-        var card = MorkBorgPartyEmbedRenderer.BuildCard("The Doomed", members);
+        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("The Doomed", members);
 
         Assert.Equal("The Doomed", card.Title);
     }
@@ -84,7 +84,7 @@ public class PartyEmbedBuilderTests
     public void Build_IncludesPartySize_InDescription()
     {
         var members = CreateMembers(3);
-        var card = MorkBorgPartyEmbedRenderer.BuildCard("Squad", members);
+        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Squad", members);
 
         Assert.Contains("Party of 3", card.Description);
     }
@@ -99,7 +99,7 @@ public class PartyEmbedBuilderTests
             new Character { Name = "Gamma" }
         };
 
-        var card = MorkBorgPartyEmbedRenderer.BuildCard("Party", members);
+        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Party", members);
 
         Assert.Contains("Alpha", card.Description);
         Assert.Contains("Beta", card.Description);
@@ -110,7 +110,7 @@ public class PartyEmbedBuilderTests
     public void Build_FormatsCorrectly_WithMultipleMembers()
     {
         var members = CreateMembers(5);
-        var card = MorkBorgPartyEmbedRenderer.BuildCard("Big Party", members);
+        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Big Party", members);
 
         // Description contains "Party of 5" plus one bullet line per member
         var lines = card.Description!.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -124,7 +124,7 @@ public class PartyEmbedBuilderTests
     public void Build_HasNoFields()
     {
         var members = CreateMembers(3);
-        var card = MorkBorgPartyEmbedRenderer.BuildCard("Party", members);
+        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard("Party", members);
 
         Assert.Null(card.Fields);
     }

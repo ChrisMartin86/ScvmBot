@@ -44,9 +44,7 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
 
             // Renderers
             services.AddSingleton<IResultRenderer, MorkBorgCharacterEmbedRenderer>();
-            services.AddSingleton<IResultRenderer, MorkBorgPartyEmbedRenderer>();
             services.AddSingleton<IResultRenderer, MorkBorgCharacterPdfRenderer>();
-            services.AddSingleton<IResultRenderer, MorkBorgPartyPdfRenderer>();
         };
     }
 

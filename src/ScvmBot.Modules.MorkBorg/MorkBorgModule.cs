@@ -34,33 +34,28 @@ public sealed class MorkBorgModule : IGameModule
     {
         ct.ThrowIfCancellationRequested();
 
-        if (string.Equals(subCommand, "party", StringComparison.OrdinalIgnoreCase))
-            return Task.FromResult<GenerateResult>(BuildPartyResult(options));
+        if (!string.Equals(subCommand, "character", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(
+                $"Unknown subcommand '{subCommand}'. Expected 'character'.");
 
-        if (string.Equals(subCommand, "character", StringComparison.OrdinalIgnoreCase))
+        var genOptions = MorkBorgGenerateOptionParser.Parse(options);
+        var count = MorkBorgGenerateOptionParser.ParseCount(options);
+
+        var characters = new List<Character>(count);
+        for (var i = 0; i < count; i++)
         {
-            var genOptions = MorkBorgGenerateOptionParser.Parse(options);
-            var character = _generator.Generate(genOptions);
-            return Task.FromResult<GenerateResult>(new CharacterGenerationResult<Character>(character));
+            // Name override only applies to the first character
+            var iterOptions = i == 0 ? genOptions : new CharacterGenerationOptions
+            {
+                RollMethod = genOptions.RollMethod,
+                ClassName = genOptions.ClassName
+            };
+            characters.Add(_generator.Generate(iterOptions));
         }
 
-        throw new InvalidOperationException(
-            $"Unknown subcommand '{subCommand}'. Expected 'character' or 'party'.");
-    }
+        var groupName = count > 1 ? PartyNameGenerator.Generate(characters) : null;
 
-    private PartyGenerationResult<Character> BuildPartyResult(
-        IReadOnlyDictionary<string, object?> options)
-    {
-        var partySize = MorkBorgPartyOptionParser.ParsePartySize(options);
-
-        var characters = Enumerable.Range(0, partySize)
-            .Select(_ => _generator.Generate(new CharacterGenerationOptions()))
-            .ToList();
-
-        var partyName = PartyNameGenerator.Generate(characters);
-
-        return new PartyGenerationResult<Character>(
-            Characters: characters.AsReadOnly(),
-            PartyName: partyName);
+        return Task.FromResult<GenerateResult>(
+            new CharacterGenerationResult<Character>(characters.AsReadOnly(), groupName));
     }
 }

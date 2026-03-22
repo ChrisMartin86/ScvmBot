@@ -17,7 +17,7 @@ public sealed class MorkBorgCommandDefinition
 
         return new[]
         {
-            new SubCommandDefinition("character", "Generate a random MÖRK BORG character", new CommandOptionDefinition[]
+            new SubCommandDefinition("character", "Generate one or more random MÖRK BORG characters", new CommandOptionDefinition[]
             {
                 new("roll-method",
                     "Classless only. 4d6 drop boosts 2 random abilities. Classed always 3d6.",
@@ -29,13 +29,10 @@ public sealed class MorkBorgCommandDefinition
                     Choices: classChoices),
                 new("name",
                     "Override the character name",
-                    CommandOptionType.String, Required: false)
-            }),
-            new SubCommandDefinition("party", "Generate a full adventuring party (1-4 characters, default 4)", new CommandOptionDefinition[]
-            {
-                new("size",
-                    "Number of characters in the party (1-4, default 4)",
-                    CommandOptionType.Integer, Required: false, MinValue: 1, MaxValue: 4)
+                    CommandOptionType.String, Required: false),
+                new("count",
+                    "Number of characters to generate (default 1)",
+                    CommandOptionType.Integer, Required: false, MinValue: 1)
             })
         };
     }

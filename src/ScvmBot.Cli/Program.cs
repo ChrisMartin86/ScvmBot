@@ -91,6 +91,11 @@ try
 // ── Benchmark mode ──────────────────────────────────────────────────────
 if (cliOpts.Quiet)
 {
+    // Benchmark generates one character per iteration for per-call timing.
+    var benchOptions = new Dictionary<string, object?>(optionsDict, StringComparer.OrdinalIgnoreCase);
+    benchOptions.Remove("count");
+    benchOptions.Remove("name");
+
     if (cliOpts.Detailed)
     {
         var ticksPerGeneration = new long[cliOpts.Count];
@@ -101,7 +106,7 @@ if (cliOpts.Quiet)
         for (var n = 0; n < cliOpts.Count; n++)
         {
             sw.Restart();
-            await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict, ct);
+            await module.HandleGenerateCommandAsync(subCommandDef.Name, benchOptions, ct);
             sw.Stop();
             ticksPerGeneration[n] = sw.ElapsedTicks;
         }
@@ -137,7 +142,7 @@ if (cliOpts.Quiet)
         var sw = Stopwatch.StartNew();
 
         for (var n = 0; n < cliOpts.Count; n++)
-            await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict, ct);
+            await module.HandleGenerateCommandAsync(subCommandDef.Name, benchOptions, ct);
 
         sw.Stop();
         var endTime = DateTimeOffset.Now;
@@ -151,86 +156,23 @@ if (cliOpts.Quiet)
 }
 
 // ── Normal generation mode ──────────────────────────────────────────────
-var results = new List<(GenerateResult Result, CardOutput Card)>(cliOpts.Count);
-for (var n = 0; n < cliOpts.Count; n++)
-{
-    // Only apply name override to the first character when generating multiples
-    var iterOptions = (n == 0 || !optionsDict.ContainsKey("name"))
-        ? optionsDict
-        : new Dictionary<string, object?>(
-            optionsDict.Where(kv => !string.Equals(kv.Key, "name", StringComparison.OrdinalIgnoreCase)),
-            StringComparer.OrdinalIgnoreCase);
-
-    var result = await module.HandleGenerateCommandAsync(subCommandDef.Name, iterOptions, ct);
-    var card = registry.RenderCard(result);
-    results.Add((result, card));
-}
-
-for (var n = 0; n < results.Count; n++)
-{
-    if (n > 0) Console.WriteLine(new string('-', 40));
-    PrintCard(results[n].Card);
-}
+var result = await module.HandleGenerateCommandAsync(subCommandDef.Name, optionsDict, ct);
+var card = registry.RenderCard(result);
+PrintCard(card);
 
 if (cliOpts.GeneratePdf)
 {
     var pdfPath = cliOpts.PdfPath;
-    if (results.Count == 1)
+    var file = registry.TryRenderFile(result);
+    if (file is null)
     {
-        var file = registry.TryRenderFile(results[0].Result);
-        if (file is null)
-        {
-            Console.Error.WriteLine("PDF rendering is not available.");
-            return 1;
-        }
-        pdfPath ??= file.FileName;
-        File.WriteAllBytes(pdfPath, file.Bytes);
-        Console.WriteLine();
-        Console.WriteLine($"  Saved to {pdfPath}");
+        Console.Error.WriteLine("PDF rendering is not available.");
+        return 1;
     }
-    else
-    {
-        var renderedFiles = new List<(string Name, byte[] Bytes, string FileName)>();
-        foreach (var (result, card) in results)
-        {
-            var file = registry.TryRenderFile(result);
-            if (file is not null)
-                renderedFiles.Add((card.Title ?? "character", file.Bytes, file.FileName));
-            else
-                Console.Error.WriteLine($"File rendering failed for '{card.Title}'; skipping.");
-        }
-
-        if (renderedFiles.Count == 0)
-        {
-            Console.Error.WriteLine("All file renders failed.");
-            return 1;
-        }
-
-        // If every rendered file is already a complete archive (e.g. party ZIPs),
-        // write each one individually rather than wrapping ZIPs inside another ZIP.
-        var allArchives = renderedFiles.All(f => f.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
-        if (allArchives)
-        {
-            for (var i = 0; i < renderedFiles.Count; i++)
-            {
-                var outputName = renderedFiles.Count == 1
-                    ? pdfPath ?? renderedFiles[i].FileName
-                    : $"{Path.GetFileNameWithoutExtension(renderedFiles[i].FileName)}_{i + 1}.zip";
-                File.WriteAllBytes(outputName, renderedFiles[i].Bytes);
-                Console.WriteLine();
-                Console.WriteLine($"  Saved to {outputName}");
-            }
-        }
-        else
-        {
-            var memberPdfs = renderedFiles.Select(f => (f.Name, f.Bytes)).ToList();
-            pdfPath ??= "characters.zip";
-            var zipBytes = PartyZipBuilder.CreatePartyZip(memberPdfs);
-            File.WriteAllBytes(pdfPath, zipBytes);
-            Console.WriteLine();
-            Console.WriteLine($"  ZIP saved to {pdfPath} ({memberPdfs.Count} character sheets)");
-        }
-    }
+    pdfPath ??= file.FileName;
+    File.WriteAllBytes(pdfPath, file.Bytes);
+    Console.WriteLine();
+    Console.WriteLine($"  Saved to {pdfPath}");
 }
 
 return 0;
@@ -289,9 +231,11 @@ static void PrintUsage(Dictionary<string, IGameModule> gameModules)
 
         foreach (var sc in mod.SubCommands)
         {
-            if (sc.Options is not { Count: > 0 }) continue;
+            // Skip "count" — it's exposed as the CLI's --count option instead
+            var displayOptions = sc.Options?.Where(o => !string.Equals(o.Name, "count", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (displayOptions is not { Count: > 0 }) continue;
             Console.WriteLine($"Options ({key} {sc.Name}):");
-            foreach (var opt in sc.Options)
+            foreach (var opt in displayOptions)
             {
                 var hint = opt.Type == CommandOptionType.Integer ? "<n>" : "<value>";
                 var label = $"--{opt.Name} {hint}";

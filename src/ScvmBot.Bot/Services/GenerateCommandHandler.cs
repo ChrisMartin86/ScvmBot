@@ -12,6 +12,12 @@ namespace ScvmBot.Bot.Services;
 /// </summary>
 public class GenerateCommandHandler : ISlashCommand
 {
+    /// <summary>
+    /// Maximum character count permitted via the Discord bot, driven by Discord's
+    /// file-size limits and embed rendering constraints.
+    /// </summary>
+    internal const int MaxDiscordCharacterCount = 4;
+
     private readonly IReadOnlyDictionary<string, IGameModule> _gameModules;
     private readonly RendererRegistry _rendererRegistry;
     private readonly GenerationDeliveryService _delivery;
@@ -144,7 +150,7 @@ public class GenerateCommandHandler : ISlashCommand
         try
         {
             var followupText = context.GuildId is null
-                ? (result is PartyGenerationResult ? "Here's your party!" : "Here's your character!")
+                ? (result.CharacterCount > 1 ? "Here are your characters!" : "Here's your character!")
                 : "Check your DMs.";
             await context.FollowupAsync(text: followupText, ephemeral: true);
         }
@@ -162,12 +168,22 @@ public class GenerateCommandHandler : ISlashCommand
         try
         {
             var (gameModule, subCommand, options) = ParseCommand(context);
+
+            // Enforce Discord-specific character count cap.
+            if (options.TryGetValue("count", out var countVal) && countVal is IConvertible c)
+            {
+                var count = c.ToInt32(null);
+                if (count > MaxDiscordCharacterCount)
+                    throw new ArgumentException(
+                        $"Character count cannot exceed {MaxDiscordCharacterCount} in Discord (attachment size limits).");
+            }
+
             var result = await gameModule.HandleGenerateCommandAsync(subCommand, options, ct);
 
-            if (result is PartyGenerationResult { CharacterCount: 0 })
+            if (result.CharacterCount == 0)
             {
                 await context.FollowupAsync(
-                    embed: ResponseCardBuilder.Build("Error", "Party generation produced no characters.", new Color(200, 50, 50)),
+                    embed: ResponseCardBuilder.Build("Error", "Generation produced no characters.", new Color(200, 50, 50)),
                     ephemeral: true);
                 return;
             }

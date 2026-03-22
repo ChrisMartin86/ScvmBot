@@ -7,103 +7,65 @@ using System.IO.Compression;
 
 namespace ScvmBot.Bot.Tests;
 
-public class MorkBorgPartyGenerationTests
+public class MorkBorgMultiCharacterGenerationTests
 {
     [Fact]
-    public async Task SubCommands_HasPartySubcommand()
+    public async Task SubCommands_CharacterSubcommandHasCountOption()
+    {
+        var gs = await CreateMinimalGameSystemAsync();
+        var charSubcommand = gs.SubCommands.First(s => s.Name == "character");
+        var countOpt = charSubcommand.Options?.FirstOrDefault(o => o.Name == "count");
+        Assert.NotNull(countOpt);
+        Assert.False(countOpt!.Required);
+        Assert.Equal(CommandOptionType.Integer, countOpt.Type);
+    }
+
+    [Fact]
+    public async Task SubCommands_NoPartySubcommand()
     {
         var gs = await CreateMinimalGameSystemAsync();
         var partySubcommand = gs.SubCommands.FirstOrDefault(s => s.Name == "party");
-        Assert.NotNull(partySubcommand);
+        Assert.Null(partySubcommand);
     }
 
     [Fact]
-    public async Task SubCommands_PartySubcommandHasSizeOption()
-    {
-        var gs = await CreateMinimalGameSystemAsync();
-        var partySubcommand = gs.SubCommands.First(s => s.Name == "party");
-        var sizeOpt = partySubcommand.Options?.FirstOrDefault(o => o.Name == "size");
-        Assert.NotNull(sizeOpt);
-        Assert.False(sizeOpt!.Required);
-        Assert.Equal(CommandOptionType.Integer, sizeOpt.Type);
-    }
-
-    [Fact]
-    public async Task SubCommands_PartySubcommandHasNoNameOption()
-    {
-        // Party names are always randomly generated; there is no user-supplied name option.
-        // This test guards against accidentally re-introducing a ghost option that the parser
-        // no longer supports.
-        var gs = await CreateMinimalGameSystemAsync();
-        var partySubcommand = gs.SubCommands.First(s => s.Name == "party");
-        var nameOpt = partySubcommand.Options?.FirstOrDefault(o => o.Name == "name");
-        Assert.Null(nameOpt);
-    }
-
-    [Fact]
-    public async Task SubCommands_PartySubcommandExposesOnlySizeOption()
-    {
-        // The command surface and the parser must agree. If this count changes, the parser
-        // and command definition need to be updated together.
-        var gs = await CreateMinimalGameSystemAsync();
-        var partySubcommand = gs.SubCommands.First(s => s.Name == "party");
-        var optionNames = partySubcommand.Options?.Select(o => o.Name).ToList() ?? [];
-        Assert.Equal(["size"], optionNames);
-    }
-
-    [Fact]
-    public async Task HandlePartyGenerationAsync_GeneratesMultipleCharacters()
+    public async Task HandleGenerateCommandAsync_CountOfThree_GeneratesThreeCharacters()
     {
         var gs = await CreateMinimalGameSystemAsync();
 
-        var result = await gs.HandleGenerateCommandAsync("party",
-            new Dictionary<string, object?> { ["size"] = 3L });
+        var result = await gs.HandleGenerateCommandAsync("character",
+            new Dictionary<string, object?> { ["count"] = 3L });
 
-        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
-        Assert.Equal(3, partyResult.Characters.Count);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.Equal(3, charResult.Characters.Count);
     }
 
     [Fact]
-    public async Task HandlePartyGenerationAsync_FirstCharacterMatchesSingleProperty()
+    public async Task HandleGenerateCommandAsync_CountGreaterThanOne_GeneratesGroupName()
     {
         var gs = await CreateMinimalGameSystemAsync();
 
-        var result = await gs.HandleGenerateCommandAsync("party",
-            new Dictionary<string, object?> { ["size"] = 2L });
+        var result = await gs.HandleGenerateCommandAsync("character",
+            new Dictionary<string, object?> { ["count"] = 2L });
 
-        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
-        Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.False(string.IsNullOrWhiteSpace(charResult.GroupName));
     }
 
     [Fact]
-    public async Task HandlePartyGenerationAsync_AllCharactersAreIndependent()
+    public async Task HandleGenerateCommandAsync_AllCharactersAreIndependent()
     {
         var gs = await CreateMinimalGameSystemAsync();
 
-        var result = await gs.HandleGenerateCommandAsync("party",
-            new Dictionary<string, object?> { ["size"] = 3L });
+        var result = await gs.HandleGenerateCommandAsync("character",
+            new Dictionary<string, object?> { ["count"] = 3L });
 
-        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
-        var characters = partyResult.Characters;
-
-        // All should have names (non-empty)
-        Assert.All(characters, c => Assert.False(string.IsNullOrWhiteSpace(c.Name)));
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.All(charResult.Characters, c => Assert.False(string.IsNullOrWhiteSpace(c.Name)));
     }
 
     [Fact]
-    public async Task HandlePartyGenerationAsync_DefaultPartySize_IsFour()
-    {
-        var gs = await CreateMinimalGameSystemAsync();
-
-        var result = await gs.HandleGenerateCommandAsync("party",
-            new Dictionary<string, object?>());
-
-        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
-        Assert.Equal(4, partyResult.Characters.Count);
-    }
-
-    [Fact]
-    public async Task HandleSingleCharacterAsync_StillWorks()
+    public async Task HandleGenerateCommandAsync_DefaultCount_IsOne()
     {
         var gs = await CreateMinimalGameSystemAsync();
 
@@ -111,21 +73,34 @@ public class MorkBorgPartyGenerationTests
             new Dictionary<string, object?>());
 
         var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
-        Assert.NotNull(charResult.Character);
+        Assert.Single(charResult.Characters);
+        Assert.Null(charResult.GroupName);
     }
 
     [Fact]
-    public async Task HandleGenerateCommandAsync_Party_GeneratesZipFile()
+    public async Task HandleGenerateCommandAsync_SingleCharacter_StillWorks()
     {
         var gs = await CreateMinimalGameSystemAsync();
 
-        var result = await gs.HandleGenerateCommandAsync("party",
-            new Dictionary<string, object?> { ["size"] = 2L });
+        var result = await gs.HandleGenerateCommandAsync("character",
+            new Dictionary<string, object?>());
 
-        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.Single(charResult.Characters);
+        Assert.False(string.IsNullOrWhiteSpace(charResult.Characters[0].Name));
+    }
 
-        // Verify ZIP can be created from character data
-        var members = partyResult.Characters
+    [Fact]
+    public async Task HandleGenerateCommandAsync_MultipleCharacters_ZipCanBeCreated()
+    {
+        var gs = await CreateMinimalGameSystemAsync();
+
+        var result = await gs.HandleGenerateCommandAsync("character",
+            new Dictionary<string, object?> { ["count"] = 2L });
+
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+
+        var members = charResult.Characters
             .Select(c => (c.Name, new byte[] { 0x25, 0x50, 0x44, 0x46 }))
             .ToList();
         var zipBytes = PartyZipBuilder.CreatePartyZip(members);
@@ -137,33 +112,21 @@ public class MorkBorgPartyGenerationTests
     }
 
     [Fact]
-    public async Task HandleGenerateCommandAsync_Party_GeneratesPartyCard()
+    public async Task HandleGenerateCommandAsync_MultipleCharacters_RosterCard()
     {
         var gs = await CreateMinimalGameSystemAsync();
 
-        var result = await gs.HandleGenerateCommandAsync("party",
-            new Dictionary<string, object?> { ["size"] = 3L });
+        var result = await gs.HandleGenerateCommandAsync("character",
+            new Dictionary<string, object?> { ["count"] = 3L });
 
-        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
-        Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
-        var card = MorkBorgPartyEmbedRenderer.BuildCard(partyResult.PartyName, partyResult.Characters);
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard(
+            charResult.GroupName!, charResult.Characters);
         Assert.Contains("Party of 3", card.Description);
     }
 
     [Fact]
-    public async Task HandleGenerateCommandAsync_Party_GeneratesRandomName()
-    {
-        var gs = await CreateMinimalGameSystemAsync();
-
-        var result = await gs.HandleGenerateCommandAsync("party",
-            new Dictionary<string, object?> { ["size"] = 2L });
-
-        var partyResult = Assert.IsType<PartyGenerationResult<Character>>(result);
-        Assert.False(string.IsNullOrWhiteSpace(partyResult.PartyName));
-    }
-
-    [Fact]
-    public async Task CharacterCardBuilder_StillWorks_ForIndividualCharacters()
+    public async Task HandleGenerateCommandAsync_SingleCharacter_CharacterCard()
     {
         var gs = await CreateMinimalGameSystemAsync();
 
@@ -171,9 +134,22 @@ public class MorkBorgPartyGenerationTests
             new Dictionary<string, object?>());
 
         var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
-        var card = MorkBorgCharacterEmbedRenderer.BuildCard(charResult.Character);
+        var card = MorkBorgCharacterEmbedRenderer.BuildCard(charResult.Characters[0]);
         Assert.NotNull(card.Title);
         Assert.False(string.IsNullOrWhiteSpace(card.Title));
+    }
+
+    [Fact]
+    public async Task HandleGenerateCommandAsync_NameOverride_OnlyAppliesToFirstCharacter()
+    {
+        var gs = await CreateMinimalGameSystemAsync();
+
+        var result = await gs.HandleGenerateCommandAsync("character",
+            new Dictionary<string, object?> { ["count"] = 2L, ["name"] = "CustomName" });
+
+        var charResult = Assert.IsType<CharacterGenerationResult<Character>>(result);
+        Assert.Equal("CustomName", charResult.Characters[0].Name);
+        Assert.NotEqual("CustomName", charResult.Characters[1].Name);
     }
 
     // Helpers

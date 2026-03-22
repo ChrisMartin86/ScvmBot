@@ -4,12 +4,14 @@ using System.Text;
 namespace ScvmBot.Modules.MorkBorg;
 
 /// <summary>
-/// Renders a MÖRK BORG <see cref="CharacterGenerationResult"/> as a structured card
-/// showing abilities, equipment, descriptions, vignette, and scrolls.
+/// Renders a MÖRK BORG <see cref="CharacterGenerationResult"/> as a structured card.
+/// Single character: detailed card with abilities, equipment, descriptions, vignette, and scrolls.
+/// Multiple characters: roster card showing group name and member list.
 /// </summary>
 public sealed class MorkBorgCharacterEmbedRenderer : IResultRenderer
 {
-    private static readonly CardColor CardColor = new(200, 170, 50);
+    private static readonly CardColor SingleColor = new(200, 170, 50);
+    private static readonly CardColor GroupColor = new(150, 20, 20);
 
     public Type ResultType => typeof(CharacterGenerationResult<Character>);
 
@@ -20,11 +22,13 @@ public sealed class MorkBorgCharacterEmbedRenderer : IResultRenderer
 
     public RenderOutput Render(GenerateResult result)
     {
-        if (result is not CharacterGenerationResult<Character> { Character: var character })
+        if (result is not CharacterGenerationResult<Character> charResult)
             throw new InvalidOperationException(
                 $"Cannot render {result.GetType().Name} as a MÖRK BORG character card.");
 
-        return BuildCard(character);
+        return charResult.Characters.Count == 1
+            ? BuildCard(charResult.Characters[0])
+            : BuildRosterCard(charResult.GroupName ?? "Adventuring Party", charResult.Characters);
     }
 
     internal static CardOutput BuildCard(Character character)
@@ -52,8 +56,20 @@ public sealed class MorkBorgCharacterEmbedRenderer : IResultRenderer
             Title: character.Name,
             Description: summary,
             Footer: "MÖRK BORG is © Ockult Örtmästare Games & Stockholm Kartell. Used under the MÖRK BORG Third Party License.",
-            Color: CardColor,
+            Color: SingleColor,
             Fields: fields);
+    }
+
+    internal static CardOutput BuildRosterCard(string groupName, IReadOnlyList<Character> members)
+    {
+        var memberList = string.Join("\n", members.Select(m => $"• {m.Name}"));
+        var description = $"Party of {members.Count}\n\n{memberList}";
+
+        return new CardOutput(
+            Title: groupName,
+            Description: description,
+            Footer: "MÖRK BORG is © Ockult Örtmästare Games & Stockholm Kartell. Used under the MÖRK BORG Third Party License.",
+            Color: GroupColor);
     }
 
     private static string FormatAbilities(Character character) =>

@@ -61,6 +61,7 @@ internal static class CliCommandParser
         }
 
         var (moduleOptions, cliOptions) = ParseOptions(commandArgs, subCommandDef);
+
         return new CliCommand(module, subCommandDef, moduleOptions, cliOptions);
     }
 
@@ -69,11 +70,12 @@ internal static class CliCommandParser
         SubCommandDefinition subCommandDef)
     {
         var moduleOptionNames = new HashSet<string>(
-            subCommandDef.Options?.Select(o => o.Name) ?? [],
+            subCommandDef.Options?.Select(o => o.Name).Where(n => !string.Equals(n, "count", StringComparison.OrdinalIgnoreCase)) ?? [],
             StringComparer.OrdinalIgnoreCase);
 
         var moduleOptions = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         int count = 1;
+        bool hasExplicitCount = false;
         bool quiet = false;
         bool detailed = false;
         bool generatePdf = false;
@@ -86,6 +88,7 @@ internal static class CliCommandParser
                 case "--count" when i + 1 < commandArgs.Length:
                     if (!int.TryParse(commandArgs[++i], out count) || count < 1)
                         throw new CliParseException("--count must be a positive integer.");
+                    hasExplicitCount = true;
                     break;
                 case "--quiet":
                     quiet = true;
@@ -128,6 +131,10 @@ internal static class CliCommandParser
 
         if (detailed && !quiet)
             throw new CliParseException("--detailed requires --quiet.");
+
+        // Pass count to the module as a module option so it generates N characters.
+        if (hasExplicitCount)
+            moduleOptions["count"] = (long)count;
 
         var cliOptions = new CliOptions(count, quiet, detailed, generatePdf, pdfPath);
         return (moduleOptions, cliOptions);
