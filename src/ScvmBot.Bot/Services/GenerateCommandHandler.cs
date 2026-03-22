@@ -165,18 +165,44 @@ public class GenerateCommandHandler : ISlashCommand
             try
             {
                 var isDm = context.GuildId is null;
-                var followupText = isDm
-                    ? (result is PartyGenerationResult ? "Here's your party!" : "Here's your character!")
-                    : "Check your DMs.";
-                await _delivery.DeliverAsync(context, embed, attachment, followupText);
-            }
-            catch (Exception sendEx)
-            {
-                _logger.LogError(sendEx, "Failed to deliver generation result via DM");
-                await context.FollowupAsync(
-                    embed: ResponseCardBuilder.Build("Send Failed",
-                        "Something went wrong sending your result. Please try again.", new Color(200, 50, 50)),
-                    ephemeral: true);
+
+                bool sent;
+                try
+                {
+                    sent = await _delivery.SendResultAsync(context, embed, attachment);
+                }
+                catch (Exception sendEx)
+                {
+                    _logger.LogError(sendEx, "Failed to deliver generation result via DM");
+                    await context.FollowupAsync(
+                        embed: ResponseCardBuilder.Build("Send Failed",
+                            "Something went wrong sending your result. Please try again.", new Color(200, 50, 50)),
+                        ephemeral: true);
+                    return;
+                }
+
+                if (!sent)
+                {
+                    await context.FollowupAsync(
+                        text: "I couldn't send you a DM. Please enable DMs from server members and try again.",
+                        ephemeral: true);
+                    return;
+                }
+
+                // Result was delivered successfully. The followup acknowledgement is
+                // best-effort — if it fails, the user already has their result.
+                try
+                {
+                    var followupText = isDm
+                        ? (result is PartyGenerationResult ? "Here's your party!" : "Here's your character!")
+                        : "Check your DMs.";
+                    await context.FollowupAsync(text: followupText, ephemeral: true);
+                }
+                catch (Exception ackEx)
+                {
+                    _logger.LogWarning(ackEx,
+                        "Result delivered successfully but followup acknowledgement failed");
+                }
             }
             finally
             {

@@ -41,10 +41,10 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
             ? await MorkBorgReferenceDataService.CreateAsync(_dataPath)
             : await MorkBorgReferenceDataService.CreateAsync();
 
-        // The PDF template always lives alongside the MorkBorgPdfRenderer assembly
-        // output (copied via Content build item), not in the reference data directory.
-        // DataPath controls JSON reference data location only.
-        _pdfTemplatePath = MorkBorgPdfRenderer.DefaultTemplatePath;
+        // Resolve PDF template path: when a custom DataPath is configured, look
+        // there first so a self-contained data directory works end-to-end.
+        // Fall back to the default build-output location.
+        _pdfTemplatePath = ResolvePdfTemplatePath();
 
         if (!File.Exists(_pdfTemplatePath))
         {
@@ -53,6 +53,18 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
                 $"PDF character sheet generation will be disabled. " +
                 $"If this is unexpected, check your build output or Data/ directory.");
         }
+    }
+
+    private string ResolvePdfTemplatePath()
+    {
+        if (_dataPath is not null)
+        {
+            var customPath = Path.Combine(_dataPath, "character_sheet.pdf");
+            if (File.Exists(customPath))
+                return customPath;
+        }
+
+        return MorkBorgPdfRenderer.DefaultTemplatePath;
     }
 
     public void Register(IServiceCollection services)
