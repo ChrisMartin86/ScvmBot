@@ -7,6 +7,13 @@ public enum CommandOptionType
     Integer
 }
 
+/// <summary>Semantic role of a command option, used by hosts to apply transport-specific constraints.</summary>
+public enum CommandOptionRole
+{
+    None,
+    GenerationCount
+}
+
 /// <summary>A named choice presented to the user for a command option.</summary>
 public sealed record CommandChoice(string Label, string Value);
 
@@ -18,7 +25,8 @@ public sealed record CommandOptionDefinition(
     bool Required = false,
     IReadOnlyList<CommandChoice>? Choices = null,
     long? MinValue = null,
-    long? MaxValue = null);
+    long? MaxValue = null,
+    CommandOptionRole Role = CommandOptionRole.None);
 
 /// <summary>Defines a subcommand within a game module's command group.</summary>
 public sealed record SubCommandDefinition(

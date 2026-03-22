@@ -32,7 +32,8 @@ public sealed class MorkBorgCommandDefinition
                     CommandOptionType.String, Required: false),
                 new("count",
                     "Number of characters to generate (default 1)",
-                    CommandOptionType.Integer, Required: false, MinValue: 1)
+                    CommandOptionType.Integer, Required: false, MinValue: 1,
+                    Role: CommandOptionRole.GenerationCount)
             })
         };
     }

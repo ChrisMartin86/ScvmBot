@@ -18,6 +18,7 @@ public class MorkBorgMultiCharacterGenerationTests
         Assert.NotNull(countOpt);
         Assert.False(countOpt!.Required);
         Assert.Equal(CommandOptionType.Integer, countOpt.Type);
+        Assert.Equal(CommandOptionRole.GenerationCount, countOpt.Role);
     }
 
     [Fact]
