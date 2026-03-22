@@ -51,7 +51,7 @@ Configure the bot to run in guild-specific mode for a single Discord server, or 
 MIT licensed. The code is public, the development is in the open, and contributions are welcome.
 
 **Modular architecture**
-New game systems can be added by implementing the `IGameModule` interface and registering explicitly in `Program.cs`. Each game module owns its command definitions, generation logic, and output behavior.
+The project is designed to be expanded from within the solution itself. New game systems are added as projects in the solution, implementing the `IGameModule` and `IModuleRegistration` interfaces and wiring in via project references. Each game module owns its command definitions, generation logic, and output behavior.
 
 ---
 
@@ -76,7 +76,7 @@ ScvmBot is an independent production and is not affiliated with Ockult Örtmäst
 
 ### Other Systems
 
-The architecture supports adding new game systems through the `IGameModule` interface with explicit host registration. No additional systems are currently implemented, but the project is designed with expansion in mind. If there is a system you would like to see supported, [open an issue on GitHub](https://github.com/ChrisMartin86/ScvmBot/issues).
+The architecture supports adding new game systems by creating projects within the solution that implement the `IGameModule` and `IModuleRegistration` interfaces. No additional systems are currently implemented, but the project is designed with expansion in mind. If there is a system you would like to see supported, [open an issue on GitHub](https://github.com/ChrisMartin86/ScvmBot/issues).
 
 ---
 

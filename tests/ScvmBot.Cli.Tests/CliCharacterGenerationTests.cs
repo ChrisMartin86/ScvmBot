@@ -211,4 +211,26 @@ public class CliCharacterGenerationTests
         Assert.NotNull(card.Title);
         Assert.NotNull(card.Description);
     }
+
+    // ── Invalid option values produce ArgumentException ──────────────────
+
+    [Fact]
+    public async Task Generate_WithInvalidRollMethod_ThrowsArgumentException()
+    {
+        var (module, _) = await CreateModulePipelineAsync();
+        var options = new Dictionary<string, object?> { ["roll-method"] = "bananas" };
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => module.HandleGenerateCommandAsync("character", options));
+    }
+
+    [Fact]
+    public async Task GenerateParty_WithInvalidSize_ThrowsArgumentException()
+    {
+        var (module, _) = await CreateModulePipelineAsync();
+        var options = new Dictionary<string, object?> { ["size"] = "nope" };
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => module.HandleGenerateCommandAsync("party", options));
+    }
 }

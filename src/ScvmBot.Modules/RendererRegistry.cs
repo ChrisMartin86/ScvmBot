@@ -15,22 +15,31 @@ public sealed class RendererRegistry
     }
 
     /// <summary>
-    /// Validates that no two renderers claim the same (ResultType, Format) combination.
+    /// Validates that no two renderers with the same <see cref="OutputFormat"/>
+    /// have overlapping <see cref="IResultRenderer.ResultType"/> coverage.
+    /// Two types overlap when either is assignable from the other (inheritance).
     /// This is checked eagerly at startup to surface configuration mistakes early.
     /// </summary>
     private void ValidateNoAmbiguousRenderers()
     {
-        var seen = new Dictionary<(Type, OutputFormat), IResultRenderer>();
-        foreach (var renderer in _renderers)
+        for (var i = 0; i < _renderers.Count; i++)
         {
-            var key = (renderer.ResultType, renderer.Format);
-            if (!seen.TryAdd(key, renderer))
+            for (var j = i + 1; j < _renderers.Count; j++)
             {
-                var existing = seen[key];
-                throw new InvalidOperationException(
-                    $"Ambiguous renderer registration: both '{existing.GetType().Name}' and '{renderer.GetType().Name}' " +
-                    $"claim result type {renderer.ResultType.Name} with format {renderer.Format}. " +
-                    $"Each (ResultType, Format) pair must have exactly one renderer.");
+                var a = _renderers[i];
+                var b = _renderers[j];
+
+                if (a.Format != b.Format)
+                    continue;
+
+                if (a.ResultType.IsAssignableFrom(b.ResultType)
+                 || b.ResultType.IsAssignableFrom(a.ResultType))
+                {
+                    throw new InvalidOperationException(
+                        $"Ambiguous renderer registration: both '{a.GetType().Name}' and '{b.GetType().Name}' " +
+                        $"claim overlapping result types ({a.ResultType.Name} / {b.ResultType.Name}) with format {a.Format}. " +
+                        $"Each (ResultType, Format) pair must have exactly one renderer.");
+                }
             }
         }
     }
@@ -38,12 +47,13 @@ public sealed class RendererRegistry
     /// <summary>
     /// Returns the first renderer that supports the given result and format,
     /// or null if no renderer matches.
-    /// Uses ResultType as the primary match (consistent with startup validation),
-    /// with CanRender as a secondary confirmation.
+    /// Uses <see cref="IResultRenderer.ResultType"/> assignability so renderers
+    /// declaring a base type will match derived result objects, consistent with
+    /// the polymorphic <see cref="IResultRenderer.CanRender"/> contract.
     /// </summary>
     public IResultRenderer? FindRenderer(GenerateResult result, OutputFormat format) =>
         _renderers.FirstOrDefault(r => r.Format == format
-            && r.ResultType == result.GetType()
+            && r.ResultType.IsAssignableFrom(result.GetType())
             && r.CanRender(result));
 
     /// <summary>

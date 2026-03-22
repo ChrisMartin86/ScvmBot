@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ScvmBot.Modules;
@@ -13,11 +14,13 @@ public interface IModuleRegistration
 {
     /// <summary>
     /// Applies host-supplied configuration before initialization.
-    /// Modules inspect the dictionary for keys they recognize (e.g. "DataPath")
-    /// and ignore everything else. The default implementation is a no-op.
+    /// The full <see cref="IConfiguration"/> tree is passed so each module can
+    /// navigate to its own section (e.g. <c>Modules:MorkBorg</c>) and read
+    /// typed, hierarchical settings without key collisions.
+    /// The default implementation is a no-op.
     /// Called after construction, before <see cref="InitializeAsync"/>.
     /// </summary>
-    void Configure(IReadOnlyDictionary<string, string> settings) { }
+    void Configure(IConfiguration configuration) { }
 
     /// <summary>
     /// Performs async startup validation (e.g. loading reference data).

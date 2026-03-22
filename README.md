@@ -24,7 +24,7 @@ A Discord bot for tabletop RPG character generation with built-in support for **
 ### Engineering
 - **.NET 10** with nullable reference types enabled throughout
 - **Six-project solution** — `ScvmBot.Bot` (Discord host), `ScvmBot.Cli` (CLI host for local generation), `ScvmBot.Modules` (shared module contracts and abstractions), `ScvmBot.Modules.MorkBorg` (MÖRK BORG module adapter — command definitions, option parsing, renderers), `ScvmBot.Games.MorkBorg` (game logic), `ScvmBot.Games.MorkBorg.Pdf` (PDF rendering)
-- **Automatic module discovery** — game modules implement `IModuleRegistration` and are discovered at startup by scanning assemblies in the application directory; adding a new game requires only a project reference — no `Program.cs` edits
+- **Modular game system architecture** — game modules implement `IModuleRegistration` and are wired into the host via project references; adding a new game means adding projects to the solution and referencing them from the host — designed for in-project expansion, not external plugins
 - **420 tests** across four test projects — character generation logic, equipment flow, PDF mapping, option parsing, command handling, and party building
 - **Fail-fast module initialization** — each `IModuleRegistration` loads required data during `InitializeAsync()`; missing files abort startup with a non-zero exit code
 - **Testable command layer** — `ISlashCommandContext` interface decouples command handlers from the sealed Discord.Net type, enabling full unit test coverage
@@ -119,7 +119,7 @@ ScvmBot/
 │   │   │       ├── ISlashCommandContext.cs # Testable abstraction over SocketSlashCommand
 │   │   │       ├── SocketSlashCommandContext.cs # Runtime adapter (excluded from coverage)
 │   │   │       └── HelloCommand.cs
-│   │   ├── Program.cs                     # Assembly-scanning module discovery & entry point
+│   │   ├── Program.cs                     # Module discovery & entry point
 │   │   ├── Dockerfile
 │   │   └── appsettings.example.json
 │   │
@@ -229,7 +229,7 @@ dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
            CancellationToken ct = default) { ... }
    }
    ```
-3. Implement `IModuleRegistration` so the host discovers the module automatically (see `MorkBorgModuleRegistration` for the full pattern):
+3. Implement `IModuleRegistration` in the module adapter (see `MorkBorgModuleRegistration` for the full pattern):
    ```csharp
    public sealed class YourGameModuleRegistration : IModuleRegistration
    {
@@ -246,7 +246,7 @@ dotnet test tests/ScvmBot.Games.MorkBorg.Pdf.Tests
        }
    }
    ```
-4. Add a project reference from `ScvmBot.Bot` (and/or `ScvmBot.Cli`) to your module adapter project. No `Program.cs` changes are needed — assembly scanning picks up the new `IModuleRegistration` at startup.
+4. Add a project reference from `ScvmBot.Bot` (and/or `ScvmBot.Cli`) to your module adapter project. The host discovers `IModuleRegistration` implementations from referenced assemblies at startup.
 
 The `/generate` dispatcher routes to modules by their `CommandKey`. Duplicate keys are rejected at startup with a clear error message.
 

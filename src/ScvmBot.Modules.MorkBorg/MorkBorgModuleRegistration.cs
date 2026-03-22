@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Pdf;
@@ -12,6 +13,8 @@ namespace ScvmBot.Modules.MorkBorg;
 /// </summary>
 public sealed class MorkBorgModuleRegistration : IModuleRegistration
 {
+    private const string ModuleKey = "MorkBorg";
+
     private string? _dataPath;
     private MorkBorgReferenceDataService? _refData;
 
@@ -22,10 +25,13 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
     public MorkBorgModuleRegistration(string? dataPath) => _dataPath = dataPath;
 
     /// <inheritdoc />
-    public void Configure(IReadOnlyDictionary<string, string> settings)
+    public void Configure(IConfiguration configuration)
     {
-        if (settings.TryGetValue("DataPath", out var path))
-            _dataPath = path;
+        // Module-specific section takes precedence over the global fallback.
+        var dataPath = configuration[$"Modules:{ModuleKey}:DataPath"]
+                    ?? configuration["Modules:DataPath"];
+        if (dataPath is { Length: > 0 })
+            _dataPath = dataPath;
     }
 
     public async Task InitializeAsync()

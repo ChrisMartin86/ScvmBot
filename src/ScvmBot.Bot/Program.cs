@@ -1,6 +1,5 @@
 using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -8,7 +7,6 @@ using ScvmBot.Bot.Services;
 using ScvmBot.Bot.Services.Commands;
 using ScvmBot.Modules;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 
 namespace ScvmBot.Bot;
 
@@ -17,18 +15,17 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-        // Load configuration early so module settings are available before host build.
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true)
-            .Build();
+        // Use the application builder so that the full config pipeline
+        // (appsettings, env vars, CLI args, secrets) is available before
+        // modules initialize. No separate ConfigurationBuilder needed.
+        var builder = Host.CreateApplicationBuilder(args);
 
-        // Discover and initialize game modules via assembly scanning.
-        // Each module performs its own startup validation; failures are fatal.
+        // Discover and initialize game modules via the shared bootstrapper.
+        // Each module navigates to its own config section (e.g. Modules:MorkBorg).
         List<IModuleRegistration> modules;
         try
         {
-            modules = await DiscoverAndInitializeModulesAsync(configuration);
+            modules = await ModuleBootstrapper.DiscoverAndInitializeAsync(builder.Configuration);
         }
         catch (FileNotFoundException ex)
         {
@@ -44,74 +41,30 @@ class Program
             return 1;
         }
 
-        var host = Host.CreateDefaultBuilder(args)
-            .ConfigureServices((context, services) =>
-            {
-                foreach (var module in modules)
-                    module.Register(services);
+        foreach (var module in modules)
+            module.Register(builder.Services);
 
-                // Rendering infrastructure
-                services.AddSingleton<RendererRegistry>();
+        // Rendering infrastructure
+        builder.Services.AddSingleton<RendererRegistry>();
 
-                // Slash commands registered via ISlashCommand; BotService discovers them automatically.
-                services.AddSingleton<ISlashCommand, HelloCommand>();
-                services.AddSingleton<GenerationDeliveryService>();
-                services.AddSingleton<GenerateCommandHandler>();
-                services.AddSingleton<ISlashCommand>(sp => sp.GetRequiredService<GenerateCommandHandler>());
+        // Slash commands registered via ISlashCommand; BotService discovers them automatically.
+        builder.Services.AddSingleton<ISlashCommand, HelloCommand>();
+        builder.Services.AddSingleton<GenerationDeliveryService>();
+        builder.Services.AddSingleton<GenerateCommandHandler>();
+        builder.Services.AddSingleton<ISlashCommand>(sp => sp.GetRequiredService<GenerateCommandHandler>());
 
-                services.AddSingleton<DiscordSocketClient>(_ => new DiscordSocketClient(new DiscordSocketConfig
-                {
-                    GatewayIntents = GatewayIntents.Guilds | GatewayIntents.DirectMessages
-                }));
-                services.AddHostedService<BotService>();
-            })
-            .ConfigureLogging(logging =>
-            {
-                logging.ClearProviders();
-                logging.AddConsole();
-            })
-            .Build();
+        builder.Services.AddSingleton<DiscordSocketClient>(_ => new DiscordSocketClient(new DiscordSocketConfig
+        {
+            GatewayIntents = GatewayIntents.Guilds | GatewayIntents.DirectMessages
+        }));
+        builder.Services.AddHostedService<BotService>();
 
+        builder.Logging.ClearProviders();
+        builder.Logging.AddConsole();
+
+        var host = builder.Build();
         await host.RunAsync();
 
         return 0;
-    }
-
-    /// <summary>
-    /// Scans the application base directory for module assemblies (ScvmBot.Modules.*.dll),
-    /// discovers <see cref="IModuleRegistration"/> implementations, instantiates each via
-    /// its parameterless constructor, and calls <see cref="IModuleRegistration.InitializeAsync"/>.
-    /// </summary>
-    private static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync(IConfiguration configuration)
-    {
-        var settings = new Dictionary<string, string>();
-        var moduleSection = configuration.GetSection("Modules");
-        foreach (var kvp in moduleSection.GetChildren())
-        {
-            if (kvp.Value is not null)
-                settings[kvp.Key] = kvp.Value;
-        }
-
-        var baseDir = AppContext.BaseDirectory;
-        var registrationTypes = Directory.GetFiles(baseDir, "ScvmBot.Modules.*.dll")
-            .Select(Path.GetFileNameWithoutExtension)
-            .Where(name => name is not null)
-            .Select(name => Assembly.Load(name!))
-            .SelectMany(a => a.GetExportedTypes())
-            .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
-                     && !t.IsAbstract
-                     && !t.IsInterface);
-
-        var modules = new List<IModuleRegistration>();
-        foreach (var type in registrationTypes)
-        {
-            var module = (IModuleRegistration)Activator.CreateInstance(type)!;
-            if (settings.Count > 0)
-                module.Configure(settings);
-            await module.InitializeAsync();
-            modules.Add(module);
-        }
-
-        return modules;
     }
 }

@@ -1,9 +1,9 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Modules;
 using System.Diagnostics;
-using System.Reflection;
 
 // ── Pre-parse --data (extracted before module discovery) ──────────────────
 string? dataPath = null;
@@ -24,10 +24,17 @@ if (commandArgs.Length == 0 || commandArgs[0] is "-h" or "--help")
 }
 
 // ── Module discovery & initialization ────────────────────────────────────
+var configPairs = new Dictionary<string, string?>();
+if (dataPath is not null)
+    configPairs["Modules:DataPath"] = dataPath;
+var configuration = new ConfigurationBuilder()
+    .AddInMemoryCollection(configPairs)
+    .Build();
+
 List<IModuleRegistration> registrations;
 try
 {
-    registrations = await DiscoverAndInitializeModulesAsync(dataPath);
+    registrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(configuration);
 }
 catch (FileNotFoundException ex)
 {
@@ -168,6 +175,9 @@ if (detailed && !quiet)
     Console.Error.WriteLine("--detailed requires --quiet.");
     return 1;
 }
+
+try
+{
 
 // ── Benchmark mode ──────────────────────────────────────────────────────
 if (quiet)
@@ -314,37 +324,14 @@ if (generatePdf)
 }
 
 return 0;
+}
+catch (ArgumentException ex)
+{
+    Console.Error.WriteLine($"Invalid option value: {ex.Message}");
+    return 1;
+}
 
 // ── Helper methods ──────────────────────────────────────────────────────
-
-static async Task<List<IModuleRegistration>> DiscoverAndInitializeModulesAsync(string? dataPath)
-{
-    var settings = new Dictionary<string, string>();
-    if (dataPath is not null)
-        settings["DataPath"] = dataPath;
-
-    var baseDir = AppContext.BaseDirectory;
-    var registrationTypes = Directory.GetFiles(baseDir, "ScvmBot.Modules.*.dll")
-        .Select(Path.GetFileNameWithoutExtension)
-        .Where(name => name is not null)
-        .Select(name => Assembly.Load(name!))
-        .SelectMany(a => a.GetExportedTypes())
-        .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
-                 && !t.IsAbstract
-                 && !t.IsInterface);
-
-    var modules = new List<IModuleRegistration>();
-    foreach (var type in registrationTypes)
-    {
-        var mod = (IModuleRegistration)Activator.CreateInstance(type)!;
-        if (settings.Count > 0)
-            mod.Configure(settings);
-        await mod.InitializeAsync();
-        modules.Add(mod);
-    }
-
-    return modules;
-}
 
 static void PrintCard(CardOutput card)
 {
