@@ -397,17 +397,15 @@ dotnet test tests/ScvmBot.Cli.Tests
 | Microsoft.Extensions.Hosting | 10.0.5 | DI / hosted service |
 | Microsoft.Extensions.Logging | 10.0.5 | Structured logging |
 
-## MÖRK BORG Attribution
+## Licence
+
+[MIT](LICENSE) © 2025 Christopher Martin
+
+### MÖRK BORG Attribution
 
 ScvmBot is an independent production by Christopher Martin and is not affiliated with Ockult Örtmästare Games or Stockholm Kartell. It is published under the [MÖRK BORG Third Party License](https://morkborg.com/license/).
 
 MÖRK BORG is © 2019 Ockult Örtmästare Games and Stockholm Kartell.
 
-See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for full third-party licence details.
-
-## Licence
-
-[MIT](LICENSE) © 2025 Christopher Martin
-
-Third-party content is licensed separately — see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for all third-party licence details.
 
