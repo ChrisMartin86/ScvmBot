@@ -26,33 +26,26 @@ git clone https://github.com/ChrisMartin86/ScvmBot.git
 cd ScvmBot
 ```
 
-### 2. Configure your Discord bot settings
+### 2. Configure the bot
+
+ScvmBot uses .NET's standard configuration pipeline. Every setting can come from `appsettings.json`, environment variables, or command-line arguments. **Environment variables take precedence over file values.**
+
+For local development, copy and edit the example settings file:
 
 ```bash
 cp src/ScvmBot.Bot/appsettings.example.json src/ScvmBot.Bot/appsettings.json
 ```
 
-Edit `src/ScvmBot.Bot/appsettings.json` with your Discord bot token:
+### Configuration Reference
 
-```json
-{
-  "Discord": {
-    "Token": "<YOUR_DISCORD_BOT_TOKEN>",
-    "GuildIds": []
-  },
-  "Bot": {
-    "SyncCommands": false
-  }
-}
-```
-
-**Configuration options:**
-
-| Setting | Required | Notes |
-|---------|----------|-------|
-| `Token` | Yes | Your bot's Discord token from the [Discord Developer Portal](https://discord.com/developers/applications) |
-| `GuildIds` | No | Leave empty for global registration, or specify one or more Discord server IDs for guild-specific registration |
-| `SyncCommands` | No | Set to `true` to auto-sync commands on startup (default: `false`) |
+| `appsettings.json` key | Environment variable | Required | Description |
+|---|---|---|---|
+| `Discord:Token` | `Discord__Token` | Yes | Your bot's Discord token from the [Discord Developer Portal](https://discord.com/developers/applications) |
+| `Discord:GuildIds` | `Discord__GuildIds__0`, `__1`, … | No | Guild IDs for guild-scoped registration (~15 s). Omit for global registration (~1 hour). |
+| `Bot:SyncCommands` | `Bot__SyncCommands` | No | Set `true` on first run or after changing commands to register them with Discord (default: `false`) |
+| `Logging:LogLevel:Default` | `Logging__LogLevel__Default` | No | Logging level (default: `Information`) |
+| `Logging:LogLevel:Microsoft` | `Logging__LogLevel__Microsoft` | No | Microsoft library log level (default: `Warning`) |
+| `Logging:LogLevel:Discord` | `Logging__LogLevel__Discord` | No | Discord.Net log level (default: `Information`) |
 
 **Guild vs. Global Registration:**
 - **Global** (empty `GuildIds`): Commands are registered across all Discord servers. Changes take ~1 hour to propagate.
@@ -66,34 +59,18 @@ dotnet run --project src/ScvmBot.Bot
 
 ---
 
-## Docker Deployment
+## Docker
 
-If you prefer Docker:
+The Dockerfile produces a standard .NET application image. Provide configuration however your environment supports it — environment variables, mounted config files, orchestrator secrets, etc.
+
+A `docker-compose.yml` is included as an example. To use it from the **repository root**:
 
 ```bash
-docker-compose up --build
+export DISCORD_TOKEN=your_token_here
+docker compose up --build
 ```
 
-The included `docker-compose.yml` and `Dockerfile` handle the build and runtime environment.
-
-**Required:** `DISCORD_TOKEN` must be set before running. The simplest way is a `.env` file in the repository root:
-
-```
-DISCORD_TOKEN=your_token_here
-```
-
-All other settings are optional:
-
-| `.env` key | Notes |
-|---|---|
-| `DISCORD_TOKEN` | **Required.** Your bot's Discord token |
-| `BOT_SYNC_COMMANDS` | Set to `true` to register commands on startup (default: `true`) |
-| `Discord__GuildIds__0` | Guild ID for guild-scoped registration (optional; repeat with `__1`, `__2`, … for multiple guilds) |
-| `LOG_LEVEL_DEFAULT` | Logging level (default: `Information`) |
-
-**How guild-scoped registration works:** variables in `.env` are injected directly into the container via `env_file:` in `docker-compose.yml`. `Discord__GuildIds__0=<id>` maps to `Discord:GuildIds[0]` in .NET's configuration system.
-
-Example `.env` for guild-scoped registration:
+The compose file reads an optional `.env` file for additional settings:
 
 ```
 DISCORD_TOKEN=your_token_here
@@ -101,6 +78,8 @@ BOT_SYNC_COMMANDS=true
 Discord__GuildIds__0=123456789012345678
 Discord__GuildIds__1=987654321098765432
 ```
+
+The compose file maps convenience shell variables (like `DISCORD_TOKEN` and `BOT_SYNC_COMMANDS`) to the app's actual configuration keys (like `Discord__Token` and `Bot__SyncCommands`). See `docker-compose.yml` for the full mapping.
 
 Leave all `Discord__GuildIds__*` entries out to use global registration.
 
