@@ -79,6 +79,8 @@ Discord__GuildIds__0=123456789012345678
 Discord__GuildIds__1=987654321098765432
 ```
 
+The compose file maps convenience shell variables (like `DISCORD_TOKEN` and `BOT_SYNC_COMMANDS`) to the app's actual configuration keys (like `Discord__Token` and `Bot__SyncCommands`). See `docker-compose.yml` for the full mapping.
+
 Leave all `Discord__GuildIds__*` entries out to use global registration.
 
 ---

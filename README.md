@@ -59,18 +59,7 @@ A Discord bot for tabletop RPG character generation with built-in support for **
    dotnet run --project src/ScvmBot.Bot
    ```
 
-### Configuration Reference
-
-Every setting is listed once below. Use whichever source fits your environment — `appsettings.json`, environment variables, CLI args, or any combination.
-
-| `appsettings.json` key | Environment variable | Required | Description |
-|---|---|---|---|
-| `Discord:Token` | `Discord__Token` | Yes | Your bot's Discord token from the [Developer Portal](https://discord.com/developers/applications) |
-| `Discord:GuildIds` | `Discord__GuildIds__0`, `__1`, … | No | Guild IDs for guild-scoped registration (~15 s propagation). Omit for global registration (~1 hour). |
-| `Bot:SyncCommands` | `Bot__SyncCommands` | No | Set `true` on first run or after changing commands to register them with Discord (default: `false`) |
-| `Logging:LogLevel:Default` | `Logging__LogLevel__Default` | No | Logging level (default: `Information`) |
-| `Logging:LogLevel:Microsoft` | `Logging__LogLevel__Microsoft` | No | Microsoft library log level (default: `Warning`) |
-| `Logging:LogLevel:Discord` | `Logging__LogLevel__Discord` | No | Discord.Net log level (default: `Information`) |
+See the [Getting Started](https://scvmbot.com/getting-started) guide for the full configuration reference, including every available setting and its environment variable equivalent.
 
 ### Docker
 
@@ -90,6 +79,8 @@ DISCORD_TOKEN=your_token_here
 BOT_SYNC_COMMANDS=true
 Discord__GuildIds__0=123456789012345678
 ```
+
+The compose file maps convenience shell variables (like `DISCORD_TOKEN`) to the app's actual configuration keys (like `Discord__Token`). See `docker-compose.yml` for the full mapping.
 
 ## Commands
 
