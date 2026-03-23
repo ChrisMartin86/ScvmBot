@@ -1,8 +1,3 @@
-# Example docker-compose configuration.
-# The Dockerfile produces a standard .NET app image — you can run it with
-# any container orchestrator or deployment method that supports environment variables.
-# This compose file is one convenient way to do it locally.
-
 services:
   bot:
     build:
@@ -12,14 +7,15 @@ services:
     container_name: scvmbot-bot
     restart: unless-stopped
 
-    # Optional .env file at the repo root. Any variable defined here is injected
-    # into the container. Omit the file entirely if you set variables another way.
+    # Load all variables from a .env file at the repo root directly into the container.
+    # This is the mechanism that makes Discord__GuildIds__0, Discord__GuildIds__1, etc. work.
+    # The file is optional — omit it entirely for global command registration.
     env_file:
       - path: ./.env
         required: false
 
     environment:
-      # Entries here override anything from .env for the same key.
+      # Explicit entries here override anything in .env for the same key.
       - Discord__Token=${DISCORD_TOKEN}
       - Bot__SyncCommands=${BOT_SYNC_COMMANDS:-false}
       - Logging__LogLevel__Default=${LOG_LEVEL_DEFAULT:-Information}
