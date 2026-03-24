@@ -38,7 +38,10 @@ public static class ModuleBootstrapper
             .SelectMany(a => a.GetExportedTypes())
             .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
                      && !t.IsAbstract
-                     && !t.IsInterface);
+                     && !t.IsInterface)
+            // Sort by assembly-qualified type name to guarantee a stable DI registration order
+            // across machines. This is intentionally independent of any user-visible concept.
+            .OrderBy(t => t.FullName, StringComparer.OrdinalIgnoreCase);
 
         return await InitializeFromTypesAsync(registrationTypes, configuration, logger);
     }
