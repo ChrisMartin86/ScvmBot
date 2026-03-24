@@ -38,23 +38,6 @@ public sealed class CharacterGenerator
         _vignetteGenerator = vignetteGenerator;
     }
 
-    /// <summary>
-    /// Convenience constructor for direct instantiation (e.g. tests) —
-    /// builds all collaborators from the two base dependencies.
-    /// </summary>
-    public CharacterGenerator(MorkBorgReferenceDataService refData, Random? rng = null)
-    {
-        _refData = refData;
-        _rng = rng ?? Random.Shared;
-        _dice = new DiceRoller(_rng);
-        _abilityRoller = new AbilityRoller(_dice, _rng);
-        _weaponResolver = new WeaponResolver(refData, _dice, _rng);
-        _armorResolver = new ArmorResolver(refData, _dice, _rng);
-        _scrollResolver = new ScrollResolver(refData, _rng);
-        _startingGearTable = new StartingGearTable(refData, _dice, _scrollResolver, _rng);
-        _vignetteGenerator = new VignetteGenerator(refData.Vignettes, _rng);
-    }
-
     public Character Generate(
         CharacterGenerationOptions? options = null)
     {

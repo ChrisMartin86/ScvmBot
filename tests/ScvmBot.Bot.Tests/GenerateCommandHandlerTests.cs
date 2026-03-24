@@ -441,7 +441,7 @@ public class GenerateCommandHandlerTests
     {
         var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
         return new MorkBorgModule(generator, refData);
     }
 

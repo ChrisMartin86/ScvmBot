@@ -93,7 +93,7 @@ public class BotIntegrationAuditTests
 
         for (int seed = 0; seed < 10; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,

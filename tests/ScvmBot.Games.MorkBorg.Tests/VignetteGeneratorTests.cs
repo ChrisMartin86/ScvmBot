@@ -163,7 +163,7 @@ public class VignetteGeneratorTests
         var refData = await MorkBorgReferenceDataService.CreateAsync(
             TestUtilities.GetMorkBorgDataPath());
 
-        var generator = new CharacterGenerator(refData);
+        var generator = CharacterGeneratorFactory.Create(refData);
         var character = generator.Generate();
 
         Assert.False(string.IsNullOrWhiteSpace(character.Vignette));
@@ -175,7 +175,7 @@ public class VignetteGeneratorTests
         var refData = await MorkBorgReferenceDataService.CreateAsync(
             TestUtilities.GetMorkBorgDataPath());
 
-        var generator = new CharacterGenerator(refData);
+        var generator = CharacterGeneratorFactory.Create(refData);
         var character = generator.Generate(new CharacterGenerationOptions { Name = "Grittr" });
 
         Assert.Contains("Grittr", character.Vignette);

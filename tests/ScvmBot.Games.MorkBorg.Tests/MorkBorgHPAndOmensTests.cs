@@ -20,7 +20,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
         // Random.Next(int) which does not route through Next(int,int) in
         // .NET 8, so the HP die is the first Next(int,int) call consumed.
         var rng = new DeterministicRandom(new[] { hitDieRoll }.Concat(Enumerable.Repeat(1, 20)));
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -42,7 +42,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
         var referenceData = await LoadGameReferenceDataAsync();
         // All dice at minimum (1) gives worst-case toughness (-3) and minimum HP die roll.
         var rng = new DeterministicRandom(Enumerable.Repeat(1, 30));
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -64,7 +64,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(555);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         for (int i = 0; i < 20; i++)
         {
@@ -82,7 +82,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(666);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         for (int i = 0; i < 20; i++)
         {
@@ -110,7 +110,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(777);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         // Generate many characters to ensure die range is covered
         for (int i = 0; i < 30; i++)
@@ -132,7 +132,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(888);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         for (int i = 0; i < 20; i++)
         {
@@ -149,7 +149,7 @@ public class MorkBorgHPAndOmensTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(999);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         for (int i = 0; i < 50; i++)
         {

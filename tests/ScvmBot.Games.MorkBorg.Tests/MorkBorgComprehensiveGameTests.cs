@@ -17,7 +17,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(444);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -53,7 +53,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
 
         {
             var rng = new Random(seed);
-            var generator = new CharacterGenerator(referenceData, rng);
+            var generator = CharacterGeneratorFactory.Create(referenceData, rng);
             char1 = generator.Generate(new CharacterGenerationOptions
             {
             });
@@ -61,7 +61,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
 
         {
             var rng = new Random(seed);
-            var generator = new CharacterGenerator(referenceData, rng);
+            var generator = CharacterGeneratorFactory.Create(referenceData, rng);
             char2 = generator.Generate(new CharacterGenerationOptions
             {
             });
@@ -83,7 +83,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(666);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         for (int i = 0; i < 1000; i++)
         {
@@ -123,7 +123,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
             for (int i = 0; i < 100; i++)
             {
                 var rng = new Random(baseRng.Next());
-                var generator = new CharacterGenerator(referenceData, rng);
+                var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
                 var character = generator.Generate(new CharacterGenerationOptions
                 {
@@ -142,7 +142,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(888);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -181,7 +181,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(999);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(null);
 
@@ -202,7 +202,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
         for (int i = 0; i < 50; i++)
         {
             var rng = new Random(i);
-            var generator = new CharacterGenerator(referenceData, rng);
+            var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
             var character = generator.Generate(new CharacterGenerationOptions
             {
@@ -229,7 +229,7 @@ public class MorkBorgComprehensiveGameTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {

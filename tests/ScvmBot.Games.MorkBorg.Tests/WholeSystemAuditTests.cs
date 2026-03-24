@@ -23,7 +23,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
         for (int seed = 0; seed < 20; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
@@ -56,7 +56,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         {
             for (int seed = 0; seed < 30; seed++)
             {
-                var gen = new CharacterGenerator(refData, new Random(seed));
+                var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
                 var ch = gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = cls.Name,
@@ -89,7 +89,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
         for (int seed = 0; seed < 50; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions
             {
                 ClassName = className,
@@ -191,7 +191,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     public async Task A5_ClasslessMode_UsesClasslessGearFlow()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var gen = new CharacterGenerator(refData, new Random(42));
+        var gen = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var ch = gen.Generate(new CharacterGenerationOptions
         {
@@ -206,7 +206,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     public async Task A5_OrdinaryMode_DoesNotUseClasslessTables()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var gen = new CharacterGenerator(refData, new Random(42));
+        var gen = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var ch = gen.Generate(new CharacterGenerationOptions
         {
@@ -221,7 +221,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     public async Task A5_CustomMode_DoesNotAddBaseKit()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var gen = new CharacterGenerator(refData, new Random(42));
+        var gen = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var ch = gen.Generate(new CharacterGenerationOptions
         {
@@ -242,7 +242,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         cls.StartingEquipmentMode = "invalid_test_mode";
         try
         {
-            var gen = new CharacterGenerator(refData, new Random(1));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(1));
             var ex = Assert.Throws<InvalidOperationException>(
                 () => gen.Generate(new CharacterGenerationOptions
                 {
@@ -268,7 +268,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
         for (int seed = 0; seed < 50; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions
             {
             });
@@ -297,7 +297,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     public async Task A7_AllOverrides_AreRespected()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var gen = new CharacterGenerator(refData, new Random(42));
+        var gen = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var opts = new CharacterGenerationOptions
         {
@@ -343,7 +343,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     {
         var refData = await LoadGameReferenceDataAsync();
         var dice = Enumerable.Repeat(2, 50).ToArray();
-        var gen = new CharacterGenerator(refData, new DeterministicRandom(dice));
+        var gen = CharacterGeneratorFactory.Create(refData, new DeterministicRandom(dice));
 
         // Wretched Royalty: STR-1, PRE+2
         var ch = gen.Generate(new CharacterGenerationOptions
@@ -447,7 +447,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     {
         var refData = await LoadGameReferenceDataAsync();
         var dice = Enumerable.Repeat(2, 50).ToArray();
-        var gen = new CharacterGenerator(refData, new DeterministicRandom(dice));
+        var gen = CharacterGeneratorFactory.Create(refData, new DeterministicRandom(dice));
 
         var ch = gen.Generate(new CharacterGenerationOptions
         {
@@ -474,7 +474,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         {
             for (int seed = 0; seed < 10; seed++)
             {
-                var gen = new CharacterGenerator(refData, new Random(seed));
+                var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
                 var ch = gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = cls.Name,
@@ -709,7 +709,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
         for (int seed = 0; seed < 20; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions());
 
             Assert.NotEmpty(ch.Name);
@@ -731,7 +731,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
         for (int seed = 0; seed < 20; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions());
 
             Assert.Contains(ch.Descriptions, d => d.Category == DescriptionCategory.Trait);
@@ -755,7 +755,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
         {
             for (int seed = 0; seed < 10; seed++)
             {
-                var gen = new CharacterGenerator(refData, new Random(seed));
+                var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
                 var ch = gen.Generate(new CharacterGenerationOptions
                 {
                     ClassName = className,
@@ -782,7 +782,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
         for (int seed = 0; seed < 20; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions());
 
             if (ch.EquippedWeapon != null)
@@ -806,7 +806,7 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
 
         for (int seed = 0; seed < 20; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions());
 
             foreach (var item in ch.Items)

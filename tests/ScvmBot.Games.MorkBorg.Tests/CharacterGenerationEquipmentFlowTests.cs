@@ -10,7 +10,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task ClasslessCharacter_AlwaysUsesFullGearFlow()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -30,7 +30,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task ClassedCharacter_WithOrdinaryEquipment_SkipsRandomGearTables()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -64,7 +64,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         for (int i = 0; i < diceRolls.Length; i++) diceRolls[i] = 3;
 
         var rng = new DeterministicRandom(diceRolls);
-        var generator = new CharacterGenerator(refData, rng);
+        var generator = CharacterGeneratorFactory.Create(refData, rng);
 
         // Fanged Deserter has various modifiers in the data
         var character = generator.Generate(new CharacterGenerationOptions
@@ -88,7 +88,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
 
         // Generate classless with same seed
         var classlessRng = new Random(seed);
-        var classlessGenerator = new CharacterGenerator(refData, classlessRng);
+        var classlessGenerator = CharacterGeneratorFactory.Create(refData, classlessRng);
         var classless = classlessGenerator.Generate(new CharacterGenerationOptions
         {
             ClassName = "none",
@@ -96,7 +96,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
 
         // Generate classed with same seed
         var classedRng = new Random(seed);
-        var classedGenerator = new CharacterGenerator(refData, classedRng);
+        var classedGenerator = CharacterGeneratorFactory.Create(refData, classedRng);
         var classed = classedGenerator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
@@ -111,7 +111,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task CustomMode_ContainsOnlyClassItems_NotBaseKit()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -136,7 +136,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task OrdinaryMode_IncludesBaseKit_AndClassItems()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -168,14 +168,14 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
 
         // Generate Occult Herbmaster (custom mode)
-        var customGenerator = new CharacterGenerator(refData, new Random(42));
+        var customGenerator = CharacterGeneratorFactory.Create(refData, new Random(42));
         var customChar = customGenerator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Occult Herbmaster",
         });
 
         // Generate a hypothetical ordinary-mode character (using Fanged Deserter as reference)
-        var ordinaryGenerator = new CharacterGenerator(refData, new Random(42));
+        var ordinaryGenerator = CharacterGeneratorFactory.Create(refData, new Random(42));
         var ordinaryChar = ordinaryGenerator.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
@@ -195,7 +195,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task UnknownEquipmentMode_ThrowsInvalidOperationException()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         // Get a real class and mutate its startingEquipmentMode to an invalid value
         var classToMutate = refData.Classes.FirstOrDefault();
@@ -221,7 +221,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task StartingItems_ConcreteItem_StillWorks()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         // Occult Herbmaster uses custom mode with "Medicine chest" as a concrete item
         var character = generator.Generate(new CharacterGenerationOptions
@@ -237,7 +237,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task StartingItems_MixedConcreteAndToken_BothAppear()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         // Get a class and add mixed items via reflection
         var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
@@ -266,7 +266,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task StartingItems_UnsupportedToken_ThrowsException()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
         Assert.NotNull(classToModify);
@@ -292,7 +292,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task Generate_Throws_WhenWeaponNameOverride_IsNotInWeaponsData()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
             generator.Generate(new CharacterGenerationOptions
@@ -327,7 +327,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
 
             var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
-            var generator = new CharacterGenerator(refData, new Random(42));
+            var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
             var ex = Assert.Throws<InvalidOperationException>(() =>
                 generator.Generate(new CharacterGenerationOptions { ClassName = "TestClass" }));
@@ -348,7 +348,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
     public async Task Generate_Throws_WhenArmorNameOverride_IsNotInArmorData()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
             generator.Generate(new CharacterGenerationOptions
@@ -383,7 +383,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
 
             var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
-            var generator = new CharacterGenerator(refData, new Random(42));
+            var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
             var ex = Assert.Throws<InvalidOperationException>(() =>
                 generator.Generate(new CharacterGenerationOptions { ClassName = "IronTestClass" }));
@@ -423,7 +423,7 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
 
             var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
-            var generator = new CharacterGenerator(refData, new Random(42));
+            var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
             var ex = Assert.Throws<InvalidOperationException>(() =>
                 generator.Generate(new CharacterGenerationOptions { ClassName = "ItemTestClass" }));

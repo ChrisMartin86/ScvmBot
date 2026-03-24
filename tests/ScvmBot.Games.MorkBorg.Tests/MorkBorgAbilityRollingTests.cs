@@ -69,7 +69,7 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
         var referenceData = await LoadGameReferenceDataAsync();
         // High rolls to differentiate 3d6 from 4d6
         var rng = new DeterministicRandom(Enumerable.Repeat(6, 12).Concat(Enumerable.Repeat(1, 18)));
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -100,7 +100,7 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
         for (int seed = 1; seed <= 10; seed++)
         {
             var rng = new Random(seed);
-            var generator = new CharacterGenerator(referenceData, rng);
+            var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
             var character = generator.Generate(new CharacterGenerationOptions
             {
@@ -138,7 +138,7 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new Random(42);
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {

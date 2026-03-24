@@ -57,7 +57,7 @@ public class RealDataIntegrationTests
     public async Task EmbedRenderer_WithRealData_ContainsActualClassName()
     {
         var refData = await LoadRealReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(123));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(123));
         var character = generator.Generate(new CharacterGenerationOptions());
 
         var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
@@ -78,7 +78,7 @@ public class RealDataIntegrationTests
     public async Task EmbedRenderer_WithRealData_AlwaysProducesPopulatedCard(int seed)
     {
         var refData = await LoadRealReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(seed));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(seed));
         var character = generator.Generate(new CharacterGenerationOptions());
 
         var card = MorkBorgCharacterEmbedRenderer.BuildCard(character);
@@ -130,7 +130,7 @@ public class RealDataIntegrationTests
     public async Task MultiCharacter_WithRealData_EachCharacterHasValidStats()
     {
         var refData = await LoadRealReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(55));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(55));
         var module = new MorkBorgModule(generator, refData);
 
         var options = new Dictionary<string, object?> { ["count"] = (long)5 };
@@ -166,7 +166,7 @@ public class RealDataIntegrationTests
         CreateSingleCharacterPipelineAsync(int seed)
     {
         var refData = await LoadRealReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(seed));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(seed));
         var module = new MorkBorgModule(generator, refData);
 
         var registry = new RendererRegistry(new IResultRenderer[]
@@ -197,7 +197,7 @@ public class RealDataIntegrationTests
         CreateMultiCharacterPipelineAsync(int count, int seed)
     {
         var refData = await LoadRealReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(seed));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(seed));
         var module = new MorkBorgModule(generator, refData);
 
         var registry = new RendererRegistry(new IResultRenderer[]
