@@ -15,7 +15,7 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
         for (int i = 0; i < diceRolls.Length; i++) diceRolls[i] = 2;
 
         var rng = new DeterministicRandom(diceRolls);
-        var generator = new CharacterGenerator(refData, rng);
+        var generator = CharacterGeneratorFactory.Create(refData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -39,7 +39,7 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
         for (int i = 0; i < diceRolls.Length; i++) diceRolls[i] = 2;
 
         var rng = new DeterministicRandom(diceRolls);
-        var generator = new CharacterGenerator(refData, rng);
+        var generator = CharacterGeneratorFactory.Create(refData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -63,7 +63,7 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
         for (int i = 0; i < diceRolls.Length; i++) diceRolls[i] = 6;
 
         var rng = new DeterministicRandom(diceRolls);
-        var generator = new CharacterGenerator(refData, rng);
+        var generator = CharacterGeneratorFactory.Create(refData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -83,14 +83,14 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
         const int seed = 42;
 
         var rng1 = new Random(seed);
-        var gen1 = new CharacterGenerator(refData, rng1);
+        var gen1 = CharacterGeneratorFactory.Create(refData, rng1);
         var char1 = gen1.Generate(new CharacterGenerationOptions
         {
             ClassName = "Fanged Deserter",
         });
 
         var rng2 = new Random(seed);
-        var gen2 = new CharacterGenerator(refData, rng2);
+        var gen2 = CharacterGeneratorFactory.Create(refData, rng2);
         var char2 = gen2.Generate(new CharacterGenerationOptions
         {
             ClassName = "Occult Herbmaster",
@@ -118,7 +118,7 @@ public class ClassStatModifiersTests : MorkBorgGameRulesFixture
         foreach (var classData in refData.Classes)
         {
             var rng = new Random(42);
-            var generator = new CharacterGenerator(refData, rng);
+            var generator = CharacterGeneratorFactory.Create(refData, rng);
 
             var character = generator.Generate(new CharacterGenerationOptions
             {

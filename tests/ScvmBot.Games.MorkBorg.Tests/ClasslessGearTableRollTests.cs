@@ -25,7 +25,7 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
     public async Task TableA_Roll_ProducesExpectedItem(int roll, string expectedItem)
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(1));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(1));
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -51,7 +51,7 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
     public async Task TableB_Roll_ProducesExpectedItem(int roll, string expectedItem)
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(1));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(1));
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -67,7 +67,7 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
     public async Task TableB_Roll2_ProducesMonkeyDescription()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(1));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(1));
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -83,7 +83,7 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
     public async Task TableB_Roll11_ProducesSacredScroll()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(1));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(1));
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -100,7 +100,7 @@ public class ClasslessGearTableRollTests : MorkBorgGameRulesFixture
     public async Task SkipRandomStartingGear_ProducesNoGearTableItems()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var character = generator.Generate(new CharacterGenerationOptions
         {

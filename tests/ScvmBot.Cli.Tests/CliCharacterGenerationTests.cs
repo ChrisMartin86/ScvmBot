@@ -100,7 +100,7 @@ public class CliCharacterGenerationTests
 
         for (int seed = 0; seed < 20; seed++)
         {
-            var gen3 = new ScvmBot.Games.MorkBorg.Generation.CharacterGenerator(
+            var gen3 = ScvmBot.Games.MorkBorg.Generation.CharacterGeneratorFactory.Create(
                 await ScvmBot.Games.MorkBorg.Reference.MorkBorgReferenceDataService.CreateAsync(
                     Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data")),
                 new Random(seed));
@@ -111,7 +111,7 @@ public class CliCharacterGenerationTests
             });
             threeD6Abilities.Add((ch3.Strength, ch3.Agility, ch3.Presence, ch3.Toughness));
 
-            var gen4 = new ScvmBot.Games.MorkBorg.Generation.CharacterGenerator(
+            var gen4 = ScvmBot.Games.MorkBorg.Generation.CharacterGeneratorFactory.Create(
                 await ScvmBot.Games.MorkBorg.Reference.MorkBorgReferenceDataService.CreateAsync(
                     Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data")),
                 new Random(seed));

@@ -105,7 +105,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         // 50 x value-2 gives base score 6 → modifier -2 for every ability
         var dice = Enumerable.Repeat(2, 50).ToArray();
         var rng = new DeterministicRandom(dice);
-        var gen = new CharacterGenerator(refData, rng);
+        var gen = CharacterGeneratorFactory.Create(refData, rng);
 
         var ch = gen.Generate(new CharacterGenerationOptions
         {
@@ -129,7 +129,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var dice = Enumerable.Repeat(2, 50).ToArray();
         var rng = new DeterministicRandom(dice);
-        var gen = new CharacterGenerator(refData, rng);
+        var gen = CharacterGeneratorFactory.Create(refData, rng);
 
         // Fanged Deserter: STR+1, PRE-1, TOU+1
         var ch = gen.Generate(new CharacterGenerationOptions
@@ -154,7 +154,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
     public async Task OccultHerbmaster_GetsMedicineChest_ViaCustomEquipment()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var gen = new CharacterGenerator(refData, new Random(42));
+        var gen = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var ch = gen.Generate(new CharacterGenerationOptions
         {
@@ -216,7 +216,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         var refData = await LoadGameReferenceDataAsync();
         var dice = Enumerable.Repeat(2, 50).ToArray();
         var rng = new DeterministicRandom(dice);
-        var gen = new CharacterGenerator(refData, rng);
+        var gen = CharacterGeneratorFactory.Create(refData, rng);
 
         var ch = gen.Generate(new CharacterGenerationOptions
         {
@@ -243,7 +243,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         // Multiple runs with ClassName = "none" should always be classless
         for (int run = 0; run < 5; run++)
         {
-            var gen = new CharacterGenerator(refData, new Random(100 + run));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(100 + run));
             var ch = gen.Generate(new CharacterGenerationOptions
             {
                 Name = $"Test_{run}",
@@ -266,7 +266,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         // Multiple runs with ClassName = null should produce both states
         for (int run = 0; run < 20; run++)
         {
-            var gen = new CharacterGenerator(refData, new Random(200 + run));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(200 + run));
             var ch = gen.Generate(new CharacterGenerationOptions
             {
                 Name = $"Test_{run}",
@@ -293,7 +293,7 @@ public class ClassRuleValidationTests : MorkBorgGameRulesFixture
         // Multiple runs with explicit class name should always be that class
         for (int run = 0; run < 5; run++)
         {
-            var gen = new CharacterGenerator(refData, new Random(300 + run));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(300 + run));
             var ch = gen.Generate(new CharacterGenerationOptions
             {
                 Name = $"Test_{run}",

@@ -53,7 +53,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -70,7 +70,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -97,7 +97,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
         foreach (var className in nonScrollClasses)
         {
             var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
-            var generator = new CharacterGenerator(
+            var generator = CharacterGeneratorFactory.Create(
                 referenceData, rng);
 
             var character = generator.Generate(new CharacterGenerationOptions
@@ -194,7 +194,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     {
         var referenceData = await LoadGameReferenceDataAsync();
         var rng = new DeterministicRandom(new[] { 3, 3, 3, 3, 2, 1, 1, 1 }.Concat(Enumerable.Repeat(1, 25)));
-        var generator = new CharacterGenerator(referenceData, rng);
+        var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
         var character = generator.Generate(new CharacterGenerationOptions
         {
@@ -222,7 +222,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
         // Eventually one should hit the sacred scroll outcome (Table B roll 11)
         for (int seed = 1; seed <= 30 && !foundScrollInGear; seed++)
         {
-            var generator = new CharacterGenerator(referenceData, new Random(seed));
+            var generator = CharacterGeneratorFactory.Create(referenceData, new Random(seed));
             var character = generator.Generate(new CharacterGenerationOptions
             {
                 ClassName = MorkBorgConstants.ClasslessClassName,  // Classless, uses gear tables
@@ -246,7 +246,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     public async Task StartingItems_Token_RandomSacredScroll_GeneratesStructuredScroll()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         // Get an ordinary-mode class and add the token via reflection
         var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
@@ -273,7 +273,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     public async Task StartingItems_Token_RandomUncleanScroll_GeneratesStructuredScroll()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
         Assert.NotNull(classToModify);
@@ -298,7 +298,7 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     public async Task StartingItems_Token_RandomAnyScroll_GeneratesStructuredScroll()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var generator = new CharacterGenerator(refData, new Random(42));
+        var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
         var classToModify = refData.Classes.FirstOrDefault(c => c.StartingEquipmentMode == MorkBorgConstants.EquipmentMode.Ordinary);
         Assert.NotNull(classToModify);

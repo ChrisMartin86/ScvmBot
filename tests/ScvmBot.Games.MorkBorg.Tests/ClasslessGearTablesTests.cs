@@ -38,7 +38,7 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         for (int seed = 1; seed <= 10; seed++)
         {
             var rng = new Random(seed);
-            var generator = new CharacterGenerator(refData, rng);
+            var generator = CharacterGeneratorFactory.Create(refData, rng);
 
             var character = generator.Generate(new CharacterGenerationOptions
             {
@@ -64,7 +64,7 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         for (int seed = 1; seed <= 5; seed++)
         {
             var rng = new Random(seed);
-            var generator = new CharacterGenerator(refData, rng);
+            var generator = CharacterGeneratorFactory.Create(refData, rng);
 
             var character = generator.Generate(new CharacterGenerationOptions
             {
@@ -90,7 +90,7 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         var char2Items = new List<string>();
 
         var rng1 = new Random(seed);
-        var gen1 = new CharacterGenerator(refData, rng1);
+        var gen1 = CharacterGeneratorFactory.Create(refData, rng1);
         var char1 = gen1.Generate(new CharacterGenerationOptions
         {
             ClassName = MorkBorgConstants.ClasslessClassName,
@@ -98,7 +98,7 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         char1Items.AddRange(char1.Items.OrderBy(x => x));
 
         var rng2 = new Random(seed);
-        var gen2 = new CharacterGenerator(refData, rng2);
+        var gen2 = CharacterGeneratorFactory.Create(refData, rng2);
         var char2 = gen2.Generate(new CharacterGenerationOptions
         {
             ClassName = MorkBorgConstants.ClasslessClassName,
@@ -118,7 +118,7 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         for (int seed = 1; seed <= 5; seed++)
         {
             var rng = new Random(seed);
-            var generator = new CharacterGenerator(refData, rng);
+            var generator = CharacterGeneratorFactory.Create(refData, rng);
 
             var character = generator.Generate(new CharacterGenerationOptions
             {
@@ -141,7 +141,7 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         for (int seed = 1; seed <= 20; seed++)
         {
             var rng = new Random(seed);
-            var generator = new CharacterGenerator(refData, rng);
+            var generator = CharacterGeneratorFactory.Create(refData, rng);
 
             var character = generator.Generate(new CharacterGenerationOptions
             {
@@ -175,7 +175,7 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         // Eventually one should hit the sacred scroll outcome (Table B roll 11)
         for (int seed = 1; seed <= 30 && !foundScrollInGear; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions
             {
                 ClassName = MorkBorgConstants.ClasslessClassName,
@@ -205,7 +205,7 @@ public class ClasslessGearTablesTests : MorkBorgGameRulesFixture
         // Multiple runs with scroll-generating positions
         for (int seed = 100; seed < 110; seed++)
         {
-            var gen = new CharacterGenerator(refData, new Random(seed));
+            var gen = CharacterGeneratorFactory.Create(refData, new Random(seed));
             var ch = gen.Generate(new CharacterGenerationOptions
             {
                 Name = "Test",

@@ -26,7 +26,7 @@ public class CharacterGeneratorGameLogicTests
                 1,
                 1
             }.Concat(Enumerable.Repeat(1, 20)));
-            var generator = new CharacterGenerator(referenceData, rng);
+            var generator = CharacterGeneratorFactory.Create(referenceData, rng);
 
             var character = generator.Generate(null);
 
@@ -162,7 +162,7 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(referenceData, new Random(42));
+            var generator = CharacterGeneratorFactory.Create(referenceData, new Random(42));
 
             var options = new CharacterGenerationOptions
             {
@@ -229,7 +229,7 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
+            var generator = CharacterGeneratorFactory.Create(
                 referenceData, new Random(42));
 
             var character = generator.Generate(new CharacterGenerationOptions
@@ -260,7 +260,7 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
+            var generator = CharacterGeneratorFactory.Create(
                 referenceData, new Random(42));
 
             var character = generator.Generate(new CharacterGenerationOptions
@@ -293,7 +293,7 @@ public class CharacterGeneratorGameLogicTests
         {
             var referenceData = await LoadReferenceDataAsync();
             var rng = new DeterministicRandom(Enumerable.Repeat(6, 12).Concat(Enumerable.Repeat(1, 18)));
-            var generator = new CharacterGenerator(
+            var generator = CharacterGeneratorFactory.Create(
                 referenceData, rng);
 
             var character = generator.Generate(new CharacterGenerationOptions
@@ -322,7 +322,7 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
+            var generator = CharacterGeneratorFactory.Create(
                 referenceData, new Random(77));
 
             for (int i = 0; i < 20; i++)
@@ -358,7 +358,7 @@ public class CharacterGeneratorGameLogicTests
             var referenceData = await LoadReferenceDataAsync();
             var allOfficialScrolls = referenceData.Scrolls;
 
-            var generator = new CharacterGenerator(
+            var generator = CharacterGeneratorFactory.Create(
                 referenceData, new Random(88));
 
             for (int i = 0; i < 10; i++)
@@ -387,7 +387,7 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
+            var generator = CharacterGeneratorFactory.Create(
                 referenceData, new Random(99));
 
             var character = generator.Generate(new CharacterGenerationOptions
@@ -412,7 +412,7 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
+            var generator = CharacterGeneratorFactory.Create(
                 referenceData, new Random(111));
 
             var character = generator.Generate(new CharacterGenerationOptions
@@ -435,7 +435,7 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var referenceData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(
+            var generator = CharacterGeneratorFactory.Create(
                 referenceData, new Random(222));
 
             var character = generator.Generate(new CharacterGenerationOptions
@@ -492,7 +492,7 @@ public class CharacterGeneratorGameLogicTests
 
             for (int seed = 1; seed <= 10; seed++)
             {
-                var generator = new CharacterGenerator(refData, new Random(seed));
+                var generator = CharacterGeneratorFactory.Create(refData, new Random(seed));
                 var character = generator.Generate(new CharacterGenerationOptions
                 {
                     ClassName = "Esoteric Hermit",
@@ -520,7 +520,7 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var refData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(refData, new Random(42));
+            var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
             var character = generator.Generate(new CharacterGenerationOptions
             {
@@ -548,7 +548,7 @@ public class CharacterGeneratorGameLogicTests
         try
         {
             var refData = await LoadReferenceDataAsync();
-            var generator = new CharacterGenerator(refData, new Random(42));
+            var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
 
             Assert.Throws<InvalidOperationException>(() =>
                 generator.Generate(new CharacterGenerationOptions
