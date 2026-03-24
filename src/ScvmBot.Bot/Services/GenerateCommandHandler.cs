@@ -120,52 +120,6 @@ public class GenerateCommandHandler : ISlashCommand
         return (embed, attachment, stream);
     }
 
-    private async Task DeliverAndAcknowledgeAsync(
-        ISlashCommandContext context,
-        GenerateResult result,
-        Embed embed,
-        FileAttachment? attachment,
-        CancellationToken ct)
-    {
-        bool sent;
-        try
-        {
-            sent = await _delivery.SendResultAsync(context, embed, attachment, ct);
-        }
-        catch (Exception sendEx)
-        {
-            _logger.LogError(sendEx, "Failed to deliver generation result via DM");
-            await context.FollowupAsync(
-                embed: ResponseCardBuilder.Build("Send Failed",
-                    "Something went wrong sending your result. Please try again.", new Color(200, 50, 50)),
-                ephemeral: true);
-            return;
-        }
-
-        if (!sent)
-        {
-            await context.FollowupAsync(
-                text: "I couldn't send you a DM. Please enable DMs from server members and try again.",
-                ephemeral: true);
-            return;
-        }
-
-        // Result was delivered successfully. The followup acknowledgement is
-        // best-effort — if it fails, the user already has their result.
-        try
-        {
-            var followupText = context.GuildId is null
-                ? (result.CharacterCount > 1 ? "Here are your characters!" : "Here's your character!")
-                : "Check your DMs.";
-            await context.FollowupAsync(text: followupText, ephemeral: true);
-        }
-        catch (Exception ackEx)
-        {
-            _logger.LogWarning(ackEx,
-                "Result delivered successfully but followup acknowledgement failed");
-        }
-    }
-
     public async Task HandleAsync(ISlashCommandContext context, CancellationToken ct = default)
     {
         await context.DeferAsync(ephemeral: true);
@@ -187,7 +141,7 @@ public class GenerateCommandHandler : ISlashCommand
             var (embed, attachment, stream) = RenderResult(result);
             try
             {
-                await DeliverAndAcknowledgeAsync(context, result, embed, attachment, ct);
+                await _delivery.DeliverAndAcknowledgeAsync(context, result, embed, attachment, ct);
             }
             finally
             {

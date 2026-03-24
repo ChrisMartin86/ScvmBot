@@ -1,5 +1,6 @@
 using Discord;
 using Microsoft.Extensions.Logging;
+using ScvmBot.Modules;
 
 namespace ScvmBot.Bot.Services;
 
@@ -14,6 +15,58 @@ namespace ScvmBot.Bot.Services;
 /// </summary>
 public class GenerationDeliveryService(ILogger<GenerationDeliveryService> logger)
 {
+    /// <summary>
+    /// Sends the generation result and posts a followup acknowledgement.
+    /// Handles DM privacy failures and unexpected send exceptions inline,
+    /// posting appropriate error followups so the handler never needs to
+    /// reason about transport-layer outcomes.
+    /// </summary>
+    public async Task DeliverAndAcknowledgeAsync(
+        ISlashCommandContext context,
+        GenerateResult result,
+        Embed embed,
+        FileAttachment? attachment,
+        CancellationToken ct = default)
+    {
+        bool sent;
+        try
+        {
+            sent = await SendResultAsync(context, embed, attachment, ct);
+        }
+        catch (Exception sendEx)
+        {
+            logger.LogError(sendEx, "Failed to deliver generation result via DM");
+            await context.FollowupAsync(
+                embed: ResponseCardBuilder.Build("Send Failed",
+                    "Something went wrong sending your result. Please try again.", new Color(200, 50, 50)),
+                ephemeral: true);
+            return;
+        }
+
+        if (!sent)
+        {
+            await context.FollowupAsync(
+                text: "I couldn't send you a DM. Please enable DMs from server members and try again.",
+                ephemeral: true);
+            return;
+        }
+
+        // Result was delivered successfully. The followup acknowledgement is
+        // best-effort — if it fails, the user already has their result.
+        try
+        {
+            var followupText = context.GuildId is null
+                ? (result.CharacterCount > 1 ? "Here are your characters!" : "Here's your character!")
+                : "Check your DMs.";
+            await context.FollowupAsync(text: followupText, ephemeral: true);
+        }
+        catch (Exception ackEx)
+        {
+            logger.LogWarning(ackEx,
+                "Result delivered successfully but followup acknowledgement failed");
+        }
+    }
+
     /// <summary>
     /// Sends the generation result to the user's DM (or the interaction channel if
     /// already in a DM). Returns <c>true</c> if the message was sent successfully,
