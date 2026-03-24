@@ -56,7 +56,7 @@ public class GenerateCommandHandler : ISlashCommand
             .WithDescription("Generate content in various game systems")
             .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
 
-        foreach (var m in _gameModules.Values)
+        foreach (var m in _gameModules.Values.OrderBy(m => m.CommandKey, StringComparer.OrdinalIgnoreCase))
         {
             var constrained = DiscordCommandAdapter.ApplyConstraints(m.SubCommands, MaxDiscordCharacterCount);
             builder.AddOption(DiscordCommandAdapter.ToSlashCommandOption(m.CommandKey, m.Name, constrained));

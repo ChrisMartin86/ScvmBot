@@ -38,7 +38,8 @@ public static class ModuleBootstrapper
             .SelectMany(a => a.GetExportedTypes())
             .Where(t => typeof(IModuleRegistration).IsAssignableFrom(t)
                      && !t.IsAbstract
-                     && !t.IsInterface);
+                     && !t.IsInterface)
+            .OrderBy(t => t.FullName, StringComparer.OrdinalIgnoreCase);
 
         return await InitializeFromTypesAsync(registrationTypes, configuration, logger);
     }
