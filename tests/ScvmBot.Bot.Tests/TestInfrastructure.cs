@@ -40,6 +40,9 @@ internal sealed class FakeCommandContext : ScvmBot.Bot.Services.ISlashCommandCon
 
     public Task FollowupAsync(string? text = null, Discord.Embed? embed = null, bool ephemeral = false)
     {
+        if (!Deferred)
+            throw new InvalidOperationException(
+                "FollowupAsync called before DeferAsync. The bot must call DeferAsync before sending any followup.");
         if (FollowupException is not null)
         {
             var ex = FollowupException;
@@ -62,6 +65,39 @@ internal sealed class FakeCommandContext : ScvmBot.Bot.Services.ISlashCommandCon
 }
 
 /// <summary>
+/// Wraps a stream and tracks whether <see cref="Dispose"/> has been called.
+/// Stored in <see cref="FakeMessageChannel.SentAttachmentStreams"/> so tests can assert
+/// that the production code cleaned up the stream after sending.
+/// </summary>
+internal sealed class TrackingStream(System.IO.Stream inner) : System.IO.Stream
+{
+    /// <summary>
+    /// Returns true if the underlying stream has been disposed — whether by production
+    /// code (which disposes the original stream it owns) or by this wrapper itself.
+    /// Relies on <see cref="System.IO.MemoryStream.CanRead"/> returning <c>false</c>
+    /// after disposal, which is guaranteed by the .NET runtime.
+    /// </summary>
+    public bool IsDisposed => !inner.CanRead;
+
+    public override bool CanRead => inner.CanRead;
+    public override bool CanSeek => inner.CanSeek;
+    public override bool CanWrite => inner.CanWrite;
+    public override long Length => inner.Length;
+    public override long Position { get => inner.Position; set => inner.Position = value; }
+    public override void Flush() => inner.Flush();
+    public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+    public override long Seek(long offset, System.IO.SeekOrigin origin) => inner.Seek(offset, origin);
+    public override void SetLength(long value) => inner.SetLength(value);
+    public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) inner.Dispose();
+        base.Dispose(disposing);
+    }
+}
+
+/// <summary>
 /// Test double for <see cref="Discord.IMessageChannel"/>.
 /// Only <see cref="SendMessageAsync"/> and <see cref="SendFileAsync(Discord.FileAttachment, string?, bool, Discord.Embed?, Discord.RequestOptions?, Discord.AllowedMentions?, Discord.MessageReference?, Discord.MessageComponent?, Discord.ISticker[]?, Discord.Embed[]?, Discord.MessageFlags)"/>
 /// are implemented; all other members throw <see cref="NotImplementedException"/>.
@@ -70,6 +106,12 @@ internal sealed class FakeMessageChannel : Discord.IMessageChannel
 {
     public List<Discord.Embed?> SentEmbeds { get; } = new();
     public List<string?> SentFileNames { get; } = new();
+    /// <summary>
+    /// Tracking wrappers around the streams passed to <see cref="SendFileAsync"/>.
+    /// Use <see cref="TrackingStream.IsDisposed"/> to assert that production code
+    /// cleaned up the stream after sending.
+    /// </summary>
+    public List<TrackingStream> SentAttachmentStreams { get; } = new();
     public int SendMessageCallCount { get; private set; }
     public int SendFileCallCount { get; private set; }
 
@@ -116,9 +158,26 @@ internal sealed class FakeMessageChannel : Discord.IMessageChannel
         Discord.PollProperties? pollProperties = null)
     {
         if (SendException is not null) throw SendException;
+
+        // Contract validation: attachment must have a named file with a recognisable extension
+        if (string.IsNullOrWhiteSpace(attachment.FileName))
+            throw new ArgumentException("File attachment must have a non-empty filename.", nameof(attachment));
+        if (!System.IO.Path.HasExtension(attachment.FileName))
+            throw new ArgumentException(
+                $"File attachment filename '{attachment.FileName}' has no extension (content type cannot be inferred).",
+                nameof(attachment));
+
+        // Contract validation: stream must be present and non-empty
+        if (attachment.Stream is null)
+            throw new ArgumentException("File attachment must have a non-null stream.", nameof(attachment));
+        if (attachment.Stream.CanSeek && attachment.Stream.Length == 0)
+            throw new ArgumentException("File attachment stream must not be empty.", nameof(attachment));
+
         SendFileCallCount++;
         SentFileNames.Add(attachment.FileName);
         SentEmbeds.Add(embed);
+        var tracking = new TrackingStream(attachment.Stream);
+        SentAttachmentStreams.Add(tracking);
         return Task.FromResult<Discord.IUserMessage>(null!);
     }
 

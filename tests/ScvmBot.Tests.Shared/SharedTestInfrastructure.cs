@@ -83,4 +83,7 @@ public static class TestDataBuilder
 
     public static string GetRealDataDirectoryPath() =>
         Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data");
+
+    public static string GetRealPdfDataDirectoryPath() =>
+        Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg.Pdf", "Data");
 }
