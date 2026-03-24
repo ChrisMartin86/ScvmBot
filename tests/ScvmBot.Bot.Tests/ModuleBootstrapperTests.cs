@@ -144,7 +144,7 @@ public class ModuleBootstrapperTests
         // No parameterless constructor — this should be rejected
         public NoParameterlessCtorRegistration(string required) => _required = required;
 
-        public Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration)
+        public Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger? logger = null)
             => Task.FromResult<Action<IServiceCollection>>(_ => { });
     }
 }

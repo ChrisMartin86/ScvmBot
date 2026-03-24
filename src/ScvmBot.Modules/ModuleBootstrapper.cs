@@ -31,7 +31,8 @@ public static class ModuleBootstrapper
     /// section (e.g. <c>Modules:MorkBorg</c>) inside its <c>InitializeAsync</c> method.
     /// </param>
     public static async Task<List<Action<IServiceCollection>>> DiscoverAndInitializeAsync(
-        IConfiguration configuration)
+        IConfiguration configuration,
+        Microsoft.Extensions.Logging.ILogger? logger = null)
     {
         var registrationTypes = GetModuleAssemblies()
             .SelectMany(a => a.GetExportedTypes())
@@ -39,7 +40,7 @@ public static class ModuleBootstrapper
                      && !t.IsAbstract
                      && !t.IsInterface);
 
-        return await InitializeFromTypesAsync(registrationTypes, configuration);
+        return await InitializeFromTypesAsync(registrationTypes, configuration, logger);
     }
 
     /// <summary>
@@ -49,7 +50,8 @@ public static class ModuleBootstrapper
     /// </summary>
     internal static async Task<List<Action<IServiceCollection>>> InitializeFromTypesAsync(
         IEnumerable<Type> registrationTypes,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        Microsoft.Extensions.Logging.ILogger? logger = null)
     {
         var registrations = new List<Action<IServiceCollection>>();
         foreach (var type in registrationTypes)
@@ -63,7 +65,7 @@ public static class ModuleBootstrapper
             }
 
             var module = (IModuleRegistration)Activator.CreateInstance(type)!;
-            var register = await module.InitializeAsync(configuration);
+            var register = await module.InitializeAsync(configuration, logger);
             registrations.Add(register);
         }
 

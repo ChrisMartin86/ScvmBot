@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ScvmBot.Games.MorkBorg.Generation;
 using ScvmBot.Games.MorkBorg.Pdf;
 using ScvmBot.Games.MorkBorg.Reference;
@@ -16,7 +17,7 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
 {
     private const string ModuleKey = "MorkBorg";
 
-    public async Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration)
+    public async Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration, ILogger? logger = null)
     {
         var dataPath = configuration[$"Modules:{ModuleKey}:DataPath"]
                     ?? configuration["Modules:DataPath"];
@@ -29,10 +30,11 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
 
         if (!File.Exists(pdfTemplatePath))
         {
-            Console.Error.WriteLine(
-                $"[MorkBorg] WARNING: PDF template not found at '{pdfTemplatePath}'. " +
-                $"PDF character sheet generation will be disabled. " +
-                $"If this is unexpected, check your build output or Data/ directory.");
+            logger?.LogWarning(
+                "PDF template not found at '{PdfTemplatePath}'. " +
+                "PDF character sheet generation will be disabled. " +
+                "If this is unexpected, check your build output or Data/ directory.",
+                pdfTemplatePath);
         }
 
         return services =>

@@ -25,7 +25,9 @@ class Program
         List<Action<IServiceCollection>> moduleRegistrations;
         try
         {
-            moduleRegistrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(builder.Configuration);
+            using var bootstrapLoggerFactory = LoggerFactory.Create(b => b.AddConsole());
+            var bootstrapLogger = bootstrapLoggerFactory.CreateLogger("ScvmBot.Startup");
+            moduleRegistrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(builder.Configuration, bootstrapLogger);
         }
         catch (FileNotFoundException ex)
         {
