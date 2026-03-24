@@ -71,7 +71,13 @@ internal sealed class FakeCommandContext : ScvmBot.Bot.Services.ISlashCommandCon
 /// </summary>
 internal sealed class TrackingStream(System.IO.Stream inner) : System.IO.Stream
 {
-    public bool IsDisposed { get; private set; }
+    /// <summary>
+    /// Returns true if the underlying stream has been disposed — whether by production
+    /// code (which disposes the original stream it owns) or by this wrapper itself.
+    /// Relies on <see cref="System.IO.MemoryStream.CanRead"/> returning <c>false</c>
+    /// after disposal, which is guaranteed by the .NET runtime.
+    /// </summary>
+    public bool IsDisposed => !inner.CanRead;
 
     public override bool CanRead => inner.CanRead;
     public override bool CanSeek => inner.CanSeek;
@@ -86,7 +92,6 @@ internal sealed class TrackingStream(System.IO.Stream inner) : System.IO.Stream
 
     protected override void Dispose(bool disposing)
     {
-        IsDisposed = true;
         if (disposing) inner.Dispose();
         base.Dispose(disposing);
     }
