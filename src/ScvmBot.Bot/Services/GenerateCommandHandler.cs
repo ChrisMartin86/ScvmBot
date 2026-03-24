@@ -56,6 +56,8 @@ public class GenerateCommandHandler : ISlashCommand
             .WithDescription("Generate content in various game systems")
             .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
 
+        // Sort by CommandKey (the user-facing game-system identifier) so Discord presents
+        // options in a predictable alphabetical order, independent of initialization order.
         foreach (var m in _gameModules.Values.OrderBy(m => m.CommandKey, StringComparer.OrdinalIgnoreCase))
         {
             var constrained = DiscordCommandAdapter.ApplyConstraints(m.SubCommands, MaxDiscordCharacterCount);
