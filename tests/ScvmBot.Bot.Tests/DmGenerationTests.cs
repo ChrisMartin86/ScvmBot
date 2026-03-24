@@ -33,7 +33,7 @@ public class DmGenerationTests
         var command = new HelloCommand();
         var context = new FakeCommandContext { UserMention = "<@123>" };
 
-        await command.HandleAsync(context);
+        await command.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.Single(context.RespondTexts);
         Assert.Contains("<@123>", context.RespondTexts[0]);

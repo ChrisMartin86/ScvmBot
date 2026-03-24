@@ -29,7 +29,7 @@ public class CustomPdfTemplatePathTests
 
         // Place a dummy PDF template in the custom data directory
         var templatePath = Path.Combine(dir, "character_sheet.pdf");
-        await File.WriteAllBytesAsync(templatePath, CreateMinimalPdf());
+        await File.WriteAllBytesAsync(templatePath, CreateMinimalPdf(), TestContext.Current.CancellationToken);
 
         var register = await new MorkBorgModuleRegistration().InitializeAsync(BuildConfig(dir));
 
@@ -72,7 +72,7 @@ public class CustomPdfTemplatePathTests
         var module = provider.GetRequiredService<IGameModule>();
         var registry = provider.GetRequiredService<RendererRegistry>();
 
-        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>(), TestContext.Current.CancellationToken);
         var file = registry.TryRenderFile(result);
 
         Assert.NotNull(file);

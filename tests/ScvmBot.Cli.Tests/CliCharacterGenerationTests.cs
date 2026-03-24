@@ -37,7 +37,7 @@ public class CliCharacterGenerationTests
     {
         var (module, _) = await CreateModulePipelineAsync();
 
-        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>(), TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(charResult.Characters[0].Name));
@@ -52,7 +52,7 @@ public class CliCharacterGenerationTests
         var (module, _) = await CreateModulePipelineAsync();
         var options = new Dictionary<string, object?> { ["name"] = "TestScvm" };
 
-        var result = await module.HandleGenerateCommandAsync("character", options);
+        var result = await module.HandleGenerateCommandAsync("character", options, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal("TestScvm", charResult.Characters[0].Name);
@@ -64,7 +64,7 @@ public class CliCharacterGenerationTests
         var (module, _) = await CreateModulePipelineAsync();
         var options = new Dictionary<string, object?> { ["class"] = "none" };
 
-        var result = await module.HandleGenerateCommandAsync("character", options);
+        var result = await module.HandleGenerateCommandAsync("character", options, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Null(charResult.Characters[0].ClassName);
@@ -81,7 +81,7 @@ public class CliCharacterGenerationTests
             .Choices!.First(c => c.Value != "none");
         var options = new Dictionary<string, object?> { ["class"] = classChoice.Value };
 
-        var result = await module.HandleGenerateCommandAsync("character", options);
+        var result = await module.HandleGenerateCommandAsync("character", options, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal(classChoice.Value, charResult.Characters[0].ClassName);
@@ -135,7 +135,7 @@ public class CliCharacterGenerationTests
     public async Task RenderCard_ReturnsCardOutput_ForCharacterResult()
     {
         var (module, registry) = await CreateModulePipelineAsync();
-        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>(), TestContext.Current.CancellationToken);
 
         var card = registry.RenderCard(result);
 
@@ -149,7 +149,7 @@ public class CliCharacterGenerationTests
     public async Task TryRenderFile_ReturnsFileOutput_ForCharacterResult()
     {
         var (module, registry) = await CreateModulePipelineAsync();
-        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>(), TestContext.Current.CancellationToken);
 
         var file = registry.TryRenderFile(result);
 
@@ -167,7 +167,7 @@ public class CliCharacterGenerationTests
         var (module, registry) = await CreateModulePipelineAsync();
         var options = new Dictionary<string, object?> { ["count"] = 3L };
 
-        var result = await module.HandleGenerateCommandAsync("character", options);
+        var result = await module.HandleGenerateCommandAsync("character", options, TestContext.Current.CancellationToken);
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal(3, charResult.Characters.Count);
 
@@ -192,7 +192,7 @@ public class CliCharacterGenerationTests
         var (module, _) = await CreateModulePipelineAsync();
         var options = new Dictionary<string, object?> { ["count"] = 3L };
 
-        var result = await module.HandleGenerateCommandAsync("character", options);
+        var result = await module.HandleGenerateCommandAsync("character", options, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal(3, charResult.Characters.Count);
@@ -204,7 +204,7 @@ public class CliCharacterGenerationTests
         var (module, registry) = await CreateModulePipelineAsync();
         var options = new Dictionary<string, object?> { ["count"] = 2L };
 
-        var result = await module.HandleGenerateCommandAsync("character", options);
+        var result = await module.HandleGenerateCommandAsync("character", options, TestContext.Current.CancellationToken);
         var card = registry.RenderCard(result);
 
         Assert.NotNull(card.Title);
@@ -220,7 +220,7 @@ public class CliCharacterGenerationTests
         var options = new Dictionary<string, object?> { ["roll-method"] = "bananas" };
 
         await Assert.ThrowsAsync<ArgumentException>(
-            () => module.HandleGenerateCommandAsync("character", options));
+            () => module.HandleGenerateCommandAsync("character", options, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -230,6 +230,6 @@ public class CliCharacterGenerationTests
         var options = new Dictionary<string, object?> { ["count"] = "nope" };
 
         await Assert.ThrowsAsync<ArgumentException>(
-            () => module.HandleGenerateCommandAsync("character", options));
+            () => module.HandleGenerateCommandAsync("character", options, TestContext.Current.CancellationToken));
     }
 }
