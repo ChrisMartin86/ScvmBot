@@ -35,7 +35,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var gs = await CreateMinimalGameSystemAsync();
 
         var result = await gs.HandleGenerateCommandAsync("character",
-            new Dictionary<string, object?> { ["count"] = 3L });
+            new Dictionary<string, object?> { ["count"] = 3L }, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal(3, charResult.Characters.Count);
@@ -47,7 +47,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var gs = await CreateMinimalGameSystemAsync();
 
         var result = await gs.HandleGenerateCommandAsync("character",
-            new Dictionary<string, object?> { ["count"] = 2L });
+            new Dictionary<string, object?> { ["count"] = 2L }, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.False(string.IsNullOrWhiteSpace(charResult.GroupName));
@@ -59,7 +59,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var gs = await CreateMinimalGameSystemAsync();
 
         var result = await gs.HandleGenerateCommandAsync("character",
-            new Dictionary<string, object?> { ["count"] = 3L });
+            new Dictionary<string, object?> { ["count"] = 3L }, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.All(charResult.Characters, c => Assert.False(string.IsNullOrWhiteSpace(c.Name)));
@@ -71,7 +71,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var gs = await CreateMinimalGameSystemAsync();
 
         var result = await gs.HandleGenerateCommandAsync("character",
-            new Dictionary<string, object?>());
+            new Dictionary<string, object?>(), TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Single(charResult.Characters);
@@ -84,7 +84,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var gs = await CreateMinimalGameSystemAsync();
 
         var result = await gs.HandleGenerateCommandAsync("character",
-            new Dictionary<string, object?>());
+            new Dictionary<string, object?>(), TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Single(charResult.Characters);
@@ -97,7 +97,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var gs = await CreateMinimalGameSystemAsync();
 
         var result = await gs.HandleGenerateCommandAsync("character",
-            new Dictionary<string, object?> { ["count"] = 2L });
+            new Dictionary<string, object?> { ["count"] = 2L }, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
 
@@ -118,7 +118,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var gs = await CreateMinimalGameSystemAsync();
 
         var result = await gs.HandleGenerateCommandAsync("character",
-            new Dictionary<string, object?> { ["count"] = 3L });
+            new Dictionary<string, object?> { ["count"] = 3L }, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         var card = MorkBorgCharacterEmbedRenderer.BuildRosterCard(
@@ -132,7 +132,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var gs = await CreateMinimalGameSystemAsync();
 
         var result = await gs.HandleGenerateCommandAsync("character",
-            new Dictionary<string, object?>());
+            new Dictionary<string, object?>(), TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         var card = MorkBorgCharacterEmbedRenderer.BuildCard(charResult.Characters[0]);
@@ -146,7 +146,7 @@ public class MorkBorgMultiCharacterGenerationTests
         var gs = await CreateMinimalGameSystemAsync();
 
         var result = await gs.HandleGenerateCommandAsync("character",
-            new Dictionary<string, object?> { ["count"] = 2L, ["name"] = "CustomName" });
+            new Dictionary<string, object?> { ["count"] = 2L, ["name"] = "CustomName" }, TestContext.Current.CancellationToken);
 
         var charResult = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal("CustomName", charResult.Characters[0].Name);

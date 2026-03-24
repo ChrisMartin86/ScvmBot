@@ -150,7 +150,7 @@ public class GameModuleArchitectureTests
             }
         };
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(context.Deferred);
         Assert.Equal(0, module1.InvocationCount);

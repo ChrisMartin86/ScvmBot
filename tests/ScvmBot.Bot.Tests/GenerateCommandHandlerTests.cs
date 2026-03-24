@@ -18,7 +18,7 @@ public class GenerateCommandHandlerTests
         var handler = CreateMinimalHandler();
         var context = new FakeCommandContext(); // no options
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(context.Deferred, "HandleAsync must call DeferAsync before doing anything else.");
     }
@@ -29,7 +29,7 @@ public class GenerateCommandHandlerTests
         var handler = CreateMinimalHandler();
         var context = new FakeCommandContext(); // no options
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.Single(context.FollowupEmbeds);
         var embed = context.FollowupEmbeds[0];
@@ -50,7 +50,7 @@ public class GenerateCommandHandlerTests
             }
         };
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.Single(context.FollowupEmbeds);
         var embed = context.FollowupEmbeds[0];
@@ -103,7 +103,7 @@ public class GenerateCommandHandlerTests
             }
         };
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(context.Deferred);
         Assert.Equal(1, channel.SendMessageCallCount);
@@ -143,7 +143,7 @@ public class GenerateCommandHandlerTests
             }
         };
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(context.Deferred);
         Assert.Equal(1, channel.SendMessageCallCount);
@@ -183,7 +183,7 @@ public class GenerateCommandHandlerTests
             }
         };
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(context.Deferred);
         Assert.Equal(1, channel.SendMessageCallCount);  // card sent without PDF archive
@@ -244,7 +244,7 @@ public class GenerateCommandHandlerTests
             }
         };
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.Single(context.FollowupEmbeds);
         var embed = context.FollowupEmbeds[0];
@@ -293,7 +293,7 @@ public class GenerateCommandHandlerTests
             }
         };
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.Contains(context.FollowupTexts, t => t != null && t.Contains("enable DMs"));
     }
@@ -327,7 +327,7 @@ public class GenerateCommandHandlerTests
         };
 
         // Should not throw — acknowledgement failure is best-effort
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         // The result was delivered to the channel despite followup failure
         Assert.Equal(1, channel.SendMessageCallCount);
@@ -371,7 +371,7 @@ public class GenerateCommandHandlerTests
             }
         };
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         // Card was delivered without attachment
         Assert.Equal(1, channel.SendMessageCallCount);
@@ -415,7 +415,7 @@ public class GenerateCommandHandlerTests
             }
         };
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.Contains(context.FollowupEmbeds, e => e?.Title == "Send Failed");
     }

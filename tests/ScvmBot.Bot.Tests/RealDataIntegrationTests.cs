@@ -29,7 +29,7 @@ public class RealDataIntegrationTests
     {
         var (handler, channel, context) = await CreateSingleCharacterPipelineAsync(seed: 42);
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(context.Deferred);
         Assert.Equal(1, channel.SendMessageCallCount);
@@ -97,7 +97,7 @@ public class RealDataIntegrationTests
     {
         var (handler, channel, context) = await CreateMultiCharacterPipelineAsync(count: 3, seed: 42);
 
-        await handler.HandleAsync(context);
+        await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(context.Deferred);
         Assert.Equal(1, channel.SendMessageCallCount);
@@ -134,7 +134,7 @@ public class RealDataIntegrationTests
         var module = new MorkBorgModule(generator, refData);
 
         var options = new Dictionary<string, object?> { ["count"] = (long)5 };
-        var result = await module.HandleGenerateCommandAsync("character", options);
+        var result = await module.HandleGenerateCommandAsync("character", options, TestContext.Current.CancellationToken);
 
         var batch = Assert.IsType<GenerationBatch<Character>>(result);
         Assert.Equal(5, batch.Characters.Count);

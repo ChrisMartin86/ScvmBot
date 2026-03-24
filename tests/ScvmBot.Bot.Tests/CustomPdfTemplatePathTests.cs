@@ -29,7 +29,7 @@ public class CustomPdfTemplatePathTests
 
         // Place a dummy PDF template in the custom data directory
         var templatePath = Path.Combine(dir, "character_sheet.pdf");
-        await File.WriteAllBytesAsync(templatePath, CreateMinimalPdf());
+        await File.WriteAllBytesAsync(templatePath, CreateMinimalPdf(), TestContext.Current.CancellationToken);
 
         var register = await new MorkBorgModuleRegistration().InitializeAsync(BuildConfig(dir));
 
@@ -55,7 +55,9 @@ public class CustomPdfTemplatePathTests
             "src", "ScvmBot.Games.MorkBorg", "Data");
         var realTemplate = Path.Combine(repoDataPath, "character_sheet.pdf");
         if (!File.Exists(realTemplate))
-            return; // Skip if PDF template not available in this environment
+            Assert.Skip(
+                $"PDF template not found at '{realTemplate}'. " +
+                "Run a full build with data files present to enable this test.");
 
         File.Copy(realTemplate, Path.Combine(dir, "character_sheet.pdf"));
 
@@ -70,7 +72,7 @@ public class CustomPdfTemplatePathTests
         var module = provider.GetRequiredService<IGameModule>();
         var registry = provider.GetRequiredService<RendererRegistry>();
 
-        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>());
+        var result = await module.HandleGenerateCommandAsync("character", new Dictionary<string, object?>(), TestContext.Current.CancellationToken);
         var file = registry.TryRenderFile(result);
 
         Assert.NotNull(file);
@@ -87,4 +89,22 @@ public class CustomPdfTemplatePathTests
             "xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n" +
             "0000000058 00000 n \n0000000115 00000 n \n" +
             "trailer<</Size 4/Root 1 0 R>>\nstartxref\n190\n%%EOF");
+
+    /// <summary>
+    /// Asserts that the default PDF template is present in the build output.
+    /// Skips loudly if the template is missing so that CI runners surface the gap
+    /// rather than silently passing without coverage.
+    /// </summary>
+    [Fact]
+    public void DefaultPdfTemplate_ExistsInBuildOutput()
+    {
+        var path = MorkBorgPdfRenderer.DefaultTemplatePath;
+        if (!File.Exists(path))
+            Assert.Skip(
+                $"Default PDF template not found at '{path}'. " +
+                "Ensure the build copies Data/MorkBorg/character_sheet.pdf to the output directory.");
+
+        Assert.True(new FileInfo(path).Length > 0,
+            $"PDF template at '{path}' is empty.");
+    }
 }

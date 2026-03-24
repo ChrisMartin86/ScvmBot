@@ -35,7 +35,7 @@ public class GenerationDeliveryServiceTests
             Channel = channel
         };
 
-        var result = await service.SendResultAsync(context, CreateDummyEmbed(), attachment: null);
+        var result = await service.SendResultAsync(context, CreateDummyEmbed(), attachment: null, TestContext.Current.CancellationToken);
 
         Assert.True(result);
         Assert.Equal(1, channel.SendMessageCallCount);
@@ -55,7 +55,7 @@ public class GenerationDeliveryServiceTests
             Channel = channel
         };
 
-        var result = await service.SendResultAsync(context, CreateDummyEmbed(), attachment: null);
+        var result = await service.SendResultAsync(context, CreateDummyEmbed(), attachment: null, TestContext.Current.CancellationToken);
 
         Assert.True(result);
         Assert.Equal(1, context.DmChannelCreationCount);
@@ -75,7 +75,7 @@ public class GenerationDeliveryServiceTests
             Channel = channel
         };
 
-        await service.SendResultAsync(context, CreateDummyEmbed(), attachment: null);
+        await service.SendResultAsync(context, CreateDummyEmbed(), attachment: null, TestContext.Current.CancellationToken);
 
         Assert.Equal(1, channel.SendMessageCallCount);
         Assert.Equal(0, channel.SendFileCallCount);
@@ -97,7 +97,7 @@ public class GenerationDeliveryServiceTests
         using var stream = new MemoryStream(new byte[] { 0x25, 0x50, 0x44, 0x46 });
         var attachment = new FileAttachment(stream, "test.pdf");
 
-        await service.SendResultAsync(context, CreateDummyEmbed(), attachment);
+        await service.SendResultAsync(context, CreateDummyEmbed(), attachment, TestContext.Current.CancellationToken);
 
         Assert.Equal(0, channel.SendMessageCallCount);
         Assert.Equal(1, channel.SendFileCallCount);
@@ -123,7 +123,7 @@ public class GenerationDeliveryServiceTests
             Channel = channel
         };
 
-        var result = await service.SendResultAsync(context, CreateDummyEmbed(), attachment: null);
+        var result = await service.SendResultAsync(context, CreateDummyEmbed(), attachment: null, TestContext.Current.CancellationToken);
 
         Assert.False(result);
     }
@@ -148,7 +148,7 @@ public class GenerationDeliveryServiceTests
         };
 
         await Assert.ThrowsAsync<HttpException>(
-            () => service.SendResultAsync(context, CreateDummyEmbed(), attachment: null));
+            () => service.SendResultAsync(context, CreateDummyEmbed(), attachment: null, TestContext.Current.CancellationToken));
     }
 
     // ── Embed is passed through to the channel ──────────────────────────
@@ -165,7 +165,7 @@ public class GenerationDeliveryServiceTests
         };
         var embed = CreateDummyEmbed();
 
-        await service.SendResultAsync(context, embed, attachment: null);
+        await service.SendResultAsync(context, embed, attachment: null, TestContext.Current.CancellationToken);
 
         Assert.Single(channel.SentEmbeds);
         Assert.Equal("Test", channel.SentEmbeds[0]!.Title);

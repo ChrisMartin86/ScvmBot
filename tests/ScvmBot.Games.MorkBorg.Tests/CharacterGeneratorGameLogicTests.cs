@@ -107,12 +107,12 @@ public class CharacterGeneratorGameLogicTests
         var directory = TestUtilities.CreateTempDirectory();
         try
         {
-            await File.WriteAllTextAsync(Path.Combine(directory, "classes.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "spells.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "names.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "weapons.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "armor.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "items.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "classes.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "spells.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "names.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "weapons.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "armor.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "items.json"), "[]", TestContext.Current.CancellationToken);
             var referenceData = await MorkBorgReferenceDataService.CreateAsync(directory);
             var rng = new DeterministicRandom(new[] { 1 });
             var dice = new DiceRoller(rng);
@@ -134,12 +134,12 @@ public class CharacterGeneratorGameLogicTests
         var directory = TestUtilities.CreateTempDirectory();
         try
         {
-            await File.WriteAllTextAsync(Path.Combine(directory, "classes.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "spells.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "names.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "weapons.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "armor.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(directory, "items.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(directory, "classes.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "spells.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "names.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "weapons.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "armor.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(directory, "items.json"), "[]", TestContext.Current.CancellationToken);
             var referenceData = await MorkBorgReferenceDataService.CreateAsync(directory);
             var rng = new DeterministicRandom(new[] { 1 });
             var dice = new DiceRoller(rng);

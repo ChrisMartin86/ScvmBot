@@ -319,12 +319,12 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
                 ""startingItems"": [],
                 ""startingEquipmentMode"": ""ordinary""
             }]";
-            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), classJson);
-            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[\"Tester\"]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), classJson, TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[\"Tester\"]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]", TestContext.Current.CancellationToken);
 
             var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
             var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
@@ -375,12 +375,12 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
                 ""startingItems"": [],
                 ""startingEquipmentMode"": ""ordinary""
             }]";
-            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), classJson);
-            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[\"Tester\"]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), classJson, TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[\"Tester\"]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]", TestContext.Current.CancellationToken);
 
             var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
             var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
@@ -414,13 +414,13 @@ public class CharacterGenerationEquipmentFlowTests : MorkBorgGameRulesFixture
                 ""startingItems"": [""SpecterPouch""],
                 ""startingEquipmentMode"": ""ordinary""
             }]";
-            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), classJson);
-            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[\"Tester\"]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), classJson, TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[\"Tester\"]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]", TestContext.Current.CancellationToken);
             // items.json present but missing the referenced item
-            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+            await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]", TestContext.Current.CancellationToken);
 
             var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
             var generator = CharacterGeneratorFactory.Create(refData, new Random(42));
