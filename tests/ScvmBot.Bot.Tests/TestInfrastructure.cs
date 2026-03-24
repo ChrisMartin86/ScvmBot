@@ -65,6 +65,34 @@ internal sealed class FakeCommandContext : ScvmBot.Bot.Services.ISlashCommandCon
 }
 
 /// <summary>
+/// Wraps a stream and tracks whether <see cref="Dispose"/> has been called.
+/// Stored in <see cref="FakeMessageChannel.SentAttachmentStreams"/> so tests can assert
+/// that the production code cleaned up the stream after sending.
+/// </summary>
+internal sealed class TrackingStream(System.IO.Stream inner) : System.IO.Stream
+{
+    public bool IsDisposed { get; private set; }
+
+    public override bool CanRead => inner.CanRead;
+    public override bool CanSeek => inner.CanSeek;
+    public override bool CanWrite => inner.CanWrite;
+    public override long Length => inner.Length;
+    public override long Position { get => inner.Position; set => inner.Position = value; }
+    public override void Flush() => inner.Flush();
+    public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+    public override long Seek(long offset, System.IO.SeekOrigin origin) => inner.Seek(offset, origin);
+    public override void SetLength(long value) => inner.SetLength(value);
+    public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
+
+    protected override void Dispose(bool disposing)
+    {
+        IsDisposed = true;
+        if (disposing) inner.Dispose();
+        base.Dispose(disposing);
+    }
+}
+
+/// <summary>
 /// Test double for <see cref="Discord.IMessageChannel"/>.
 /// Only <see cref="SendMessageAsync"/> and <see cref="SendFileAsync(Discord.FileAttachment, string?, bool, Discord.Embed?, Discord.RequestOptions?, Discord.AllowedMentions?, Discord.MessageReference?, Discord.MessageComponent?, Discord.ISticker[]?, Discord.Embed[]?, Discord.MessageFlags)"/>
 /// are implemented; all other members throw <see cref="NotImplementedException"/>.
@@ -73,7 +101,12 @@ internal sealed class FakeMessageChannel : Discord.IMessageChannel
 {
     public List<Discord.Embed?> SentEmbeds { get; } = new();
     public List<string?> SentFileNames { get; } = new();
-    public List<System.IO.Stream> SentAttachmentStreams { get; } = new();
+    /// <summary>
+    /// Tracking wrappers around the streams passed to <see cref="SendFileAsync"/>.
+    /// Use <see cref="TrackingStream.IsDisposed"/> to assert that production code
+    /// cleaned up the stream after sending.
+    /// </summary>
+    public List<TrackingStream> SentAttachmentStreams { get; } = new();
     public int SendMessageCallCount { get; private set; }
     public int SendFileCallCount { get; private set; }
 
@@ -138,7 +171,8 @@ internal sealed class FakeMessageChannel : Discord.IMessageChannel
         SendFileCallCount++;
         SentFileNames.Add(attachment.FileName);
         SentEmbeds.Add(embed);
-        SentAttachmentStreams.Add(attachment.Stream);
+        var tracking = new TrackingStream(attachment.Stream);
+        SentAttachmentStreams.Add(tracking);
         return Task.FromResult<Discord.IUserMessage>(null!);
     }
 

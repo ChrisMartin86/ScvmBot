@@ -50,14 +50,12 @@ public class CustomPdfTemplatePathTests
         var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
 
         // Copy the real PDF template from the repo (if available)
-        var repoDataPath = Path.Combine(
-            SharedTestInfrastructure.GetRepositoryRoot(),
-            "src", "ScvmBot.Games.MorkBorg", "Data");
-        var realTemplate = Path.Combine(repoDataPath, "character_sheet.pdf");
+        var realTemplate = Path.Combine(
+            TestDataBuilder.GetRealPdfDataDirectoryPath(), "character_sheet.pdf");
         if (!File.Exists(realTemplate))
             Assert.Skip(
                 $"PDF template not found at '{realTemplate}'. " +
-                "Run a full build with data files present to enable this test.");
+                "Ensure src/ScvmBot.Games.MorkBorg.Pdf/Data/character_sheet.pdf exists in the repository.");
 
         File.Copy(realTemplate, Path.Combine(dir, "character_sheet.pdf"));
 
