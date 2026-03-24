@@ -31,7 +31,7 @@ public sealed class AbilityRoller
         {
             while (heroicAbilityIndices.Count < 2)
             {
-                heroicAbilityIndices.Add(_rng.Next(4));  // 0=STR, 1=AGI, 2=PRE, 3=TOU
+                heroicAbilityIndices.Add(_rng.Next(0, 4));  // 0=STR, 1=AGI, 2=PRE, 3=TOU
             }
         }
 
