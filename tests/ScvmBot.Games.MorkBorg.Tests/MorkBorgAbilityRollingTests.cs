@@ -208,4 +208,33 @@ public class MorkBorgAbilityRollingTests : MorkBorgGameRulesFixture
         Assert.Equal(scores3d6.Toughness, scores4d6.Toughness);
     }
 
+    [Theory]
+    [InlineData(new[] { 4, 4, 4 }, 2, 2)]   // sum=12 → 0; 0 + 2 = +2 (no clamp)
+    [InlineData(new[] { 6, 6, 6 }, 1, 3)]   // sum=18 → +3; +3 + 1 = +4 → clamped to +3
+    [InlineData(new[] { 1, 1, 1 }, -1, -3)] // sum=3  → -3; -3 + (-1) = -4 → clamped to -3
+    public void ClassStatModifier_IsAppliedAndClamped_ForRolledStrength(int[] strRolls, int classStrModifier, int expectedStrength)
+    {
+        // Cross-validates roll method arithmetic with class modifier application and clamping
+        // by exercising AbilityRoller.Roll() directly with a fabricated ClassData.
+        var classData = new ScvmBot.Games.MorkBorg.Reference.ClassData
+        {
+            Name = "Test",
+            StrengthModifier = classStrModifier,
+        };
+
+        // Pad remaining 9 dice with neutral values (4,4,4 per ability × 3 remaining abilities → sum=12 → 0)
+        var rolls = strRolls.Concat(Enumerable.Repeat(4, 9));
+        var rng = new DeterministicRandom(rolls);
+        var dice = new DiceRoller(rng);
+        var roller = new AbilityRoller(dice, rng);
+
+        var scores = roller.Roll(new CharacterGenerationOptions { RollMethod = AbilityRollMethod.ThreeD6 }, classData);
+
+        Assert.Equal(expectedStrength, scores.Strength);
+        // Other abilities should all be 0 (sum=12, no modifier)
+        Assert.Equal(0, scores.Agility);
+        Assert.Equal(0, scores.Presence);
+        Assert.Equal(0, scores.Toughness);
+    }
+
 }
