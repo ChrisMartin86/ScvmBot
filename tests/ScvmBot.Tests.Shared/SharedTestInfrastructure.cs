@@ -67,3 +67,20 @@ public sealed class DeterministicRandom : Random
         return candidate;
     }
 }
+
+public static class TestDataBuilder
+{
+    private static readonly string[] MinimalDataFiles =
+        ["classes.json", "spells.json", "names.json", "weapons.json", "armor.json", "items.json"];
+
+    public static async Task<string> CreateMinimalDataDirectoryAsync()
+    {
+        var dir = SharedTestInfrastructure.CreateTempDirectory();
+        foreach (var file in MinimalDataFiles)
+            await File.WriteAllTextAsync(Path.Combine(dir, file), "[]");
+        return dir;
+    }
+
+    public static string GetRealDataDirectoryPath() =>
+        Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data");
+}
