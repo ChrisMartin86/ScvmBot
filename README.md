@@ -46,59 +46,41 @@ A Discord bot for tabletop RPG character generation with built-in support for **
    ```
 
 2. **Configure the bot**
+
+   ScvmBot uses .NET's standard configuration pipeline. Every setting can come from `appsettings.json`, environment variables, or command-line arguments. Environment variables take precedence over file values.
+
+   For local development, copy and edit the example settings file:
    ```bash
    cp src/ScvmBot.Bot/appsettings.example.json src/ScvmBot.Bot/appsettings.json
    ```
-   Edit `src/ScvmBot.Bot/appsettings.json`:
-   ```json
-   {
-     "Discord": {
-       "Token": "<YOUR_DISCORD_BOT_TOKEN_HERE>",
-       "GuildIds": []
-     },
-     "Bot": {
-       "SyncCommands": false
-     }
-   }
-   ```
-
-   | Setting | Description |
-   |---|---|
-   | `Token` | Your bot's Discord token (required) |
-   | `GuildIds` | Leave empty `[]` for global registration (~1 hour to propagate), or list specific server IDs for instant guild-scoped registration (~15 seconds) |
-   | `SyncCommands` | Set `true` on first run or after adding/changing commands to register them with Discord |
 
 3. **Run the bot**
    ```bash
    dotnet run --project src/ScvmBot.Bot
    ```
 
+See the [Getting Started](https://scvmbot.com/getting-started) guide for the full configuration reference, including every available setting and its environment variable equivalent.
+
 ### Docker
 
-Set the required environment variable and start the container from the **repository root**:
+The Dockerfile produces a standard .NET application image. Provide configuration however your environment supports it — environment variables, mounted config files, orchestrator secrets, etc.
+
+A `docker-compose.yml` is included as an example. To use it from the **repository root**:
 
 ```bash
 export DISCORD_TOKEN=your_token_here
 docker compose up --build
 ```
 
-Or with optional settings:
-
-```bash
-export DISCORD_TOKEN=your_token_here
-export BOT_SYNC_COMMANDS=true          # register commands on this startup
-docker compose up --build
-```
-
-For guild-scoped command registration, add the target guild IDs to a `.env` file in the repository root alongside `DISCORD_TOKEN`:
+The compose file reads an optional `.env` file for additional settings:
 
 ```
 DISCORD_TOKEN=your_token_here
+BOT_SYNC_COMMANDS=true
 Discord__GuildIds__0=123456789012345678
-Discord__GuildIds__1=987654321098765432
 ```
 
-`docker-compose.yml` uses `env_file:` to inject all `.env` entries directly into the container. `Discord__GuildIds__N` maps to the `Discord:GuildIds` array. Leave all `Discord__GuildIds__*` entries out for global registration.
+The compose file maps convenience shell variables (like `DISCORD_TOKEN`) to the app's actual configuration keys (like `Discord__Token`). See `docker-compose.yml` for the full mapping.
 
 ## Commands
 
@@ -415,17 +397,15 @@ dotnet test tests/ScvmBot.Cli.Tests
 | Microsoft.Extensions.Hosting | 10.0.5 | DI / hosted service |
 | Microsoft.Extensions.Logging | 10.0.5 | Structured logging |
 
-## MÖRK BORG Attribution
+## Licence
+
+[MIT](LICENSE) © 2025 Christopher Martin
+
+### MÖRK BORG Attribution
 
 ScvmBot is an independent production by Christopher Martin and is not affiliated with Ockult Örtmästare Games or Stockholm Kartell. It is published under the [MÖRK BORG Third Party License](https://morkborg.com/license/).
 
 MÖRK BORG is © 2019 Ockult Örtmästare Games and Stockholm Kartell.
 
-See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for full third-party licence details.
-
-## Licence
-
-[MIT](LICENSE) © 2025 Christopher Martin
-
-Third-party content is licensed separately — see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for all third-party licence details.
 

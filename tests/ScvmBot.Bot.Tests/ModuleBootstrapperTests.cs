@@ -45,13 +45,7 @@ public class ModuleBootstrapperTests
     [Fact]
     public async Task DiscoverAndInitialize_WorksWithMinimalDataFiles()
     {
-        var dir = SharedTestInfrastructure.CreateTempDirectory();
-        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+        var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
 
         var config = BuildConfig(new Dictionary<string, string?>
         {
@@ -95,13 +89,7 @@ public class ModuleBootstrapperTests
         // find without configuration. If config weren't passed to InitializeAsync,
         // the module would fall back to a default path that doesn't contain
         // these files and would fail with FileNotFoundException.
-        var dir = SharedTestInfrastructure.CreateTempDirectory();
-        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+        var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
 
         var config = BuildConfig(new Dictionary<string, string?>
         {
@@ -156,7 +144,7 @@ public class ModuleBootstrapperTests
         // No parameterless constructor — this should be rejected
         public NoParameterlessCtorRegistration(string required) => _required = required;
 
-        public Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration)
+        public Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger? logger = null)
             => Task.FromResult<Action<IServiceCollection>>(_ => { });
     }
 }

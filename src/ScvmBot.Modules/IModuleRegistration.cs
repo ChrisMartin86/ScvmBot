@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ScvmBot.Modules;
 
@@ -29,5 +30,5 @@ public interface IModuleRegistration
     /// Throw if required resources are missing or invalid — the host treats any
     /// exception here as a fatal startup failure.
     /// </summary>
-    Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration);
+    Task<Action<IServiceCollection>> InitializeAsync(IConfiguration configuration, ILogger? logger = null);
 }

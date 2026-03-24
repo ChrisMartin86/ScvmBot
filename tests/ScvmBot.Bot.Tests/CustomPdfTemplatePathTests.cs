@@ -25,15 +25,7 @@ public class CustomPdfTemplatePathTests
     [Fact]
     public async Task Registration_UsesCustomPdfTemplate_WhenPresentInDataPath()
     {
-        var dir = TestInfrastructure.CreateTempDirectory();
-
-        // Create minimal data files
-        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+        var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
 
         // Place a dummy PDF template in the custom data directory
         var templatePath = Path.Combine(dir, "character_sheet.pdf");
@@ -55,14 +47,7 @@ public class CustomPdfTemplatePathTests
     [Fact]
     public async Task RenderFile_UsesCustomTemplate_EndToEnd()
     {
-        var dir = TestInfrastructure.CreateTempDirectory();
-
-        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+        var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
 
         // Copy the real PDF template from the repo (if available)
         var repoDataPath = Path.Combine(

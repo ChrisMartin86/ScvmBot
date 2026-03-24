@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Third-Party Licenses
+permalink: /third-party-licenses/
 ---
 
 # Third-Party Licenses

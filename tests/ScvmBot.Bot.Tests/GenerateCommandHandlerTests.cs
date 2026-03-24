@@ -439,13 +439,7 @@ public class GenerateCommandHandlerTests
 
     private static async Task<MorkBorgModule> CreateMinimalGameSystemAsync()
     {
-        var dir = TestInfrastructure.CreateTempDirectory();
-        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+        var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
         var refData = await MorkBorgReferenceDataService.CreateAsync(dir);
         var generator = new CharacterGenerator(refData, new Random(42));
         return new MorkBorgModule(generator, refData);

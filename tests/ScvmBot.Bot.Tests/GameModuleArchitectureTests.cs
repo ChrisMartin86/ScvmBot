@@ -163,13 +163,7 @@ public class GameModuleArchitectureTests
         // Verify the registration delegate correctly sets up services
         var services = new ServiceCollection();
         // Simulate a successful registration by providing a test data directory
-        var dir = TestInfrastructure.CreateTempDirectory();
-        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+        var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
 
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Modules:MorkBorg:DataPath"] = dir })
@@ -190,13 +184,7 @@ public class GameModuleArchitectureTests
     [Fact]
     public async Task MorkBorgModuleRegistration_ImplementsIModuleRegistration_AndRegistersServices()
     {
-        var dir = TestInfrastructure.CreateTempDirectory();
-        await File.WriteAllTextAsync(Path.Combine(dir, "classes.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "spells.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "names.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "weapons.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
-        await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
+        var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
 
         IModuleRegistration registration = new MorkBorgModuleRegistration();
         var config = new ConfigurationBuilder()
