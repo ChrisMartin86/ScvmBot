@@ -13,7 +13,35 @@ public sealed class CharacterGenerator
     private readonly ArmorResolver _armorResolver;
     private readonly ScrollResolver _scrollResolver;
     private readonly StartingGearTable _startingGearTable;
+    private readonly VignetteGenerator _vignetteGenerator;
 
+    /// <summary>Primary constructor — all collaborators are injected (used by DI).</summary>
+    public CharacterGenerator(
+        MorkBorgReferenceDataService refData,
+        DiceRoller dice,
+        AbilityRoller abilityRoller,
+        WeaponResolver weaponResolver,
+        ArmorResolver armorResolver,
+        ScrollResolver scrollResolver,
+        StartingGearTable startingGearTable,
+        VignetteGenerator vignetteGenerator,
+        Random rng)
+    {
+        _refData = refData;
+        _rng = rng;
+        _dice = dice;
+        _abilityRoller = abilityRoller;
+        _weaponResolver = weaponResolver;
+        _armorResolver = armorResolver;
+        _scrollResolver = scrollResolver;
+        _startingGearTable = startingGearTable;
+        _vignetteGenerator = vignetteGenerator;
+    }
+
+    /// <summary>
+    /// Convenience constructor for direct instantiation (e.g. tests) —
+    /// builds all collaborators from the two base dependencies.
+    /// </summary>
     public CharacterGenerator(MorkBorgReferenceDataService refData, Random? rng = null)
     {
         _refData = refData;
@@ -24,6 +52,7 @@ public sealed class CharacterGenerator
         _armorResolver = new ArmorResolver(refData, _dice, _rng);
         _scrollResolver = new ScrollResolver(refData, _rng);
         _startingGearTable = new StartingGearTable(refData, _dice, _scrollResolver, _rng);
+        _vignetteGenerator = new VignetteGenerator(refData.Vignettes, _rng);
     }
 
     public Character Generate(
@@ -99,8 +128,7 @@ public sealed class CharacterGenerator
             Items = itemsList
         };
 
-        var vignetteGenerator = new VignetteGenerator(_refData.Vignettes, _rng);
-        character.Vignette = vignetteGenerator.Generate(character);
+        character.Vignette = _vignetteGenerator.Generate(character);
 
         return character;
     }

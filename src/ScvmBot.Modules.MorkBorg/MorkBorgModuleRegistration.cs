@@ -39,7 +39,15 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
 
         return services =>
         {
+            services.AddSingleton(Random.Shared);
             services.AddSingleton(refData);
+            services.AddSingleton<DiceRoller>();
+            services.AddSingleton<AbilityRoller>();
+            services.AddSingleton<WeaponResolver>();
+            services.AddSingleton<ArmorResolver>();
+            services.AddSingleton<ScrollResolver>();
+            services.AddSingleton<StartingGearTable>();
+            services.AddSingleton(sp => new VignetteGenerator(sp.GetRequiredService<MorkBorgReferenceDataService>().Vignettes));
             services.AddSingleton<CharacterGenerator>();
             services.AddSingleton(new MorkBorgPdfRenderer(pdfTemplatePath));
             services.AddSingleton<IGameModule, MorkBorgModule>();
