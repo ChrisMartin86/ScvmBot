@@ -28,7 +28,7 @@ internal static class CliHelpRenderer
         }
     }
 
-    internal static void PrintUsage(Dictionary<string, IGameModule> gameModules)
+    internal static void PrintUsage(IReadOnlyDictionary<string, IGameModule> gameModules)
     {
         Console.WriteLine("Usage: scvmbot-cli [--data <path>] generate <game> <subcommand> [options]");
         Console.WriteLine();

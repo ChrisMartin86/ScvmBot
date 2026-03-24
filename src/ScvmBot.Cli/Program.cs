@@ -31,7 +31,7 @@ try
 }
 catch (Exception ex) when (showHelp)
 {
-    CliHelpRenderer.PrintUsage([]);
+    CliHelpRenderer.PrintUsage(new Dictionary<string, IGameModule>());
     Console.Error.WriteLine();
     Console.Error.WriteLine($"  (Module details unavailable: {ex.Message})");;
     return 0;
