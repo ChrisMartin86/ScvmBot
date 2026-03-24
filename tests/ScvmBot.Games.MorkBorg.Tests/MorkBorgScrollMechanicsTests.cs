@@ -131,12 +131,12 @@ public class MorkBorgScrollMechanicsTests : MorkBorgGameRulesFixture
     public async Task GetRandomScroll_ReturnsValidScrollOfRequestedType()
     {
         var referenceData = await LoadGameReferenceDataAsync();
-        var rng = new Random(333);
+        var picker = new MorkBorgRandomPicker(referenceData, new Random(333));
 
         for (int i = 0; i < 20; i++)
         {
-            var sacredScroll = referenceData.GetRandomScroll(ScrollKind.Sacred, rng);
-            var uncleanScroll = referenceData.GetRandomScroll(ScrollKind.Unclean, rng);
+            var sacredScroll = picker.PickScroll(ScrollKind.Sacred);
+            var uncleanScroll = picker.PickScroll(ScrollKind.Unclean);
 
             Assert.NotNull(sacredScroll);
             Assert.Equal(ScrollKind.Sacred, sacredScroll.Kind);

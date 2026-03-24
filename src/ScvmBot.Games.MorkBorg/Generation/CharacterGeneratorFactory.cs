@@ -13,7 +13,8 @@ public static class CharacterGeneratorFactory
     {
         var resolvedRng = rng ?? Random.Shared;
         var dice = new DiceRoller(resolvedRng);
-        var scrollResolver = new ScrollResolver(refData, resolvedRng);
+        var picker = new ScvmBot.Games.MorkBorg.Reference.MorkBorgRandomPicker(refData, resolvedRng);
+        var scrollResolver = new ScrollResolver(refData, picker);
         return new CharacterGenerator(
             refData,
             dice,
@@ -21,8 +22,8 @@ public static class CharacterGeneratorFactory
             new WeaponResolver(refData, dice, resolvedRng),
             new ArmorResolver(refData, dice, resolvedRng),
             scrollResolver,
-            new StartingGearTable(refData, dice, scrollResolver, resolvedRng),
+            new StartingGearTable(refData, dice, scrollResolver, picker),
             new VignetteGenerator(refData.Vignettes, resolvedRng),
-            resolvedRng);
+            picker);
     }
 }

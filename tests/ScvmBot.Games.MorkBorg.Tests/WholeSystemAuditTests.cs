@@ -576,11 +576,12 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     {
         var refData = await LoadGameReferenceDataAsync();
         var rng = new Random(42);
+        var picker = new MorkBorgRandomPicker(refData, rng);
 
         for (int i = 0; i < 50; i++)
         {
-            Assert.NotNull(refData.GetRandomScroll(ScrollKind.Sacred, rng));
-            Assert.NotNull(refData.GetRandomScroll(ScrollKind.Unclean, rng));
+            Assert.NotNull(picker.PickScroll(ScrollKind.Sacred));
+            Assert.NotNull(picker.PickScroll(ScrollKind.Unclean));
         }
     }
 
@@ -653,11 +654,11 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     public async Task C4_RequiredDescriptionTables_AreNonEmpty()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var rng = new Random(42);
+        var picker = new MorkBorgRandomPicker(refData, new Random(42));
 
-        Assert.False(string.IsNullOrEmpty(refData.GetRandomTrait(rng)), "Trait table returned empty");
-        Assert.False(string.IsNullOrEmpty(refData.GetRandomBody(rng)), "BrokenBody table returned empty");
-        Assert.False(string.IsNullOrEmpty(refData.GetRandomHabit(rng)), "BadHabit table returned empty");
+        Assert.False(string.IsNullOrEmpty(picker.PickTrait()), "Trait table returned empty");
+        Assert.False(string.IsNullOrEmpty(picker.PickBody()), "BrokenBody table returned empty");
+        Assert.False(string.IsNullOrEmpty(picker.PickHabit()), "BadHabit table returned empty");
     }
 
     [Fact]
@@ -678,11 +679,11 @@ public class WholeSystemAuditTests : MorkBorgGameRulesFixture
     public async Task C5_Names_NeverReturnEmpty()
     {
         var refData = await LoadGameReferenceDataAsync();
-        var rng = new Random(42);
+        var picker = new MorkBorgRandomPicker(refData, new Random(42));
 
         for (int i = 0; i < 100; i++)
         {
-            var name = refData.GetRandomName(rng);
+            var name = picker.PickName();
             Assert.False(string.IsNullOrWhiteSpace(name), $"Iteration {i}: name was empty");
         }
     }
