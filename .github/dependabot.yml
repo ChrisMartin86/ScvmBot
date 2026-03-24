@@ -19,6 +19,23 @@ updates:
       prefix: "chore(deps):"
       include: "scope"
 
+  # Docker base image updates (mcr.microsoft.com/dotnet/sdk and runtime)
+  - package-ecosystem: "docker"
+    directory: "/src/ScvmBot.Bot"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:15"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ChrisMartin86"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+
   # GitHub Actions version updates
   - package-ecosystem: "github-actions"
     directory: "/"
