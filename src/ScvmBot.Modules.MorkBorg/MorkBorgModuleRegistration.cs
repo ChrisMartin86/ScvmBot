@@ -41,6 +41,7 @@ public sealed class MorkBorgModuleRegistration : IModuleRegistration
         {
             services.AddSingleton(Random.Shared);
             services.AddSingleton(refData);
+            services.AddSingleton<MorkBorgRandomPicker>();
             services.AddSingleton<DiceRoller>();
             services.AddSingleton<AbilityRoller>();
             services.AddSingleton<WeaponResolver>();

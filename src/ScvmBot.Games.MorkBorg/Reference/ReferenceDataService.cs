@@ -146,25 +146,7 @@ public class MorkBorgReferenceDataService
         }
     }
 
-    public string GetRandomName(Random random)
-    {
-        return _names.Count > 0 ? _names[random.Next(_names.Count)] : "Unknown";
-    }
 
-    public WeaponData? GetRandomWeapon(Random random)
-    {
-        return _weapons.Count > 0 ? _weapons[random.Next(_weapons.Count)] : null;
-    }
-
-    public ArmorData? GetRandomArmor(Random random)
-    {
-        return _armor.Count > 0 ? _armor[random.Next(_armor.Count)] : null;
-    }
-
-    public ItemData? GetRandomItem(Random random)
-    {
-        return _items.Count > 0 ? _items[random.Next(_items.Count)] : null;
-    }
 
     public WeaponData? GetWeaponByTableIndex(int tableIndex)
     {
@@ -191,28 +173,9 @@ public class MorkBorgReferenceDataService
         return _items.FirstOrDefault(i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
-    public string GetRandomTrait(Random random) =>
-        _descriptions.Trait.Count > 0 ? _descriptions.Trait[random.Next(_descriptions.Trait.Count)] : "";
-
-    public string GetRandomBody(Random random) =>
-        _descriptions.BrokenBody.Count > 0 ? _descriptions.BrokenBody[random.Next(_descriptions.BrokenBody.Count)] : "";
-
-    public string GetRandomHabit(Random random) =>
-        _descriptions.BadHabit.Count > 0 ? _descriptions.BadHabit[random.Next(_descriptions.BadHabit.Count)] : "";
-
-    public ClassData? GetRandomClass(Random random)
-    {
-        return _classes.Count > 0 ? _classes[random.Next(_classes.Count)] : null;
-    }
-
     public ClassData? GetClassByName(string name)
     {
         return _classes.FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
-    public ScrollData? GetRandomScroll(ScrollKind kind, Random random)
-    {
-        var matching = _scrolls.Where(s => s.Kind == kind).ToList();
-        return matching.Count > 0 ? matching[random.Next(matching.Count)] : null;
-    }
 }

@@ -190,7 +190,7 @@ public class ReferenceDataServiceErrorTests
     }
 
     [Fact]
-    public async Task GetRandomName_ReturnsUnknown_WhenNamesListIsEmpty()
+    public async Task PickName_ReturnsUnknown_WhenNamesListIsEmpty()
     {
         var dir = TestUtilities.CreateTempDirectory();
         try
@@ -202,7 +202,8 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
-            Assert.Equal("Unknown", service.GetRandomName(new Random(42)));
+            var picker = new MorkBorgRandomPicker(service, new Random(42));
+            Assert.Equal("Unknown", picker.PickName());
         }
         finally
         {
@@ -211,7 +212,7 @@ public class ReferenceDataServiceErrorTests
     }
 
     [Fact]
-    public async Task GetRandomWeapon_ReturnsNull_WhenWeaponsEmpty()
+    public async Task PickWeapon_ReturnsNull_WhenWeaponsEmpty()
     {
         var dir = TestUtilities.CreateTempDirectory();
         try
@@ -223,7 +224,8 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
-            Assert.Null(service.GetRandomWeapon(new Random(42)));
+            var picker = new MorkBorgRandomPicker(service, new Random(42));
+            Assert.Null(picker.PickWeapon());
         }
         finally
         {
@@ -232,7 +234,7 @@ public class ReferenceDataServiceErrorTests
     }
 
     [Fact]
-    public async Task GetRandomArmor_ReturnsNull_WhenArmorEmpty()
+    public async Task PickArmor_ReturnsNull_WhenArmorEmpty()
     {
         var dir = TestUtilities.CreateTempDirectory();
         try
@@ -244,7 +246,8 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
-            Assert.Null(service.GetRandomArmor(new Random(42)));
+            var picker = new MorkBorgRandomPicker(service, new Random(42));
+            Assert.Null(picker.PickArmor());
         }
         finally
         {
@@ -253,7 +256,7 @@ public class ReferenceDataServiceErrorTests
     }
 
     [Fact]
-    public async Task GetRandomItem_ReturnsNull_WhenItemsEmpty()
+    public async Task PickItem_ReturnsNull_WhenItemsEmpty()
     {
         var dir = TestUtilities.CreateTempDirectory();
         try
@@ -265,7 +268,8 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
-            Assert.Null(service.GetRandomItem(new Random(42)));
+            var picker = new MorkBorgRandomPicker(service, new Random(42));
+            Assert.Null(picker.PickItem());
         }
         finally
         {
@@ -274,7 +278,7 @@ public class ReferenceDataServiceErrorTests
     }
 
     [Fact]
-    public async Task GetRandomClass_ReturnsNull_WhenClassesEmpty()
+    public async Task PickClass_ReturnsNull_WhenClassesEmpty()
     {
         var dir = TestUtilities.CreateTempDirectory();
         try
@@ -286,7 +290,8 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
-            Assert.Null(service.GetRandomClass(new Random(42)));
+            var picker = new MorkBorgRandomPicker(service, new Random(42));
+            Assert.Null(picker.PickClass());
         }
         finally
         {
@@ -295,7 +300,7 @@ public class ReferenceDataServiceErrorTests
     }
 
     [Fact]
-    public async Task GetRandomScroll_ReturnsNull_WhenNoScrollsOfType()
+    public async Task PickScroll_ReturnsNull_WhenNoScrollsOfType()
     {
         var dir = TestUtilities.CreateTempDirectory();
         try
@@ -307,7 +312,8 @@ public class ReferenceDataServiceErrorTests
             await File.WriteAllTextAsync(Path.Combine(dir, "armor.json"), "[]");
             await File.WriteAllTextAsync(Path.Combine(dir, "items.json"), "[]");
             var service = await MorkBorgReferenceDataService.CreateAsync(dir);
-            Assert.Null(service.GetRandomScroll(ScrollKind.Sacred, new Random(42)));
+            var picker = new MorkBorgRandomPicker(service, new Random(42));
+            Assert.Null(picker.PickScroll(ScrollKind.Sacred));
         }
         finally
         {

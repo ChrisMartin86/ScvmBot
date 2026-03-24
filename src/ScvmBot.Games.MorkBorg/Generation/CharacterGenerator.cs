@@ -6,7 +6,6 @@ namespace ScvmBot.Games.MorkBorg.Generation;
 public sealed class CharacterGenerator
 {
     private readonly MorkBorgReferenceDataService _refData;
-    private readonly Random _rng;
     private readonly DiceRoller _dice;
     private readonly AbilityRoller _abilityRoller;
     private readonly WeaponResolver _weaponResolver;
@@ -14,6 +13,7 @@ public sealed class CharacterGenerator
     private readonly ScrollResolver _scrollResolver;
     private readonly StartingGearTable _startingGearTable;
     private readonly VignetteGenerator _vignetteGenerator;
+    private readonly MorkBorgRandomPicker _picker;
 
     /// <summary>Primary constructor — all collaborators are injected (used by DI).</summary>
     public CharacterGenerator(
@@ -25,10 +25,9 @@ public sealed class CharacterGenerator
         ScrollResolver scrollResolver,
         StartingGearTable startingGearTable,
         VignetteGenerator vignetteGenerator,
-        Random rng)
+        MorkBorgRandomPicker picker)
     {
         _refData = refData;
-        _rng = rng;
         _dice = dice;
         _abilityRoller = abilityRoller;
         _weaponResolver = weaponResolver;
@@ -36,6 +35,7 @@ public sealed class CharacterGenerator
         _scrollResolver = scrollResolver;
         _startingGearTable = startingGearTable;
         _vignetteGenerator = vignetteGenerator;
+        _picker = picker;
     }
 
     public Character Generate(
@@ -46,7 +46,7 @@ public sealed class CharacterGenerator
         var name = options.Name;
         if (string.IsNullOrWhiteSpace(name))
         {
-            name = _refData.GetRandomName(_rng);
+            name = _picker.PickName();
         }
 
         var classData = ResolveClass(options);
@@ -86,9 +86,9 @@ public sealed class CharacterGenerator
             _scrollResolver.ResolveStartingScrolls(classData, scrollsList);
         }
 
-        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Trait, _refData.GetRandomTrait(_rng)));
-        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Body, _refData.GetRandomBody(_rng)));
-        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Habit, _refData.GetRandomHabit(_rng)));
+        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Trait, _picker.PickTrait()));
+        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Body, _picker.PickBody()));
+        descriptionsList.Add(new CharacterDescription(DescriptionCategory.Habit, _picker.PickHabit()));
 
         var character = new Character
         {
@@ -134,7 +134,7 @@ public sealed class CharacterGenerator
         {
             // 50/50 classless vs classed: d6 1-3 = classless, 4-6 = random class
             var roll = _dice.RollDie(6);
-            return roll <= 3 ? null : _refData.GetRandomClass(_rng);
+            return roll <= 3 ? null : _picker.PickClass();
         }
 
         // empty string => backward compat, treat as classless

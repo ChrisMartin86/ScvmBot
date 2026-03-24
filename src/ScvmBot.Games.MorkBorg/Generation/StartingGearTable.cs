@@ -8,18 +8,18 @@ public sealed class StartingGearTable
     private readonly MorkBorgReferenceDataService _refData;
     private readonly DiceRoller _dice;
     private readonly ScrollResolver _scrollResolver;
-    private readonly Random _rng;
+    private readonly MorkBorgRandomPicker _picker;
 
     public StartingGearTable(
         MorkBorgReferenceDataService refData,
         DiceRoller dice,
         ScrollResolver scrollResolver,
-        Random rng)
+        MorkBorgRandomPicker picker)
     {
         _refData = refData;
         _dice = dice;
         _scrollResolver = scrollResolver;
-        _rng = rng;
+        _picker = picker;
     }
 
     public void ApplyStartingEquipment(
@@ -271,7 +271,7 @@ public sealed class StartingGearTable
                 break;
 
             case 11:
-                var scroll = _refData.GetRandomScroll(ScrollKind.Sacred, _rng);
+                var scroll = _picker.PickScroll(ScrollKind.Sacred);
                 if (scroll != null)
                 {
                     scrolls.Add(scroll.ToFormattedString());
