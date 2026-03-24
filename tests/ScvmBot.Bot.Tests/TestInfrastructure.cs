@@ -40,6 +40,9 @@ internal sealed class FakeCommandContext : ScvmBot.Bot.Services.ISlashCommandCon
 
     public Task FollowupAsync(string? text = null, Discord.Embed? embed = null, bool ephemeral = false)
     {
+        if (!Deferred)
+            throw new InvalidOperationException(
+                "FollowupAsync called before DeferAsync. The bot must call DeferAsync before sending any followup.");
         if (FollowupException is not null)
         {
             var ex = FollowupException;
@@ -70,6 +73,7 @@ internal sealed class FakeMessageChannel : Discord.IMessageChannel
 {
     public List<Discord.Embed?> SentEmbeds { get; } = new();
     public List<string?> SentFileNames { get; } = new();
+    public List<System.IO.Stream> SentAttachmentStreams { get; } = new();
     public int SendMessageCallCount { get; private set; }
     public int SendFileCallCount { get; private set; }
 
@@ -116,9 +120,25 @@ internal sealed class FakeMessageChannel : Discord.IMessageChannel
         Discord.PollProperties? pollProperties = null)
     {
         if (SendException is not null) throw SendException;
+
+        // Contract validation: attachment must have a named file with a recognisable extension
+        if (string.IsNullOrWhiteSpace(attachment.FileName))
+            throw new ArgumentException("File attachment must have a non-empty filename.", nameof(attachment));
+        if (!System.IO.Path.HasExtension(attachment.FileName))
+            throw new ArgumentException(
+                $"File attachment filename '{attachment.FileName}' has no extension (content type cannot be inferred).",
+                nameof(attachment));
+
+        // Contract validation: stream must be present and non-empty
+        if (attachment.Stream is null)
+            throw new ArgumentException("File attachment must have a non-null stream.", nameof(attachment));
+        if (attachment.Stream.CanSeek && attachment.Stream.Length == 0)
+            throw new ArgumentException("File attachment stream must not be empty.", nameof(attachment));
+
         SendFileCallCount++;
         SentFileNames.Add(attachment.FileName);
         SentEmbeds.Add(embed);
+        SentAttachmentStreams.Add(attachment.Stream);
         return Task.FromResult<Discord.IUserMessage>(null!);
     }
 
