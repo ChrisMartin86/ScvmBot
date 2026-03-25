@@ -397,6 +397,12 @@ dotnet test tests/ScvmBot.Cli.Tests
 | Microsoft.Extensions.Hosting | 10.0.5 | DI / hosted service |
 | Microsoft.Extensions.Logging | 10.0.5 | Structured logging |
 
+## Artist Credit
+
+Character sheet artwork used in the PDF export is by **Thomas Kolvenbag**.
+
+The artwork is **not** covered by the MIT licence and is not included in the open-source distribution. All rights to the artwork remain with the artist.
+
 ## Licence
 
 [MIT](LICENSE) © 2025 Christopher Martin
