@@ -28,8 +28,8 @@ internal sealed class SocketSlashCommandContext : ISlashCommandContext
     public Task FollowupAsync(string? text = null, Embed? embed = null, bool ephemeral = false) =>
         _command.FollowupAsync(text: text, embed: embed, ephemeral: ephemeral);
 
-    public Task RespondAsync(string text) =>
-        _command.RespondAsync(text: text);
+    public Task RespondAsync(string text, bool ephemeral = false) =>
+        _command.RespondAsync(text: text, ephemeral: ephemeral);
 
     public async Task<IMessageChannel> CreateUserDMChannelAsync() =>
         await _command.User.CreateDMChannelAsync();

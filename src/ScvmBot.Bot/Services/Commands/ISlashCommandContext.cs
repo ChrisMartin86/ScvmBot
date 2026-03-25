@@ -32,7 +32,7 @@ public interface ISlashCommandContext
     Task FollowupAsync(string? text = null, Embed? embed = null, bool ephemeral = false);
 
     /// <summary>Sends an immediate acknowledgement response to the interaction.</summary>
-    Task RespondAsync(string text);
+    Task RespondAsync(string text, bool ephemeral = false);
 
     /// <summary>Opens (or retrieves) the invoking user's direct-message channel.</summary>
     Task<IMessageChannel> CreateUserDMChannelAsync();

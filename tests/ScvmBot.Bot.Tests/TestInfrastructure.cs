@@ -55,7 +55,9 @@ internal sealed class FakeCommandContext : ScvmBot.Bot.Services.ISlashCommandCon
         return Task.CompletedTask;
     }
 
-    public Task RespondAsync(string text) { RespondTexts.Add(text); return Task.CompletedTask; }
+    public List<bool> RespondEphemerals { get; } = new();
+
+    public Task RespondAsync(string text, bool ephemeral = false) { RespondTexts.Add(text); RespondEphemerals.Add(ephemeral); return Task.CompletedTask; }
 
     public Task<Discord.IMessageChannel> CreateUserDMChannelAsync()
     {
