@@ -28,7 +28,7 @@ public class DmGenerationTests
     }
 
     [Fact]
-    public async Task HelloCommand_HandleAsync_RespondsWithUserMention()
+    public async Task HelloCommand_HandleAsync_RespondsEphemerallyWithUserMentionAndUsefulInfo()
     {
         var command = new HelloCommand();
         var context = new FakeCommandContext { UserMention = "<@123>" };
@@ -37,6 +37,8 @@ public class DmGenerationTests
 
         Assert.Single(context.RespondTexts);
         Assert.Contains("<@123>", context.RespondTexts[0]);
+        Assert.Contains("/generate", context.RespondTexts[0]);
+        Assert.True(context.RespondEphemerals[0], "Hello response must be ephemeral.");
     }
 
     private static GenerateCommandHandler CreateMinimalHandler() =>

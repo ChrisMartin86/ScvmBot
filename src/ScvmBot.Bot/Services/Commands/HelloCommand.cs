@@ -14,5 +14,7 @@ public sealed class HelloCommand : ISlashCommand
             .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
 
     public Task HandleAsync(ISlashCommandContext context, CancellationToken ct = default) =>
-        context.RespondAsync($"Hello, {context.UserMention}! I'm ScvmBot!");
+        context.RespondAsync(
+            $"Hello, {context.UserMention}! I'm ScvmBot, a Discord bot for tabletop RPG character generation.\n\nUse **/generate** to create characters. MÖRK BORG is supported.",
+            ephemeral: true);
 }
