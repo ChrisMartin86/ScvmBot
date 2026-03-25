@@ -399,9 +399,9 @@ dotnet test tests/ScvmBot.Cli.Tests
 
 ## Artist Credit
 
-Character sheet artwork used in the PDF export is by **Thomas Kolvenbag**.
+Original artwork for ScvmBot is by **Thomas Kolvenbag**.
 
-The artwork is **not** covered by the MIT licence and is not included in the open-source distribution. All rights to the artwork remain with the artist.
+This artwork is **not** covered by the MIT licence and is not included in the open-source distribution. All rights to the artwork remain with the artist.
 
 ## Licence
 
