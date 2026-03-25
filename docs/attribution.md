@@ -27,3 +27,11 @@ MÖRK BORG is © 2019 Ockult Örtmästare Games and Stockholm Kartell.
 ### License reference
 
 [https://morkborg.com/license/](https://morkborg.com/license/)
+
+---
+
+## Artwork
+
+The character sheet artwork used in the PDF export is by **Thomas Kolvenbag**.
+
+This artwork is **not** covered by the MIT licence. All rights remain with the artist. The open-source release of ScvmBot does not include or redistribute the artwork.

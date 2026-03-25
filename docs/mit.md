@@ -31,3 +31,9 @@ SOFTWARE.
 ```
 
 Third-party licensing information is documented in [Third-Party Licenses]({{ site.baseurl }}/third-party-licenses).
+
+---
+
+## Artwork Notice
+
+The character sheet artwork used in the PDF export is by **Thomas Kolvenbag** and is **not** covered by the MIT licence above. All rights to the artwork remain with the artist. The MIT licence applies to the software source code only.
