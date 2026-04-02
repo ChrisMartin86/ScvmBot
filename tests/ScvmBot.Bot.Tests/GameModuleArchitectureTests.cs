@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ScvmBot.Bot.Services;
 using ScvmBot.Modules;
+using ScvmBot.Modules.CyBorg;
 using ScvmBot.Modules.MorkBorg;
 
 namespace ScvmBot.Bot.Tests;
@@ -91,6 +92,68 @@ public class GameModuleArchitectureTests
             () => new MorkBorgModuleRegistration().InitializeAsync(config));
 
         Assert.Contains("classes.json", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // ── CyBorg module registration tests ────────────────────────────────────
+
+    [Fact]
+    public async Task CyBorgModuleRegistration_FailsFast_WhenDataDirectoryMissing()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Modules:CyBorg:DataPath"] = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))
+            })
+            .Build();
+
+        var ex = await Assert.ThrowsAsync<FileNotFoundException>(
+            () => new CyBorgModuleRegistration().InitializeAsync(config));
+
+        Assert.Contains(".json", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CyBorgModuleRegistration_RegistersModuleAndRenderer()
+    {
+        var dir = await TestDataBuilder.CreateMinimalCyBorgDataDirectoryAsync();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Modules:CyBorg:DataPath"] = dir })
+            .Build();
+        var register = await new CyBorgModuleRegistration().InitializeAsync(config);
+
+        var services = new ServiceCollection();
+        register(services);
+        services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+
+        using var provider = services.BuildServiceProvider();
+        var modules = provider.GetServices<IGameModule>().ToList();
+        var renderers = provider.GetServices<IResultRenderer>().ToList();
+
+        Assert.Single(modules);
+        Assert.IsType<CyBorgModule>(modules[0]);
+        Assert.Single(renderers);
+        Assert.IsType<CyBorgCharacterEmbedRenderer>(renderers[0]);
+    }
+
+    [Fact]
+    public async Task CyBorgModuleRegistration_ImplementsIModuleRegistration_AndRegistersServices()
+    {
+        var dir = await TestDataBuilder.CreateMinimalCyBorgDataDirectoryAsync();
+
+        IModuleRegistration registration = new CyBorgModuleRegistration();
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Modules:CyBorg:DataPath"] = dir })
+            .Build();
+        var register = await registration.InitializeAsync(config);
+
+        var services = new ServiceCollection();
+        register(services);
+        services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+
+        using var provider = services.BuildServiceProvider();
+        var module = Assert.Single(provider.GetServices<IGameModule>());
+        Assert.IsType<CyBorgModule>(module);
     }
 
     // ── Adding a second module does not require changes to bot orchestration ──

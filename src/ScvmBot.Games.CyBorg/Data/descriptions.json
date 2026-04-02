@@ -1,0 +1,53 @@
+{
+  "Trait": [
+    "Paranoid — trusts no one, double-checks every exit",
+    "Cynical — nothing surprises you anymore",
+    "Addicted — stim-packs, data feeds, something",
+    "Violent — first instinct is always to break things",
+    "Reckless — the plan is: go fast, figure it out later",
+    "Meticulous — can't leave a system unoptimized",
+    "Haunted — can't stop thinking about who you used to be",
+    "Greedy — everything has a price, including you",
+    "Nihilistic — nothing matters, but you keep moving",
+    "Loyal — to the wrong people, always",
+    "Cunning — sees angles others miss",
+    "Broken — something fundamental snapped, long ago",
+    "Ruthless — collateral damage is just math",
+    "Curious — digs into things better left buried",
+    "Detached — feels everything from a distance"
+  ],
+  "Appearance": [
+    "Subdermal LED implants pulse in your cheeks",
+    "One eye replaced with a matte-black optical implant",
+    "Neck-to-wrist tattoos of corrupted corporate logos",
+    "Half your scalp is shaved; the rest is wire-threaded dreadlocks",
+    "Chrome-capped fingers clack on every surface",
+    "A deep scar runs from your temple to your chin",
+    "Your skin is pale and almost translucent from years underground",
+    "Augmented jaw gives you an unsettling too-wide smile",
+    "Oversized coat hides the fact that one arm is entirely synthetic",
+    "Permanent dark circles — you don't sleep much",
+    "Military-grade prosthetic legs, slightly too long",
+    "Burn scars cover the left side of your face and neck",
+    "Retractable subdermal blades, visible as faint lines on your forearms",
+    "Cheap wetware port behind your ear, jury-rigged with silver tape",
+    "Both hands are slightly too perfect — you had them replaced"
+  ],
+  "Glitch": [
+    "Sporadic audio hallucinations — voices, music, static",
+    "Occasional motor stutter — your hand freezes for a second",
+    "Random memory gaps — hours of your life, just gone",
+    "Involuntary data-dump — you recite network logs mid-sentence",
+    "Light sensitivity — everything above 60% brightness is agony",
+    "Phantom pain in the limb you no longer have",
+    "Emotional blunting — you know you should feel something, but don't",
+    "Persistent heads-up overlay you can't disable",
+    "Sleep dysfunction — you crash for 18 hours or not at all",
+    "Tic loop — you repeat a word or motion under stress",
+    "Chronic low-level fever from infected wetware",
+    "Optical flicker — your vision stutters in bright light",
+    "Signal bleed — you pick up other people's comms involuntarily",
+    "Neural lag — two-second delay between thought and action",
+    "Involuntary system scan — you analyze strangers' threat levels obsessively"
+  ]
+}

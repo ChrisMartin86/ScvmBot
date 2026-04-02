@@ -1,0 +1,77 @@
+[
+  {
+    "name": "Stim-pack",
+    "category": "Medical",
+    "description": "Restore d6 HP, once"
+  },
+  {
+    "name": "Flashbang",
+    "category": "Weapon",
+    "description": "Blind all in area for one round"
+  },
+  {
+    "name": "Lockpick set",
+    "category": "Tool",
+    "description": null
+  },
+  {
+    "name": "Encrypted comm link",
+    "category": "Tech",
+    "description": "Secure short-range comms"
+  },
+  {
+    "name": "Rope (10m)",
+    "category": "Gear",
+    "description": null
+  },
+  {
+    "name": "Ration pack",
+    "category": "Supplies",
+    "description": "3 days of food"
+  },
+  {
+    "name": "Grappling hook",
+    "category": "Gear",
+    "description": null
+  },
+  {
+    "name": "Holo-disguise",
+    "category": "Tech",
+    "description": "Alter appearance for 1 hour"
+  },
+  {
+    "name": "Medkit",
+    "category": "Medical",
+    "description": "Restore d6 HP, three uses"
+  },
+  {
+    "name": "Broken drone",
+    "category": "Tech",
+    "description": "Repairable with Tech DR12"
+  },
+  {
+    "name": "Hazard suit",
+    "category": "Gear",
+    "description": "Protection from toxins"
+  },
+  {
+    "name": "Corporate keycard (stolen)",
+    "category": "Misc",
+    "description": "Access to mid-level facilities"
+  },
+  {
+    "name": "Bioscanner",
+    "category": "Tech",
+    "description": "Detect living creatures nearby"
+  },
+  {
+    "name": "Crowbar",
+    "category": "Tool",
+    "description": null
+  },
+  {
+    "name": "Smoke grenade",
+    "category": "Weapon",
+    "description": "Create obscuring smoke for d4 rounds"
+  }
+]

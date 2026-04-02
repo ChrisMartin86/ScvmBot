@@ -31,3 +31,30 @@ MÖRK BORG is © 2019 Ockult Örtmästare Games and Stockholm Kartell.
 ### License reference
 
 <https://morkborg.com/license/>
+
+---
+
+## CY_BORG
+
+ScvmBot is an independent production by Christopher Martin and is
+not affiliated with Stockholm Kartell. It is published under the
+[CY_BORG Third Party License](https://cyborg-rpg.com/license/).
+
+CY_BORG is © Stockholm Kartell.
+
+### What this project uses
+
+- **Game mechanics and rules** — character generation tables, ability
+  modifiers, class stat ranges, equipment lists, and app/nanogram mechanics.
+  These are freely reusable under the license.
+- **Names of classes, entities, and concepts** — permitted by the license.
+
+### What this project does NOT redistribute
+
+- Art, illustrations, or graphic design from any CY_BORG publication.
+- The CY_BORG logo or any Stockholm Kartell branding.
+- Full verbatim text or prose passages from the core book.
+
+### License reference
+
+<https://cyborg-rpg.com/license/>

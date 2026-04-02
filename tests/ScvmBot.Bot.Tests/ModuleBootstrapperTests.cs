@@ -15,7 +15,7 @@ public class ModuleBootstrapperTests
     private static IConfiguration BuildConfig(Dictionary<string, string?> values) =>
         new ConfigurationBuilder().AddInMemoryCollection(values).Build();
 
-    // ── Discovery finds MorkBorg module in the test dependency graph ─────
+    // ── Discovery finds both MorkBorg and CyBorg modules in the test dependency graph ─────
 
     [Fact]
     public async Task DiscoverAndInitialize_FindsMorkBorgModule_WhenDataPathConfigured()
@@ -23,42 +23,49 @@ public class ModuleBootstrapperTests
         var dataPath = Path.Combine(
             SharedTestInfrastructure.GetRepositoryRoot(),
             "src", "ScvmBot.Games.MorkBorg", "Data");
+        var cyBorgDataPath = Path.Combine(
+            SharedTestInfrastructure.GetRepositoryRoot(),
+            "src", "ScvmBot.Games.CyBorg", "Data");
 
         var config = BuildConfig(new Dictionary<string, string?>
         {
-            ["Modules:MorkBorg:DataPath"] = dataPath
+            ["Modules:MorkBorg:DataPath"] = dataPath,
+            ["Modules:CyBorg:DataPath"] = cyBorgDataPath
         });
 
         var registrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
 
         Assert.NotEmpty(registrations);
 
-        // Verify the discovered registration produces a working module
+        // Verify the discovered registrations produce working modules
         var services = new ServiceCollection();
         foreach (var register in registrations)
             register(services);
         Assert.True(services.Count > 0);
     }
 
-    // ── Discovery with minimal data directory still works ────────────────
+    // ── Discovery with minimal data directories still works ────────────────
 
     [Fact]
     public async Task DiscoverAndInitialize_WorksWithMinimalDataFiles()
     {
         var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
+        var cyBorgDir = await TestDataBuilder.CreateMinimalCyBorgDataDirectoryAsync();
 
         var config = BuildConfig(new Dictionary<string, string?>
         {
-            ["Modules:MorkBorg:DataPath"] = dir
+            ["Modules:MorkBorg:DataPath"] = dir,
+            ["Modules:CyBorg:DataPath"] = cyBorgDir
         });
 
         var registrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
 
-        Assert.Single(registrations);
+        Assert.Equal(2, registrations.Count);
 
-        // Verify the registration can populate a DI container
+        // Verify the registrations can populate a DI container
         var services = new ServiceCollection();
-        registrations[0](services);
+        foreach (var register in registrations)
+            register(services);
         Assert.True(services.Count > 0);
     }
 
@@ -85,24 +92,27 @@ public class ModuleBootstrapperTests
     [Fact]
     public async Task DiscoverAndInitialize_AppliesConfiguredDataPath()
     {
-        // Place data files in a unique temp directory that the module cannot
+        // Place data files in unique temp directories that the modules cannot
         // find without configuration. If config weren't passed to InitializeAsync,
-        // the module would fall back to a default path that doesn't contain
+        // the modules would fall back to default paths that don't contain
         // these files and would fail with FileNotFoundException.
         var dir = await TestDataBuilder.CreateMinimalDataDirectoryAsync();
+        var cyBorgDir = await TestDataBuilder.CreateMinimalCyBorgDataDirectoryAsync();
 
         var config = BuildConfig(new Dictionary<string, string?>
         {
-            ["Modules:MorkBorg:DataPath"] = dir
+            ["Modules:MorkBorg:DataPath"] = dir,
+            ["Modules:CyBorg:DataPath"] = cyBorgDir
         });
 
         var registrations = await ModuleBootstrapper.DiscoverAndInitializeAsync(config);
 
-        Assert.Single(registrations);
+        Assert.Equal(2, registrations.Count);
         // If the wrong path were used, InitializeAsync would have thrown.
-        // Verify the registration produces services.
+        // Verify the registrations produce services.
         var services = new ServiceCollection();
-        registrations[0](services);
+        foreach (var register in registrations)
+            register(services);
         Assert.True(services.Count > 0);
     }
 
