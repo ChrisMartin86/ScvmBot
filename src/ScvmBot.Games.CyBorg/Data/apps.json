@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Neural spike",
+    "description": "Overload a target's nervous system. Test Presence DR12 — on success, target is stunned for one round.",
+    "appNumber": 1
+  },
+  {
+    "name": "Ghost protocol",
+    "description": "Render yourself invisible to cameras and electronic detection for d4 rounds.",
+    "appNumber": 2
+  },
+  {
+    "name": "Viral cascade",
+    "description": "Crash one electronic system within range. Locks down doors, disables turrets, kills comms.",
+    "appNumber": 3
+  },
+  {
+    "name": "Nano-heal",
+    "description": "Swarm of nanites repairs d6 HP. Cannot be used on androids.",
+    "appNumber": 4
+  },
+  {
+    "name": "Data leech",
+    "description": "Siphon encrypted data from a connected target. Reveals one secret or access code.",
+    "appNumber": 5
+  },
+  {
+    "name": "Static burst",
+    "description": "Emit an EMP that disrupts all electronics in the immediate area for one round. Affects allies.",
+    "appNumber": 6
+  },
+  {
+    "name": "Perception filter",
+    "description": "Allies cannot be detected by electronic sensors for one scene.",
+    "appNumber": 7
+  },
+  {
+    "name": "Swarm construct",
+    "description": "Nanite swarm attacks one target for d8 damage, ignoring armor.",
+    "appNumber": 8
+  },
+  {
+    "name": "Memory wipe",
+    "description": "Erase the last minute of a target's memory. Test Presence DR14 to affect unwilling targets.",
+    "appNumber": 9
+  },
+  {
+    "name": "Overclock",
+    "description": "Boost one ally's next test, granting +4 to the roll.",
+    "appNumber": 10
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Shard knife",
+    "damage": "d4",
+    "isRanged": false,
+    "twoHanded": false,
+    "special": null,
+    "tableIndex": 1
+  },
+  {
+    "name": "Combat baton",
+    "damage": "d6",
+    "isRanged": false,
+    "twoHanded": false,
+    "special": null,
+    "tableIndex": 2
+  },
+  {
+    "name": "Autopistol",
+    "damage": "d6",
+    "isRanged": true,
+    "twoHanded": false,
+    "special": null,
+    "tableIndex": 3
+  },
+  {
+    "name": "Pump shotgun",
+    "damage": "d8",
+    "isRanged": true,
+    "twoHanded": true,
+    "special": null,
+    "tableIndex": 4
+  },
+  {
+    "name": "Vibro-blade",
+    "damage": "d8",
+    "isRanged": false,
+    "twoHanded": false,
+    "special": "Ignores 1 point of damage reduction",
+    "tableIndex": 5
+  },
+  {
+    "name": "SMG",
+    "damage": "d6",
+    "isRanged": true,
+    "twoHanded": false,
+    "special": "Burst fire: +1 damage against unarmored targets",
+    "tableIndex": 6
+  },
+  {
+    "name": "Heavy axe",
+    "damage": "d8",
+    "isRanged": false,
+    "twoHanded": true,
+    "special": null,
+    "tableIndex": 7
+  },
+  {
+    "name": "Mono-wire",
+    "damage": "d10",
+    "isRanged": false,
+    "twoHanded": false,
+    "special": "Ignores all damage reduction",
+    "tableIndex": 8
+  },
+  {
+    "name": "Assault rifle",
+    "damage": "d10",
+    "isRanged": true,
+    "twoHanded": true,
+    "special": null,
+    "tableIndex": 9
+  },
+  {
+    "name": "Plasma cutter",
+    "damage": "d12",
+    "isRanged": false,
+    "twoHanded": true,
+    "special": "Ignores all armor",
+    "tableIndex": 10
+  }
+]

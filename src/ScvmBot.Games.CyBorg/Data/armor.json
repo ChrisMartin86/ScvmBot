@@ -1,0 +1,32 @@
+[
+  {
+    "name": "No protection",
+    "tier": 0,
+    "damageReduction": null,
+    "agilityPenalty": 0
+  },
+  {
+    "name": "Kevlar jacket",
+    "tier": 1,
+    "damageReduction": "d2",
+    "agilityPenalty": 0
+  },
+  {
+    "name": "Armored vest",
+    "tier": 2,
+    "damageReduction": "d4",
+    "agilityPenalty": 2
+  },
+  {
+    "name": "Combat exoskeleton",
+    "tier": 3,
+    "damageReduction": "d6",
+    "agilityPenalty": 4
+  },
+  {
+    "name": "Reinforced chassis",
+    "tier": 4,
+    "damageReduction": "d6",
+    "agilityPenalty": 2
+  }
+]
