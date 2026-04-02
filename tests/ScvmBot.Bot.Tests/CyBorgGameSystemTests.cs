@@ -127,7 +127,7 @@ public class CyBorgGameSystemTests
         var module = new CyBorgModule(generator, refData);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            module.HandleGenerateCommandAsync("unknown", new Dictionary<string, object?>()));
+            module.HandleGenerateCommandAsync("unknown", new Dictionary<string, object?>(), TestContext.Current.CancellationToken));
     }
 
     [Fact]
