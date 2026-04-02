@@ -25,6 +25,8 @@
     <ProjectReference Include="..\..\src\ScvmBot.Games.MorkBorg.Pdf\ScvmBot.Games.MorkBorg.Pdf.csproj" />
     <ProjectReference Include="..\..\src\ScvmBot.Modules\ScvmBot.Modules.csproj" />
     <ProjectReference Include="..\..\src\ScvmBot.Modules.MorkBorg\ScvmBot.Modules.MorkBorg.csproj" />
+    <ProjectReference Include="..\..\src\ScvmBot.Modules.CyBorg\ScvmBot.Modules.CyBorg.csproj" />
+    <ProjectReference Include="..\..\src\ScvmBot.Games.CyBorg\ScvmBot.Games.CyBorg.csproj" />
     <ProjectReference Include="..\ScvmBot.Tests.Shared\ScvmBot.Tests.Shared.csproj" />
   </ItemGroup>
 

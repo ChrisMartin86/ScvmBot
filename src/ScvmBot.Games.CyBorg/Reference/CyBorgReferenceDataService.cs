@@ -58,10 +58,8 @@ public class CyBorgReferenceDataService
         _weapons = await LoadJsonAsync<List<CyBorgWeaponData>>(Path.Combine(_dataRootPath, "weapons.json"));
         _armor = await LoadJsonAsync<List<CyBorgArmorData>>(Path.Combine(_dataRootPath, "armor.json"));
         _gear = await LoadJsonAsync<List<CyBorgGearData>>(Path.Combine(_dataRootPath, "gear.json"));
-
-        // Supplementary datasets — missing file is tolerated; malformed JSON still throws.
-        _apps = await LoadJsonOptionalAsync<List<CyBorgAppData>>(Path.Combine(_dataRootPath, "apps.json")) ?? new();
-        _descriptions = await LoadJsonOptionalAsync<CyBorgDescriptionTables>(Path.Combine(_dataRootPath, "descriptions.json")) ?? new();
+        _apps = await LoadJsonAsync<List<CyBorgAppData>>(Path.Combine(_dataRootPath, "apps.json"));
+        _descriptions = await LoadJsonAsync<CyBorgDescriptionTables>(Path.Combine(_dataRootPath, "descriptions.json"));
 
         ValidateCreditsFormulas();
     }
@@ -104,40 +102,6 @@ public class CyBorgReferenceDataService
         catch (JsonException ex)
         {
             throw new InvalidOperationException($"Invalid JSON in required data file '{filePath}': {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
-    /// Missing file => null (optional). Malformed JSON => throws (corrupt data file).
-    /// </summary>
-    private async Task<T?> LoadJsonOptionalAsync<T>(string filePath) where T : class
-    {
-        if (!File.Exists(filePath))
-        {
-            return null;
-        }
-
-        try
-        {
-            await using var stream = File.OpenRead(filePath);
-            return await JsonSerializer.DeserializeAsync<T>(stream, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-        }
-        catch (JsonException jsonEx)
-        {
-            throw new InvalidOperationException(
-                $"Malformed JSON in optional data file '{filePath}': {jsonEx.Message}", jsonEx);
-        }
-        catch (IOException ioEx) when (ioEx is FileNotFoundException)
-        {
-            return null;
-        }
-        catch (IOException ioEx)
-        {
-            throw new InvalidOperationException(
-                $"Error reading data file '{filePath}': {ioEx.Message}", ioEx);
         }
     }
 

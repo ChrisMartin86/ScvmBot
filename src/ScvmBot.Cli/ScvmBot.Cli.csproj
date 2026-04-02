@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="../ScvmBot.Modules/ScvmBot.Modules.csproj" />
     <ProjectReference Include="../ScvmBot.Modules.MorkBorg/ScvmBot.Modules.MorkBorg.csproj" />
+    <ProjectReference Include="../ScvmBot.Modules.CyBorg/ScvmBot.Modules.CyBorg.csproj" />
   </ItemGroup>
 
 </Project>

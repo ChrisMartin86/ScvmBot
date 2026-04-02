@@ -223,9 +223,59 @@ public class CyBorgCharacterGeneratorTests
             await File.WriteAllTextAsync(Path.Combine(tempDir, "weapons.json"), "[]", TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(Path.Combine(tempDir, "armor.json"), "[]", TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(Path.Combine(tempDir, "gear.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "apps.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "descriptions.json"), "{}", TestContext.Current.CancellationToken);
 
             await Assert.ThrowsAsync<FileNotFoundException>(() =>
                 CyBorgReferenceDataService.CreateAsync(tempDir));
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public async Task ReferenceDataService_MissingAppsFile_Throws()
+    {
+        var tempDir = SharedTestInfrastructure.CreateTempDirectory();
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "classes.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "names.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "weapons.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "armor.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "gear.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "descriptions.json"), "{}", TestContext.Current.CancellationToken);
+            // intentionally NOT writing apps.json
+
+            var ex = await Assert.ThrowsAsync<FileNotFoundException>(() =>
+                CyBorgReferenceDataService.CreateAsync(tempDir));
+            Assert.Contains("apps.json", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public async Task ReferenceDataService_MissingDescriptionsFile_Throws()
+    {
+        var tempDir = SharedTestInfrastructure.CreateTempDirectory();
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "classes.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "names.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "weapons.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "armor.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "gear.json"), "[]", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "apps.json"), "[]", TestContext.Current.CancellationToken);
+            // intentionally NOT writing descriptions.json
+
+            var ex = await Assert.ThrowsAsync<FileNotFoundException>(() =>
+                CyBorgReferenceDataService.CreateAsync(tempDir));
+            Assert.Contains("descriptions.json", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {

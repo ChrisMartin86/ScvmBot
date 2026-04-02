@@ -73,6 +73,9 @@ public static class TestDataBuilder
     private static readonly string[] MinimalDataFiles =
         ["classes.json", "spells.json", "names.json", "weapons.json", "armor.json", "items.json"];
 
+    private static readonly string[] MinimalCyBorgDataFiles =
+        ["classes.json", "names.json", "weapons.json", "armor.json", "gear.json", "apps.json", "descriptions.json"];
+
     public static async Task<string> CreateMinimalDataDirectoryAsync()
     {
         var dir = SharedTestInfrastructure.CreateTempDirectory();
@@ -81,8 +84,25 @@ public static class TestDataBuilder
         return dir;
     }
 
+    public static async Task<string> CreateMinimalCyBorgDataDirectoryAsync()
+    {
+        var dir = SharedTestInfrastructure.CreateTempDirectory();
+        foreach (var file in MinimalCyBorgDataFiles)
+        {
+            // descriptions.json needs a valid object, not an array
+            var content = file == "descriptions.json"
+                ? "{}"
+                : "[]";
+            await File.WriteAllTextAsync(Path.Combine(dir, file), content);
+        }
+        return dir;
+    }
+
     public static string GetRealDataDirectoryPath() =>
         Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg", "Data");
+
+    public static string GetRealCyBorgDataDirectoryPath() =>
+        Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.CyBorg", "Data");
 
     public static string GetRealPdfDataDirectoryPath() =>
         Path.Combine(SharedTestInfrastructure.GetRepositoryRoot(), "src", "ScvmBot.Games.MorkBorg.Pdf", "Data");
